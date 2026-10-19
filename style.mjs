@@ -603,7 +603,7 @@ ul.local-log code { background: none; padding: 0; font-family: var(--mono); font
 .thread-blockers + h3 { margin-top: 18px; }
 .thread-children { font-size: 12.5px; color: var(--muted); margin: 8px 0 0; line-height: 1.6; }
 .thread-children + h3 { margin-top: 18px; }
-.thread-children .tally { font-family: var(--mono); font-size: 11px; margin-right: 4px; }
+.thread-children .kids-tally { font-family: var(--mono); font-size: 11px; margin-right: 4px; }
 .thread-children .child { color: var(--ink); }
 .thread-children .child.done { color: var(--muted); text-decoration: line-through; }
 .thread-blockers .blocker { color: var(--ink); }

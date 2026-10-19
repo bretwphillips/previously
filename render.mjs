@@ -504,7 +504,7 @@ function childrenLine(thread) {
   const kids = thread.children ?? [];
   if (!kids.length) return "";
   const done = kids.filter((c) => !c.open).length;
-  return `<div class="thread-children">sub-issues <span class="tally">${done} of ${kids.length} closed</span> ${kids
+  return `<div class="thread-children">sub-issues <span class="kids-tally">${done} of ${kids.length} closed</span> ${kids
     .map((c) => `<span class="child${c.open ? "" : " done"}">${prose(`${c.ref}${c.title ? ` ${c.title}` : ""}`)}</span>`)
     .join(" \u00b7 ")}</div>`;
 }

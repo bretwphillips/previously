@@ -483,8 +483,11 @@ review, and one batched query for the issues you're working on, with what blocks
 them. Pull requests show as `!` refs, the way merge requests do, so a `#` is
 always an issue; branches named `<issue>-<title>` (GitHub's own suggestion when
 you create a branch from an issue) tie a branch to its issue. GitHub has no
-weights or epics, so fantasy mode's monsters and the standup's epic headings come
-only from what the narrative records. It keeps its own `sync-cache-github.json`
+weights or epics, so fantasy mode's monsters come only from what the narrative
+records -- but a **parent issue** stands in as an epic. An issue with sub-issues,
+or the older makeshift of a description that lists other issues as a checklist
+(`- [ ] #13`), groups its children under it in the standup and adds a line to
+*Goals*, and its own pane lists its sub-issues with how many are closed. It keeps its own `sync-cache-github.json`
 and writes `activity-github.json` beside GitLab's.
 
 Note the distinction: a repo is left out of the standup when you are sitting on
