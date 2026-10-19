@@ -2,6 +2,8 @@
 // A draft, not a post: it goes into an editable box, because only you know
 // which of yesterday's commits is worth a line and which is noise.
 
+import { issueUrl, mrUrl, isGitHub } from "./hosts.mjs";
+
 const DAY = 86400;
 
 const stamp = (now) =>
@@ -23,16 +25,13 @@ export function since(now = new Date()) {
 
 // Epics hang off the group, which is the project path with the project removed.
 const epicUrlFor = (web, ref) => {
-  if (!web) return null;
+  if (!web || isGitHub(web)) return null;
   const parts = web.split("/");
   parts.pop();
   return `${parts.slice(0, 3).join("/")}/groups/${parts.slice(3).join("/")}/-/epics/${ref.slice(1)}`;
 };
 
-const urlFor = (web, token) =>
-  token.startsWith("!")
-    ? `${web}/-/merge_requests/${token.slice(1)}`
-    : `${web}/-/work_items/${token.slice(1)}`;
+const urlFor = (web, token) => (token.startsWith("!") ? mrUrl(web, token.slice(1)) : issueUrl(web, token.slice(1)));
 
 // The merge request is the more useful destination when there is one; the
 // ticket stands in when there is not. Written as a full URL so it can be read
@@ -118,7 +117,7 @@ export function standup(repos, tasks, activity, now = new Date(), { weightLimit 
         scopeDone.length > 0 ||
         discussed;
       const epic = thread.epic
-        ? { ...thread.epic, url: epicUrlFor(repo.web, thread.epic.ref) }
+        ? { ...thread.epic, url: thread.epic.url ?? epicUrlFor(repo.web, thread.epic.ref) }
         : null;
       // A review thread reports the review, not the work. What you actually
       // did comes from approvals and comments; what is left to do is whether
@@ -130,7 +129,7 @@ export function standup(repos, tasks, activity, now = new Date(), { weightLimit 
         for (const mr of waiting) {
           today.push({
             text: `Review: ${goal}`,
-            ref: repo.web ? `${repo.web}/-/merge_requests/${mr.number}` : `!${mr.number}`,
+            ref: mrUrl(repo.web, mr.number) ?? `!${mr.number}`,
             epic,
             touched: true,
             at: repo.committedAt ?? 0,
@@ -151,7 +150,7 @@ export function standup(repos, tasks, activity, now = new Date(), { weightLimit 
       for (const number of awaitingReview(thread)) {
         reviews.push({
           text: thread.title ?? repo.name,
-          ref: repo.web ? `${repo.web}/-/merge_requests/${number}` : `!${number}`,
+          ref: mrUrl(repo.web, number) ?? `!${number}`,
         });
       }
     }
@@ -192,7 +191,7 @@ export function standup(repos, tasks, activity, now = new Date(), { weightLimit 
     if (!repo?.onWorkHost) continue;
     yesterday.push({
       text: `Reviewed: ${brief(approval.title)}`,
-      ref: repo.web ? `${repo.web}/-/merge_requests/${approval.iid}` : `!${approval.iid}`,
+      ref: mrUrl(repo.web, approval.iid) ?? `!${approval.iid}`,
       epic: null,
     });
   }

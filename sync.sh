@@ -4,7 +4,7 @@ HERE=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 
 . "$HERE/env.sh"
 
-# Neither waits on the other: the fetch talks to git, the rest to the API.
+# Neither waits on the other: the fetch talks to git, the rest to each host's API.
 sh "$HERE/fetch.sh" &
-sh "$HERE/gitlab.sh" &
+sh "$HERE/hosts.sh" &
 wait

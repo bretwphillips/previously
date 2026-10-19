@@ -58,10 +58,17 @@ say "Building Previously.app…"
 out=$(sh "$HERE/make.sh" 2>&1) || { say "$out"; fail "The build failed (above)."; }
 say "Built ~/Applications/Previously.app"
 
+# Sync reads what a clone can't see from each repo's host: GitLab through glab,
+# GitHub through gh. Both optional; only the ones your repos use matter.
 if command -v glab >/dev/null 2>&1; then
   say "GitLab: glab is installed. If you haven't, run  glab auth login  so Sync can read comments, reviews and tickets."
 else
   say "GitLab (optional): install glab (brew install glab) and run  glab auth login  for Sync."
+fi
+if command -v gh >/dev/null 2>&1; then
+  say "GitHub: gh is installed. If you haven't, run  gh auth login  so Sync can read pull requests, reviews and issues."
+else
+  say "GitHub (optional): install gh (brew install gh) and run  gh auth login  for Sync."
 fi
 
 # The Claude Code conventions, for anyone who wants sessions to keep the

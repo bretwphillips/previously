@@ -13,6 +13,7 @@ const QUEST_CSS = readFileSync(new URL("quest.css", here), "utf8");
 const QUEST_DEFS = readFileSync(new URL("quest-defs.svg", here), "utf8");
 import { HOARD, HOARD_PALETTE } from "./hoard.mjs";
 import { CANDY, pile, HOUSES, HOUSE_COLOURS, POTION_CSS } from "./halloween.mjs";
+import { issueUrl, mrUrl, branchUrl, isGitHub } from "./hosts.mjs";
 import { OFRENDA, ofrendaArt, DOTD_STOPS, PAPEL_PICADO, MUERTOS_CSS } from "./muertos.mjs";
 import { TRIGGERS, COLOURS, DEFAULT_MARKERS, readMarkers, triggerOf } from "./markers.mjs";
 import { textArts } from "./pet.mjs";
@@ -50,7 +51,6 @@ const prose = (text) => linkRefs(markdownInline(text), CURRENT_WEB);
 const link = (href, text, cls) =>
   href ? `<a href="${href}"${cls ? ` class="${cls}"` : ""}>${text}</a>` : text;
 
-// This GitLab serves issues as work items; /-/issues/<n> is a 404.
 // Fantasy mode's journey, drawn from rows like the gems: a dot at each earlier stop,
 // the tent where you are now. quest.js lays the road between them.
 const pixelArt = (rows, scale) => {
@@ -83,13 +83,11 @@ const WEB_PRINTS = (() => {
     <g transform="translate(0 11) rotate(-14 6 6)">${foot}</g><g transform="translate(12 0) rotate(12 6 6)">${foot}</g></svg>`;
 })();
 
-export const issueUrl = (web, n) => (web ? `${web}/-/work_items/${n}` : null);
-const mrUrl = (web, n) => (web ? `${web}/-/merge_requests/${n}` : null);
-const branchUrl = (web, b) => (web ? `${web}/-/tree/${encodeURIComponent(b)}` : null);
+export { issueUrl };
 
-// Epics belong to the group, under /groups/, not to the project.
+// Epics belong to the group, under /groups/, not to the project. GitHub has none.
 const epicUrl = (web, n) => {
-  if (!web) return null;
+  if (!web || isGitHub(web)) return null;
   const parts = web.split("/");
   parts.pop();
   const origin = parts.slice(0, 3).join("/");
@@ -238,7 +236,7 @@ function mrLine(r, thread) {
   return [...mrs.filter((m) => !finished(m)), ...mrs.filter(finished)]
     .map((m) => {
       const label = `!${m.number}`;
-      const href = r.web ? `${r.web}/-/merge_requests/${m.number}` : null;
+      const href = mrUrl(r.web, m.number);
       return `<span${finished(m) ? ' class="done"' : ""}>${link(href, label)} ${esc(
         MR_STATE[m.state] ?? m.state,
       )}${m.seenAt ? ` <span class="seen">seen ${esc(m.seenAt)}</span>` : ""}</span>`;
@@ -302,7 +300,7 @@ function alertLine(a, withRepo) {
 // Someone else commented on a ticket or merge request of yours.
 function messageLine(m, withRepo) {
   const web = REPO_WEB.get(m.repo);
-  const url = web ? `${web}/-/${m.ref.startsWith("!") ? "merge_requests" : "work_items"}/${m.ref.slice(1)}` : null;
+  const url = m.ref.startsWith("!") ? mrUrl(web, m.ref.slice(1)) : issueUrl(web, m.ref.slice(1));
   const by = (m.who ?? []).join(", ");
   const did =
     m.kind === "review" ? `${by} asked you to review`
@@ -340,6 +338,16 @@ function problemLine(p, withRepo) {
     p.url && !withRepo ? link(p.url, esc(what)) : esc(what)
   }</span></li>`;
 }
+// Epic numbers in Goals, linked: "&12" and "repo#1" wherever they are written,
+// a bare "#1" only as "parent issue #1" -- written alone it could be any ticket.
+function linkEpics(html, links = {}) {
+  for (const [ref, url] of Object.entries(links).sort((a, b) => b[0].length - a[0].length)) {
+    const text = esc(ref).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const before = ref.startsWith("#") ? "(parent issue )" : "(^|[^\\w-])";
+    html = html.replace(new RegExp(`${before}(${text})\\b(?![^<]*<\\/a>)`, "g"), (_, pre, m) => pre + link(url, m));
+  }
+  return html;
+}
 // The Overview shows the last couple of days of them; a repo's pane, two weeks.
 const RECENT_MESSAGES = 2 * 86400;
 
@@ -372,9 +380,7 @@ function overview(data) {
       <button class="mini" data-sync-now>Sync now</button></p>
 
     <h3 data-fold="goals" data-edit="goals" data-count="${(data.goals ?? []).length}">Goals${PENCIL}</h3>
-    ${list(data.goals, "No goals recorded.").replace(/&amp;(\d+)\b(?![^<]*<\/a>)/g, (whole, n) =>
-      data.epicLinks?.[`&${n}`] ? link(data.epicLinks[`&${n}`], `&amp;${n}`) : whole,
-    )}
+    ${linkEpics(list(data.goals, "No goals recorded."), data.epicLinks)}
     ${sectionEditor("goals", rawLines(data.writtenGoals ?? data.goals), "One goal per line. Epics your tickets belong to are added on their own.")}
 
     <h3 data-fold="needs" data-count="${needs.length + heard.length + reviews.length + problems.length}">Needs you</h3>
@@ -498,7 +504,18 @@ const SECTION_NAMES = { now: "Now", next: "Next", plan: "Scope", notes: "Notes" 
 // replaces, so a repo with one thread looks exactly as it did.
 // Where a blocker came from, in a word. Only the ones you linked here can be
 // removed here; the rest are changed where they were written.
-const BLOCKER_SOURCE = { narrative: "noted", you: "you", gitlab: "GitLab", description: "ticket" };
+const BLOCKER_SOURCE = { narrative: "noted", you: "you", gitlab: "GitLab", github: "GitHub", description: "ticket" };
+
+// A parent ticket's children (GitHub sub-issues, or a checklist of issues in its
+// description): each linked, the closed ones struck through, with a tally.
+function childrenLine(thread) {
+  const kids = thread.children ?? [];
+  if (!kids.length) return "";
+  const done = kids.filter((c) => !c.open).length;
+  return `<div class="thread-children">sub-issues <span class="kids-tally">${done} of ${kids.length} closed</span> ${kids
+    .map((c) => `<span class="child${c.open ? "" : " done"}">${prose(`${c.ref}${c.title ? ` ${c.title}` : ""}`)}</span>`)
+    .join(" \u00b7 ")}</div>`;
+}
 
 function blockerLine(r, thread) {
   if (!thread.ticket) return "";
@@ -553,6 +570,7 @@ function threadBody(r, thread, index, current) {
         : ""
     }
     ${blockerLine(r, thread)}
+    ${childrenLine(thread)}
 
     ${!thread.plan?.length && thread.brief && thread.kind !== "review" ? briefSection(thread) : ""}
     ${unwritten(thread) ? localWork(r) : ""}
@@ -770,7 +788,7 @@ function nav(data) {
       // Collapsed, a section still has to say whether anything inside wants you.
       const pending = byGroup[k].reduce((total, r) => total + pendingOf(r), 0);
       return `<button class="grp" data-group="${k}" aria-expanded="true" title="${esc(meta.hint)}">
-          <span class="tri">\u25be</span><span class="nm">${esc(meta.label)}</span>
+          <span class="tri">\u25bc</span><span class="nm">${esc(meta.label)}</span>
           <span class="grp-count">${pending || ""}</span>
         </button>
         <div class="grp-items" data-group="${k}">${byGroup[k].map(item).join("")}</div>`;
@@ -801,7 +819,41 @@ function nav(data) {
 // The shortcuts live here rather than in the header, where they were noise
 // after the first read. Command-key items belong to the app's menu and cannot
 // be rebound from the page.
-function settingsPane(userName, weightLimit = 5, terminals = []) {
+// Settings -> General's first row: this version, and a newer one when there is.
+function updateRow(update, settings, row, about) {
+  if (!update) return "";
+  const checked = update.checkedAt ? `checked ${esc(shortDate(update.checkedAt))}` : "not checked yet";
+  const { latest } = update;
+  const problem = update.problem ? `<p class="update-problem">${esc(update.problem.text)}</p>` : "";
+  const status = !latest
+    ? `<p class="hint">Version ${esc(update.version)} · ${update.checkError ? "couldn’t reach GitHub" : "up to date"}, ${checked}
+        <button class="mini" id="update-check">Check now</button></p>`
+    : update.skipped
+      ? `<p class="hint">Version ${esc(update.version)} · you skipped ${esc(latest.version)}
+          <button class="mini" id="update-unskip">Show it again</button></p>`
+      : `<div class="update-card">
+          <p><b>Version ${esc(latest.version)} is out</b> <span class="hint">· you have ${esc(update.version)}${
+            latest.url ? ` · ${link(esc(latest.url), "on GitHub")}` : ""
+          }</span></p>
+          ${latest.notesHtml ? `<div class="update-notes">${latest.notesHtml}</div>` : ""}
+          ${
+            update.ownBranch
+              ? `<p class="hint">This copy is on the branch <code>${esc(update.ownBranch)}</code>, not ${esc(update.defaultBranch)}, so it is yours to update with git.</p>`
+              : `<p><button class="mini primary" id="update-now">Update</button> <button class="mini" id="update-skip" data-version="${esc(latest.version)}">Skip this version</button></p>`
+          }
+        </div>`;
+  return row(
+    "Updates",
+    `<div class="themes" id="update-choice"><button data-updates="daily">Check daily</button><button data-updates="off">Off</button></div>
+    ${status}${problem}
+    ${about(
+      "Once a day, when the window opens, Previously asks GitHub whether there is a newer release.",
+      `<p>Updating moves this folder to the new release with git, rebuilds the app and opens it again. Every space’s data and your settings stay as they are. If you changed a file the release also changes, nothing is touched and you’re told which. A copy installed from a zip becomes a git clone on its first update.</p>`,
+    )}`,
+  );
+}
+
+function settingsPane(userName, weightLimit = 5, terminals = [], update = null, settings = {}) {
   const rebindable = [
     ["down", "Next project"],
     ["up", "Previous project"],
@@ -839,6 +891,7 @@ function settingsPane(userName, weightLimit = 5, terminals = []) {
         .join("")}</div>
 
       <div class="stab" data-stab="general">
+        ${updateRow(update, settings, row, about)}
         ${row(
           "Theme",
           `<div class="themes">${THEMES.map(
@@ -883,7 +936,7 @@ function settingsPane(userName, weightLimit = 5, terminals = []) {
           `<p class="hint"><button class="mini" id="sync-all">Sync all</button></p>
           ${about(
             "A normal sync of every space, one after another.",
-            `<p><b>What a sync does.</b> It runs <code>git fetch</code> across a space's repos (ahead/behind, merged branches, others' pushes) and asks GitLab, through <code>glab</code>, for what a clone can't see: your comments and approvals, review requests, your merge requests' state, conflicts, pipelines and threads, and your tickets' weight, epic and blockers.</p>
+            `<p><b>What a sync does.</b> It runs <code>git fetch</code> across a space's repos (ahead/behind, merged branches, others' pushes) and asks the repos' host -- GitLab through <code>glab</code>, GitHub through <code>gh</code> -- for what a clone can't see: your comments and approvals, review requests, your merge and pull requests' state, conflicts, pipelines or checks and threads, and your tickets' weight, epic and blockers (GitHub has no weights or epics).</p>
             <p><b>How much.</b> Only what changed since the last sync is asked for, and the rest is kept on disk -- a typical sync is a handful of small calls.</p>
             <p><b>Each space's Sync.</b> Weekly or Daily sync the first time you're at the Mac after that long. Hourly also asks GitLab once an hour. Every 15 min adds a two-call check for comments, approvals and review requests between those. Nothing runs while the screen is locked or asleep, after 15 minutes idle, or with the window hidden; a sync that comes due then waits for you. Spaces take turns, never two at once.</p>
             <p><b>Sync now</b> runs a normal sync of that space straight away. <b>Full refresh</b> forgets what was kept and asks GitLab for everything again -- a few dozen calls rather than a handful. Use it only if something looks out of date that an ordinary sync can't see, like a comment you deleted or a blocking link removed in GitLab.</p>`,
@@ -1018,14 +1071,14 @@ export function renderPage(data) {
   <span class="spacer"></span>
   <button class="mini" id="terminal-open" title="Open a terminal (\u2303\`)" hidden>Terminal</button>
   <button class="mini" id="standup-open" title="Generate this morning's standup">Standup</button>
-  <button class="gear" id="gear" title="Settings">\u2699</button>
+  <button class="gear${data.update?.latest && !data.update.skipped ? " has-update" : ""}" id="gear" title="${data.update?.latest && !data.update.skipped ? `Settings \u2014 version ${esc(data.update.latest.version)} is out` : "Settings"}">\u2699</button>
 </div>
 <div class="wrap">
 ${nav(data)}
 <main>
 ${overview(data)}
 ${data.repos.map(project).join("\n")}
-${settingsPane(data.userName, data.sync?.weightLimit ?? 5, data.terminals)}
+${settingsPane(data.userName, data.sync?.weightLimit ?? 5, data.terminals, data.update, data.sync)}
 </main>
 </div>
 <div class="scrim" id="standup" hidden>
