@@ -788,7 +788,7 @@ function nav(data) {
       // Collapsed, a section still has to say whether anything inside wants you.
       const pending = byGroup[k].reduce((total, r) => total + pendingOf(r), 0);
       return `<button class="grp" data-group="${k}" aria-expanded="true" title="${esc(meta.hint)}">
-          <span class="tri">\u25be</span><span class="nm">${esc(meta.label)}</span>
+          <span class="tri">\u25bc</span><span class="nm">${esc(meta.label)}</span>
           <span class="grp-count">${pending || ""}</span>
         </button>
         <div class="grp-items" data-group="${k}">${byGroup[k].map(item).join("")}</div>`;
@@ -819,7 +819,41 @@ function nav(data) {
 // The shortcuts live here rather than in the header, where they were noise
 // after the first read. Command-key items belong to the app's menu and cannot
 // be rebound from the page.
-function settingsPane(userName, weightLimit = 5, terminals = []) {
+// Settings -> General's first row: this version, and a newer one when there is.
+function updateRow(update, settings, row, about) {
+  if (!update) return "";
+  const checked = update.checkedAt ? `checked ${esc(shortDate(update.checkedAt))}` : "not checked yet";
+  const { latest } = update;
+  const problem = update.problem ? `<p class="update-problem">${esc(update.problem.text)}</p>` : "";
+  const status = !latest
+    ? `<p class="hint">Version ${esc(update.version)} · ${update.checkError ? "couldn’t reach GitHub" : "up to date"}, ${checked}
+        <button class="mini" id="update-check">Check now</button></p>`
+    : update.skipped
+      ? `<p class="hint">Version ${esc(update.version)} · you skipped ${esc(latest.version)}
+          <button class="mini" id="update-unskip">Show it again</button></p>`
+      : `<div class="update-card">
+          <p><b>Version ${esc(latest.version)} is out</b> <span class="hint">· you have ${esc(update.version)}${
+            latest.url ? ` · ${link(esc(latest.url), "on GitHub")}` : ""
+          }</span></p>
+          ${latest.notesHtml ? `<div class="update-notes">${latest.notesHtml}</div>` : ""}
+          ${
+            update.ownBranch
+              ? `<p class="hint">This copy is on the branch <code>${esc(update.ownBranch)}</code>, not ${esc(update.defaultBranch)}, so it is yours to update with git.</p>`
+              : `<p><button class="mini primary" id="update-now">Update</button> <button class="mini" id="update-skip" data-version="${esc(latest.version)}">Skip this version</button></p>`
+          }
+        </div>`;
+  return row(
+    "Updates",
+    `<div class="themes" id="update-choice"><button data-updates="daily">Check daily</button><button data-updates="off">Off</button></div>
+    ${status}${problem}
+    ${about(
+      "Once a day, when the window opens, Previously asks GitHub whether there is a newer release.",
+      `<p>Updating moves this folder to the new release with git, rebuilds the app and opens it again. Every space’s data and your settings stay as they are. If you changed a file the release also changes, nothing is touched and you’re told which. A copy installed from a zip becomes a git clone on its first update.</p>`,
+    )}`,
+  );
+}
+
+function settingsPane(userName, weightLimit = 5, terminals = [], update = null, settings = {}) {
   const rebindable = [
     ["down", "Next project"],
     ["up", "Previous project"],
@@ -857,6 +891,7 @@ function settingsPane(userName, weightLimit = 5, terminals = []) {
         .join("")}</div>
 
       <div class="stab" data-stab="general">
+        ${updateRow(update, settings, row, about)}
         ${row(
           "Theme",
           `<div class="themes">${THEMES.map(
@@ -1036,14 +1071,14 @@ export function renderPage(data) {
   <span class="spacer"></span>
   <button class="mini" id="terminal-open" title="Open a terminal (\u2303\`)" hidden>Terminal</button>
   <button class="mini" id="standup-open" title="Generate this morning's standup">Standup</button>
-  <button class="gear" id="gear" title="Settings">\u2699</button>
+  <button class="gear${data.update?.latest && !data.update.skipped ? " has-update" : ""}" id="gear" title="${data.update?.latest && !data.update.skipped ? `Settings \u2014 version ${esc(data.update.latest.version)} is out` : "Settings"}">\u2699</button>
 </div>
 <div class="wrap">
 ${nav(data)}
 <main>
 ${overview(data)}
 ${data.repos.map(project).join("\n")}
-${settingsPane(data.userName, data.sync?.weightLimit ?? 5, data.terminals)}
+${settingsPane(data.userName, data.sync?.weightLimit ?? 5, data.terminals, data.update, data.sync)}
 </main>
 </div>
 <div class="scrim" id="standup" hidden>

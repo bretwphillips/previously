@@ -92,6 +92,10 @@ code { font-family: var(--mono); font-size: 0.88em; background: var(--line-soft)
 .gear { border: 0; background: none; color: var(--muted); cursor: pointer; padding: 3px 8px;
         font-size: 19px; line-height: 1; border-radius: 6px; }
 .gear:hover { background: var(--line-soft); color: var(--ink); }
+/* A newer release: a dot on the gear until it is installed or skipped. */
+.gear.has-update { position: relative; }
+.gear.has-update::after { content: ""; position: absolute; top: 2px; right: 4px; width: 7px; height: 7px;
+                          border-radius: 50%; background: var(--mark-new); box-shadow: 0 0 0 2px var(--bg); }
 
 .wrap { display: flex; align-items: flex-start; }
 nav { width: 236px; flex: none; position: sticky; top: 38px; height: calc(100vh - 38px);
@@ -102,7 +106,7 @@ nav .grp { display: flex; align-items: center; gap: 8px; width: 100%; border: 0;
            background: none; color: var(--muted); font: inherit; font-size: 10px; font-weight: 600;
            text-transform: uppercase; letter-spacing: 0.09em; padding: 16px 22px 6px; text-align: left; }
 nav .grp:hover { color: var(--ink); }
-nav .grp .tri { font-size: 12px; transition: transform 0.12s; display: inline-block; }
+nav .grp .tri { font-size: 10px; transition: transform 0.12s; display: inline-block; }
 nav .grp[aria-expanded="false"] .tri { transform: rotate(-90deg); }
 nav .grp .grp-count { margin-left: auto; font-family: var(--mono); font-size: 10px;
                       letter-spacing: 0; color: var(--muted); font-weight: 400; }
@@ -162,7 +166,7 @@ h3:first-of-type { margin-top: 0; }
 h3[data-fold] { cursor: pointer; user-select: none; display: flex; align-items: center; }
 h3[data-fold]:hover { color: var(--ink); }
 h3[data-fold] .tri { display: inline-flex; align-items: center; justify-content: center;
-                     width: 12px; height: 12px; margin: 0 6px 0 -2px; font-size: 12px;
+                     width: 14px; height: 14px; margin: 0 7px 0 -2px; font-size: 10px;
                      line-height: 1; transition: transform 0.12s; }
 h3[data-fold][aria-expanded="false"] .tri { transform: rotate(-90deg); }
 h3[data-fold] .fold-count { margin-left: 8px; font-family: var(--mono); font-size: 10px;
@@ -250,7 +254,7 @@ ul.scope li.task .box::before { content: ""; display: inline-block; width: 8px; 
 ul.scope li.task.done .box::before { display: none; }
 h3 .note { font-weight: 400; letter-spacing: 0; text-transform: none; opacity: 0.5;
            margin-left: 8px; font-style: italic; }
-h3 .tally { font-weight: 500; letter-spacing: 0; text-transform: none;
+h3 .tally { position: static; font-weight: 500; letter-spacing: 0; text-transform: none;
             opacity: 0.6; margin-left: 6px; font-family: var(--mono); font-size: 10px; }
 .when { font-family: var(--mono); font-size: 10px; margin-left: 8px;
         color: var(--muted); opacity: 0.7; }
@@ -428,6 +432,15 @@ body.quest .thread-tabs .mark { display: none; }
 .builder-preview .text-companion { margin: 0; font-family: var(--mono); font-size: 15px; line-height: 1.25; color: var(--ink); white-space: pre; }
 .stab > .hint:first-child { margin: 0 0 12px; max-width: 640px; }
 /* A setting's short description, and its details behind Learn more. */
+#update-choice + .hint, #update-choice + .update-card { margin: 8px 0 0; }
+.update-card { margin: 8px 0 0; padding: 10px 14px; border: 1px solid var(--line); border-radius: 8px;
+               background: var(--panel); max-width: 560px; }
+.update-card p { margin: 0 0 6px; }
+.update-card p:last-child { margin-bottom: 0; }
+.update-notes { font-size: 12.5px; max-height: 220px; overflow-y: auto; margin: 0 0 10px; }
+#pane-settings .update-notes h3 { margin: 12px 0 4px; }
+#pane-settings .update-notes > :first-child { margin-top: 0; }
+.update-problem { margin: 8px 0 0; font-size: 12.5px; color: var(--blocked); max-width: 560px; }
 .about { margin: 6px 0 0; font-size: 12px; color: var(--muted); max-width: 560px; }
 .about details { display: inline; }
 .about summary { display: inline; cursor: pointer; color: var(--waiting); list-style: none; }

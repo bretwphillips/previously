@@ -16,6 +16,7 @@ import { petState } from "./pet.mjs";
 import { standup } from "./standup.mjs";
 import { quoteFor } from "./quotes.mjs";
 import { installedTerminals } from "./terminals.mjs";
+import { currentVersion, readUpdate, isNewer, ownBranch, defaultBranch } from "./update.mjs";
 
 // The space this build is for: its own data folder, and the repos in its folders.
 const space = spaceFor();
@@ -465,7 +466,21 @@ const pet = petState(
 );
 const standupDraft = standup(repos, tasks, activity, now, { weightLimit: sync.weightLimit });
 const standupText = standupDraft.text;
+// The last update check: a newer release is offered unless you skipped it.
+const update = (() => {
+  const state = readUpdate();
+  const version = currentVersion();
+  const latest = state.latest && isNewer(state.latest.version, version) ? { ...state.latest, notesHtml: markdown(state.latest.notes ?? "") } : null;
+  return {
+    version, latest, checkedAt: state.checkedAt ?? null, checkError: state.checkError ?? null, problem: state.problem ?? null,
+    skipped: Boolean(latest && sync.skipVersion === latest.version),
+    ownBranch: ownBranch(),
+    defaultBranch: defaultBranch(),
+  };
+})();
+
 const html = renderPage({
+  update,
   // Every space, for the switcher and Settings; each one's sync from its own settings.
   spaces: {
     current: space.id, companion: space.config.companion, menubar: space.config.menubar,

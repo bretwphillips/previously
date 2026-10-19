@@ -27,3 +27,6 @@ sketches/
 spaces.json
 spaces/
 feeds.json
+
+# The last update check, and how the last update went.
+update.json

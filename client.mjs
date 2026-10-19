@@ -493,7 +493,7 @@ document.addEventListener('DOMContentLoaded', function () {
   for (var f = 0; f < folds.length; f++) {
     var tri = document.createElement('span');
     tri.className = 'tri';
-    tri.textContent = '\u25be';
+    tri.textContent = '\u25bc';
     folds[f].insertBefore(tri, folds[f].firstChild);
     if (Number(folds[f].dataset.count) > 0) {
       var count = document.createElement('span');
@@ -764,6 +764,42 @@ document.addEventListener('DOMContentLoaded', function () {
       if (termRow.previousElementSibling && termRow.previousElementSibling.tagName === 'H3') termRow.previousElementSibling.hidden = true;
     }
   }
+
+  /* Updates: checked daily unless turned off; Update and Check now are the app's to do. */
+  function paintUpdates() {
+    var choice = syncState.updates || 'daily';
+    var buttons = document.querySelectorAll('#update-choice button');
+    for (var i = 0; i < buttons.length; i++) {
+      buttons[i].setAttribute('aria-pressed', String(buttons[i].dataset.updates === choice));
+    }
+  }
+  paintUpdates();
+  document.addEventListener('click', function (e) {
+    var button = e.target.closest ? e.target.closest('#update-choice button, #update-check, #update-now, #update-skip, #update-unskip') : null;
+    if (!button) return;
+    var app = window.webkit && window.webkit.messageHandlers;
+    if (button.dataset.updates) {
+      syncState.updates = button.dataset.updates;
+      paintUpdates();
+      if (settingsBridge) settingsBridge.postMessage(JSON.stringify(syncState));
+    } else if (button.id === 'update-check') {
+      if (!app || !app.checkUpdate) return;
+      button.textContent = 'Checking\u2026';
+      button.disabled = true;
+      app.checkUpdate.postMessage('');
+    } else if (button.id === 'update-now') {
+      if (!app || !app.updateNow) return;
+      button.textContent = 'Updating\u2026';
+      button.disabled = true;
+      var skip = document.getElementById('update-skip');
+      if (skip) skip.disabled = true;
+      app.updateNow.postMessage('');
+    } else {
+      syncState.skipVersion = button.id === 'update-skip' ? button.dataset.version : null;
+      button.disabled = true;
+      if (settingsBridge) settingsBridge.postMessage(JSON.stringify(syncState));
+    }
+  });
 
   var syncButtons = document.querySelectorAll('#sync-choice button');
   for (var sb = 0; sb < syncButtons.length; sb++) {
