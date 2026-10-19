@@ -265,9 +265,12 @@ const workHost = (() => {
   return [...tally.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
 })();
 
+// A space can instead count every repo in it as work -- a Work space that holds
+// nothing else, where a work tool hosted elsewhere should still be reported.
+const everyRepo = space.standup === "all";
 for (const repo of repos) {
   const declared = state.projects?.[repo.name]?.standup;
-  const onWorkHost = workHost ? repo.host === workHost : Boolean(repo.web);
+  const onWorkHost = everyRepo || (workHost ? repo.host === workHost : Boolean(repo.web));
   // Someone else's branch is not yours to report, however much work is on it.
   const mine = repo.branchAuthor === null;
   // Two different questions. Reviewing someone's MR is your work whoever owns
@@ -436,7 +439,7 @@ const html = renderPage({
   spaces: {
     current: space.id, companion: space.config.companion, menubar: space.config.menubar,
     list: space.config.spaces.map((s) => ({
-      id: s.id, name: s.name, word: s.word, folders: s.folders,
+      id: s.id, name: s.name, word: s.word, folders: s.folders, standup: s.standup === "all" ? "all" : "host",
       sync: (s.id === space.id ? sync : readJson(join(s.data, "settings.json"), {})).sync ?? "manual",
       lastSyncAt: (s.id === space.id ? sync : readJson(join(s.data, "settings.json"), {})).lastSyncAt ?? null,
     })),

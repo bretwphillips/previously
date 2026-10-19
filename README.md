@@ -355,6 +355,12 @@ Standup is for team work. Whichever host most of a space's repos live on is take
 work, and anything else — no remote at all, or a side project on another host — is
 shown in the app but left out of the post. Its pane says so, next to the title.
 
+That is each space's **Standup** choice in Settings → Projects, *Main host only*,
+and the default: side projects mixed in with work stay out until you move them to
+a space of their own. *Every repo* reports everything in the space instead -- for a
+Work space that holds only work, where the odd work tool hosted publicly on GitHub
+should still count.
+
 A branch is also left out when **none of its commits are yours** — you are sitting
 on someone else's work, which happens after a review or a hand-off. The repo still
 shows, with whose branch it is on its pane and under *Good to know*. A branch with

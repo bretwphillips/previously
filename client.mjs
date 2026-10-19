@@ -981,7 +981,7 @@ document.addEventListener('DOMContentLoaded', function () {
     spacesBridge.postMessage(JSON.stringify({
       current: spacesState.current, companion: spacesState.companion, menubar: spacesState.menubar,
       spaces: spacesState.list.map(function (s) {
-        return { id: s.id, name: s.name, word: s.word, folders: s.folders, sync: s.sync };
+        return { id: s.id, name: s.name, word: s.word, folders: s.folders, sync: s.sync, standup: s.standup || 'host' };
       })
     }));
   }
@@ -1062,6 +1062,20 @@ document.addEventListener('DOMContentLoaded', function () {
       sync.addEventListener('change', function () { space.sync = this.value; saveSpaces(); });
       syncRow.appendChild(sync);
       col.appendChild(syncRow);
+      // What its standup reports: repos on the host most of its repos share (side
+      // projects elsewhere left out), or every repo in it.
+      var standupRow = el('label', 'sb-field', 'Standup ');
+      var standup = el('select', 'sb-sync');
+      [['host', 'Main host only'], ['all', 'Every repo']].forEach(function (c) {
+        var o = el('option', '', c[1]);
+        o.value = c[0];
+        if ((space.standup || 'host') === c[0]) o.selected = true;
+        standup.appendChild(o);
+      });
+      standup.title = 'Main host only: repos on the host most of this space\u2019s repos use; others are left out. Every repo: all of them.';
+      standup.addEventListener('change', function () { space.standup = this.value; saveSpaces(); });
+      standupRow.appendChild(standup);
+      col.appendChild(standupRow);
       // This space's sync, without switching to it.
       var now = el('div', 'sb-syncnow');
       var once = el('button', 'mini', 'Sync now');

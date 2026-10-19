@@ -84,7 +84,7 @@ export function readSpaces() {
 export function writeSpaces(config) {
   const clean = {
     current: config.current, companion: config.companion, menubar: config.menubar,
-    spaces: config.spaces.map(({ id, name, word, folders }) => ({ id, name, word, folders })),
+    spaces: config.spaces.map(({ id, name, word, folders, standup }) => ({ id, name, word, folders, ...(standup ? { standup } : {}) })),
   };
   writeFileSync(CONFIG, JSON.stringify(clean, null, 2) + "\n");
 }
