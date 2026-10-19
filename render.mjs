@@ -703,7 +703,7 @@ function companion(pet, tally) {
     ${Object.entries(pet.arts ?? { cat: pet.art })
       .map(([race, art]) => `<pre class="art" data-race="${race}"${race === "cat" ? "" : " hidden"}>${esc(art)}</pre>`)
       .join("")}
-    <div class="pet-line">${esc(pet.line)}</div>
+    <div class="pet-line"><span class="plain">${esc(pet.line)}</span><span class="questy">${esc(pet.questLine ?? pet.line)}</span></div>
     <div class="pet-status">${esc(pet.status)}</div>
     ${tallyMark(tally)}
   </div>`;
