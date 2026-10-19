@@ -17,6 +17,7 @@ import { issueUrl, mrUrl, branchUrl, isGitHub } from "./hosts.mjs";
 import { OFRENDA, ofrendaArt, DOTD_STOPS, PAPEL_PICADO, MUERTOS_CSS } from "./muertos.mjs";
 import { TRIGGERS, COLOURS, DEFAULT_MARKERS, readMarkers, triggerOf } from "./markers.mjs";
 import { textArts } from "./pet.mjs";
+import { HOLIDAYS } from "./holidays.mjs";
 
 const shortDate = (seconds) =>
   new Date(seconds * 1000).toLocaleDateString("en-US", { month: "short", day: "numeric" });
@@ -1021,6 +1022,18 @@ function settingsPane(userName, weightLimit = 5, terminals = [], update = null, 
               <div hidden>${toggle("quest-toggle", "quest")}${toggle("halloween-toggle", "halloween")}${toggle("muertos-toggle", "muertos")}</div>`,
             )}
             ${row(
+              "Holidays",
+              `<div class="themes" id="holiday-choice"><button data-holidays="auto">Switch</button><button data-holidays="ask">Ask</button><button data-holidays="off">Off</button></div>
+              <div class="holiday-skip" id="holiday-skip">${HOLIDAYS.map(
+                (h) => `<label><input type="checkbox" data-skip="${esc(h.id)}"> Skip ${esc(h.name)}</label>`,
+              ).join("")}</div>
+              ${about(
+                "Your theme follows the calendar near a holiday, then goes back to your own.",
+                `<p><b>When.</b> A big holiday takes its whole month (Halloween: October). A smaller one starts the Monday two weeks before, or when a bigger holiday it overlaps is over (D\u00eda de los Muertos: November 1\u20132, after Halloween). When one ends, a holiday that follows straight on takes over; otherwise the theme goes back to the one you had.</p>
+                <p><b>Switch</b> changes the theme on its own; <b>Ask</b> asks first (<b>Don\u2019t ask again</b> there turns this Off). Choosing a theme yourself during a holiday keeps your choice. Skip the holidays you don\u2019t celebrate.</p>`,
+              )}`,
+            )}
+            ${row(
               "Companion",
               toggle("pet-toggle", "pet"),
               "A small animal in the sidebar, fed by your commits and the scope lines you check off. Purely decorative.",
@@ -1147,6 +1160,11 @@ ${settingsPane(data.userName, data.sync?.weightLimit ?? 5, data.terminals, data.
     })(),
   ).replace(/</g, "\\u003c")}</script>
 <script type="application/json" id="text-companions">${JSON.stringify(textArts("happy")).replace(/</g, "\\u003c")}</script>
+<div class="holiday-ask" id="holiday-ask" role="dialog" aria-live="polite" hidden>
+  <p id="holiday-ask-text"></p>
+  <p><button class="mini primary" data-answer="yes">Switch</button> <button class="mini" data-answer="no">Not now</button> <button class="mini" data-answer="never">Don\u2019t ask again</button></p>
+</div>
+<script type="application/json" id="holidays-data">${JSON.stringify(HOLIDAYS).replace(/</g, "\\u003c")}</script>
 <script type="application/json" id="markers-data">${JSON.stringify({
   triggers: TRIGGERS, colours: COLOURS, defaults: DEFAULT_MARKERS, config: readMarkers(data.sync?.markers),
 }).replace(/</g, "\\u003c")}</script>
