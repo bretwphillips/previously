@@ -753,7 +753,7 @@ function tallyMark(tally) {
     return `${count} commit${count === 1 ? "" : "s"} since ${day}${next ? ` \u00b7 ${next[1]} at ${next[0]}` : ""}`;
   };
   return `<div class="tally" title="${esc(titleFor(HOARD))}" data-title-gold="${esc(titleFor(HOARD))}" data-title-candy="${esc(titleFor(CANDY))}" data-title-ofrenda="${esc(titleFor(OFRENDA))}">
-      <div class="tally-text"><span class="tally-n">${count}</span>commit${count === 1 ? "" : "s"}</div>
+      <div class="tally-text"><span class="tally-label">commit${count === 1 ? "" : "s"}</span><span class="tally-n">${count}</span></div>
       <div class="tally-hoard">${hoardArt(count)}${candyArt(count)}${ofrendaArt(count)}<span class="tally-n">${count}</span></div>
     </div>`;
 }

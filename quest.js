@@ -570,7 +570,10 @@ function sprite(v, px) {
   // health bar over a character's head.
   var body = el('g', { class: 'body' }), bar = el('g', {}), BAR = 4;
   r.forEach(function (row, y) { for (var x = 0; x < w; x++) { var c = row[x];
-    if (c !== '.') (y >= h - BAR ? bar : body).appendChild(el('rect', { x: x, y: y >= h - BAR ? y - (h - BAR) : y + BAR + 1, width: 1, height: 1, fill: v.pal[c] })); } });
+    // A letter with no colour is empty, as the Settings preview draws it -- not black.
+    if (c === '.' || !v.pal[c]) continue;
+    var inBar = y >= h - BAR, cell = el('rect', { x: x, y: inBar ? y - (h - BAR) : y + BAR + 1, width: 1, height: 1, fill: v.pal[c] });
+    (inBar ? bar : body).appendChild(cell); } });
   svg.appendChild(body); svg.appendChild(bar);
   (v.fx || []).forEach(function (f, i) {
     var d = (document.body.classList.contains('muertos') && MUERTOS_FX[f[0]]) || FX[f[0]], x0 = f[1] - Math.floor(d.px[0].length / 2), y0 = f[2] - Math.floor(d.px.length / 2);

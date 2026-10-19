@@ -283,8 +283,10 @@ li:hover .src, p:hover .src { opacity: 0.85; }
 .pet { position: relative; }
 .tally { position: absolute; right: 18px; bottom: 16px; font-family: var(--mono); font-size: 10px;
          line-height: 1.3; text-align: center; color: var(--muted); }
-.tally-text { opacity: 0.7; }
-.tally-text .tally-n { display: block; font-size: 12px; }
+.tally-text { text-align: center; }
+/* the label reads like the mood line beside it, the count under it like the status */
+.tally-text .tally-label { display: block; font-family: var(--sans); font-size: 11px; font-weight: 600; letter-spacing: 0.02em; }
+.tally-text .tally-n { display: block; font-size: 12px; opacity: 0.7; margin-top: 1px; }
 .tally-hoard { display: none; }
 /* Centred in the gap between the wizard and the sidebar's edge, its number on
    the same line as the mood. */
