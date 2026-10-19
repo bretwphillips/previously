@@ -159,12 +159,21 @@ const STOPS = [
 export const DOTD_STOPS = STOPS.map(([rows, pal, scale]) => svgOf(rows, { ...STOP_PAL, ...pal }, scale, "dotd-stop"));
 
 // ---------- papel picado across the top of the page, each flag swaying on its own beat.
-// Cut paper: a border of holes, a flower cut in the middle, a fringed hem.
-const FLAG = ["XXXXXXXXXXXXX", "XX.XX.X.XX.XX", "X.X.XXXXX.X.X", "XX.XX...XX.XX", "XXXX.X.X.XXXX", "XXX.X...X.XXX", "XX.X..X..X.XX",
-  "XXX.X...X.XXX", "XXXX.X.X.XXXX", "XX.XX...XX.XX", "X.X.XXXXX.X.X", "XX.XX.X.XX.XX", "XXXXXXXXXXXXX", "X.X.X.X.X.X.X"];
+// Cut paper, four patterns mixed along the string: a flower, a calavera, a star
+// and a lattice, each in a border of holes over a fringed hem.
+const FLAGS = [
+  ["XXXXXXXXXXXXX", "XX.XX.X.XX.XX", "X.X.XXXXX.X.X", "XX.XX...XX.XX", "XXXX.X.X.XXXX", "XXX.X...X.XXX", "XX.X..X..X.XX",
+    "XXX.X...X.XXX", "XXXX.X.X.XXXX", "XX.XX...XX.XX", "X.X.XXXXX.X.X", "XX.XX.X.XX.XX", "XXXXXXXXXXXXX", "X.X.X.X.X.X.X"],
+  ["XXXXXXXXXXXXX", "XX.XX.X.XX.XX", "XXXX.....XXXX", "XXX.......XXX", "XXX.XX.XX.XXX", "XXX.XX.XX.XXX", "XXX...X...XXX",
+    "XXXX.....XXXX", "XXXX.X.X.XXXX", "XXXXX...XXXXX", "XX.XXXXXXX.XX", "X.X.XXXXX.X.X", "XXXXXXXXXXXXX", "X.X.X.X.X.X.X"],
+  ["XXXXXXXXXXXXX", "XX.XX.X.XX.XX", "XXXXXX.XXXXXX", "XX.XXX.XXX.XX", "XXX.X...X.XXX", "XXXX.....XXXX", "X....XXX....X",
+    "XXXX.....XXXX", "XXX.X...X.XXX", "XX.XXX.XXX.XX", "XXXXXX.XXXXXX", "XX.XX.X.XX.XX", "XXXXXXXXXXXXX", "X.X.X.X.X.X.X"],
+  ["XXXXXXXXXXXXX", "XX.XXXXXXX.XX", "X.X.XX.XX.X.X", "XXX.X...X.XXX", "XX.X.X.X.X.XX", "X.X...X...X.X", "XX.X.X.X.X.XX",
+    "X.X...X...X.X", "XX.X.X.X.X.XX", "XXX.X...X.XXX", "X.X.XX.XX.X.X", "XX.XXXXXXX.XX", "XXXXXXXXXXXXX", "X.X.X.X.X.X.X"],
+];
 const FLAG_COLOURS = ["#e8508a", "#f08a1c", "#8a55c9", "#2fb3c4", "#f2c94c", "#3f8a3a"];
 export const PAPEL_PICADO = `<div class="picado" aria-hidden="true">${Array.from({ length: 110 }, (_, i) =>
-  `<i style="animation-delay:-${((i * 0.37) % 2.4).toFixed(2)}s">${svgOf(FLAG, { X: FLAG_COLOURS[i % 6] }, 1.6, "flag")}</i>`).join("")}</div>`;
+  `<i style="animation-delay:-${((i * 0.37) % 2.4).toFixed(2)}s">${svgOf(FLAGS[(i * 3 + (i >> 2)) % 4], { X: FLAG_COLOURS[i % 6] }, 1.6, "flag")}</i>`).join("")}</div>`;
 
 export const MUERTOS_CSS = `
 body.quest.muertos .dot { width: 9px; height: 12px; background-color: transparent; background-size: 9px 12px; background-repeat: no-repeat; box-shadow: none; border-radius: 0; }
