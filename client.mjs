@@ -493,7 +493,7 @@ document.addEventListener('DOMContentLoaded', function () {
   for (var f = 0; f < folds.length; f++) {
     var tri = document.createElement('span');
     tri.className = 'tri';
-    tri.textContent = '\u25be';
+    tri.textContent = '\u25bc';
     folds[f].insertBefore(tri, folds[f].firstChild);
     if (Number(folds[f].dataset.count) > 0) {
       var count = document.createElement('span');

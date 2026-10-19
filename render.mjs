@@ -788,7 +788,7 @@ function nav(data) {
       // Collapsed, a section still has to say whether anything inside wants you.
       const pending = byGroup[k].reduce((total, r) => total + pendingOf(r), 0);
       return `<button class="grp" data-group="${k}" aria-expanded="true" title="${esc(meta.hint)}">
-          <span class="tri">\u25be</span><span class="nm">${esc(meta.label)}</span>
+          <span class="tri">\u25bc</span><span class="nm">${esc(meta.label)}</span>
           <span class="grp-count">${pending || ""}</span>
         </button>
         <div class="grp-items" data-group="${k}">${byGroup[k].map(item).join("")}</div>`;

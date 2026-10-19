@@ -106,7 +106,7 @@ nav .grp { display: flex; align-items: center; gap: 8px; width: 100%; border: 0;
            background: none; color: var(--muted); font: inherit; font-size: 10px; font-weight: 600;
            text-transform: uppercase; letter-spacing: 0.09em; padding: 16px 22px 6px; text-align: left; }
 nav .grp:hover { color: var(--ink); }
-nav .grp .tri { font-size: 12px; transition: transform 0.12s; display: inline-block; }
+nav .grp .tri { font-size: 10px; transition: transform 0.12s; display: inline-block; }
 nav .grp[aria-expanded="false"] .tri { transform: rotate(-90deg); }
 nav .grp .grp-count { margin-left: auto; font-family: var(--mono); font-size: 10px;
                       letter-spacing: 0; color: var(--muted); font-weight: 400; }
@@ -166,7 +166,7 @@ h3:first-of-type { margin-top: 0; }
 h3[data-fold] { cursor: pointer; user-select: none; display: flex; align-items: center; }
 h3[data-fold]:hover { color: var(--ink); }
 h3[data-fold] .tri { display: inline-flex; align-items: center; justify-content: center;
-                     width: 12px; height: 12px; margin: 0 6px 0 -2px; font-size: 12px;
+                     width: 14px; height: 14px; margin: 0 7px 0 -2px; font-size: 10px;
                      line-height: 1; transition: transform 0.12s; }
 h3[data-fold][aria-expanded="false"] .tri { transform: rotate(-90deg); }
 h3[data-fold] .fold-count { margin-left: 8px; font-family: var(--mono); font-size: 10px;
