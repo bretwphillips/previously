@@ -1825,12 +1825,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, WKN
     private func installUpdate() {
         guard !updateRunning else { return }
         updateRunning = true
+        let started = Date().timeIntervalSince1970
         let task = script("update.sh", args: ["install"])
         task.terminationHandler = { [weak self] done in
             DispatchQueue.main.async {
                 guard let self else { return }
                 self.updateRunning = false
+                // 3: nothing newer after all. Anything else but 0 stopped it,
+                // and update.mjs has said why in update.json -- unless it never
+                // got that far, which is said here instead.
                 guard done.terminationStatus == 0 else {
+                    if done.terminationStatus != 3 { self.noteUpdateProblem(since: started, status: done.terminationStatus) }
                     self.refresh(cached: true)
                     return
                 }
@@ -1842,7 +1847,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, WKN
                 NSApp.terminate(nil)
             }
         }
-        if (try? task.run()) == nil { updateRunning = false }
+        if (try? task.run()) == nil {
+            updateRunning = false
+            noteUpdateProblem(since: started, status: -1)
+            refresh(cached: true)
+        }
+    }
+
+    /// An update that stopped without leaving its reason gets a plain one.
+    private func noteUpdateProblem(since started: Double, status: Int32) {
+        let file = codeDir.appendingPathComponent("update.json")
+        var state = ((try? JSONSerialization.jsonObject(with: Data(contentsOf: file))) as? [String: Any]) ?? [:]
+        let at = (state["problem"] as? [String: Any])?["at"] as? Double ?? 0
+        guard at < started - 1 else { return }
+        state["problem"] = [
+            "text": "The update stopped before it could say why (exit \(status)). Run sh update.sh install in the previously folder to see the error.",
+            "at": Date().timeIntervalSince1970,
+        ]
+        if let out = try? JSONSerialization.data(withJSONObject: state, options: [.prettyPrinted, .sortedKeys]) {
+            try? out.write(to: file)
+        }
     }
 
     private func refresh(cached: Bool = false, space: String? = nil) {

@@ -92,6 +92,7 @@ export async function check() {
   }
 }
 
+const UP_TO_DATE = "Already up to date.";
 class Stop extends Error {}
 const stop = (text) => {
   throw new Stop(text);
@@ -103,7 +104,7 @@ const named = (files) =>
 
 export async function install() {
   const latest = await check();
-  if (!latest || !isNewer(latest.version, currentVersion())) return "Already up to date.";
+  if (!latest || !isNewer(latest.version, currentVersion())) return UP_TO_DATE;
   const slug = repoSlug();
 
   if (isClone()) {
@@ -136,13 +137,8 @@ export async function install() {
   if (!forward.ok) {
     const yours = listFiles(forward.out);
     if (yours.length) stop(`Your own changes to ${named(yours)} would be overwritten, so nothing was changed. Commit or undo them, then update again.`);
-    // main has commits of its own: a real merge, unless it conflicts.
-    const merged = git("merge", "--no-edit", "-q", latest.tag);
-    if (!merged.ok) {
-      const clashing = git("diff", "--name-only", "--diff-filter=U").out.split("\n").filter(Boolean);
-      git("merge", "--abort");
-      stop(`Your commits clash with the new version in ${named(clashing.length ? clashing : ["some files"])}, so nothing was changed. Merge ${latest.tag} with git yourself.`);
-    }
+    if (!git("merge-base", "--is-ancestor", "HEAD", latest.tag).ok) stop(`This copy has commits of its own on main, so it is left for you to update with git (merge ${latest.tag}).`);
+    stop(`Git couldn't move to ${latest.tag}, so nothing was changed: ${forward.out.split("\n").pop() || "no reason given"}`);
   }
 
   try {
@@ -161,7 +157,10 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     console.log(latest ? `latest ${latest.version} (this is ${currentVersion()})` : `no release found (this is ${currentVersion()})`);
   } else if (cmd === "install") {
     try {
-      console.log(await install());
+      const said = await install();
+      console.log(said);
+      // Nothing installed: the app has no new copy to reopen.
+      if (said === UP_TO_DATE) process.exit(3);
     } catch (e) {
       const text = e instanceof Stop ? e.message : `The update failed: ${e.message ?? e}`;
       save({ problem: { text, at: Math.floor(Date.now() / 1000) } });
