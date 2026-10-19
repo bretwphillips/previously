@@ -801,6 +801,49 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
 
+  /* Settings -> A.I.: saved a moment after you stop typing, and on leaving the box. */
+  var aiStatus = document.getElementById('ai-notes-status');
+  var aiBoxes = document.querySelectorAll('textarea.ai-notes');
+  var AI_NOTES_LIMIT = 40;
+  function aiLines() {
+    var n = 0;
+    for (var i = 0; i < aiBoxes.length; i++) {
+      n += aiBoxes[i].value.split('\\n').filter(function (l) { return l.trim(); }).length;
+    }
+    return n;
+  }
+  function paintAiStatus(saved) {
+    if (!aiStatus) return;
+    var n = aiLines();
+    aiStatus.classList.toggle('warn', n > AI_NOTES_LIMIT);
+    aiStatus.textContent = n > AI_NOTES_LIMIT
+      ? n + ' lines of notes. Every session reads all of them first; a long list costs room and the important ones get lost. Worth trimming.'
+      : saved ? 'Saved.' : '';
+  }
+  for (var ai = 0; ai < aiBoxes.length; ai++) {
+    (function (box) {
+      var timer = null;
+      var bridge = window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.saveAiNotes;
+      if (!bridge) { box.disabled = true; return; }
+      function save() {
+        clearTimeout(timer);
+        timer = null;
+        if (box.value === box.dataset.saved) return;
+        box.dataset.saved = box.value;
+        bridge.postMessage(JSON.stringify({ scope: box.dataset.scope, text: box.value }));
+        paintAiStatus(true);
+      }
+      box.dataset.saved = box.value;
+      box.addEventListener('input', function () {
+        clearTimeout(timer);
+        timer = setTimeout(save, 800);
+        paintAiStatus(false);
+      });
+      box.addEventListener('blur', save);
+    })(aiBoxes[ai]);
+  }
+  paintAiStatus(false);
+
   var syncButtons = document.querySelectorAll('#sync-choice button');
   for (var sb = 0; sb < syncButtons.length; sb++) {
     syncButtons[sb].addEventListener('click', function () {

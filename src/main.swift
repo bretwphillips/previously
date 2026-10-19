@@ -1410,6 +1410,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, WKN
             return
         }
 
+        // Settings -> A.I.: {"scope": "all" | "space", "text"} -- the notes for
+        // every space beside the code, a space's own in its folder.
+        if message.name == "saveAiNotes" {
+            guard let note = try? JSONSerialization.jsonObject(with: Data(text.utf8)) as? [String: Any],
+                  let body = note["text"] as? String
+            else { return }
+            let dir = note["scope"] as? String == "all" ? codeDir : spaceDir()
+            try? body.write(to: dir.appendingPathComponent("ai-notes.md"), atomically: true, encoding: .utf8)
+            refresh(cached: true)
+            return
+        }
+
         // Settings -> General -> Updates.
         if message.name == "checkUpdate" {
             checkForUpdate(force: true)
@@ -1471,6 +1483,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, WKN
         config.userContentController.add(self, name: "syncNow")
         config.userContentController.add(self, name: "checkUpdate")
         config.userContentController.add(self, name: "updateNow")
+        config.userContentController.add(self, name: "saveAiNotes")
         config.userContentController.add(self, name: "switchSpace")
         config.userContentController.add(self, name: "saveSpaces")
         config.userContentController.add(self, name: "pickFolder")

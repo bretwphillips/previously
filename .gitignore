@@ -28,5 +28,8 @@ spaces.json
 spaces/
 feeds.json
 
+# Your notes for AI sessions (each space keeps its own in spaces/).
+ai-notes.md
+
 # The last update check, and how the last update went.
 update.json

@@ -853,7 +853,7 @@ function updateRow(update, settings, row, about) {
   );
 }
 
-function settingsPane(userName, weightLimit = 5, terminals = [], update = null, settings = {}) {
+function settingsPane(userName, weightLimit = 5, terminals = [], update = null, settings = {}, aiNotes = {}) {
   const rebindable = [
     ["down", "Next project"],
     ["up", "Previous project"],
@@ -880,7 +880,7 @@ function settingsPane(userName, weightLimit = 5, terminals = [], update = null, 
   const toggle = (id, key) =>
     `<div class="themes" id="${id}"><button data-${key}="off">Off</button><button data-${key}="on">On</button></div>`;
 
-  const tabs = [["general", "General"], ["projects", "Projects"], ["markers", "Markers"], ["keys", "Shortcuts"], ["extras", "Extras"]];
+  const tabs = [["general", "General"], ["projects", "Projects"], ["ai", "A.I."], ["markers", "Markers"], ["keys", "Shortcuts"], ["extras", "Extras"]];
   return `<section id="pane-settings" hidden>
       <div class="settings-head">
         <h2 class="pane">Settings</h2>
@@ -925,6 +925,25 @@ function settingsPane(userName, weightLimit = 5, terminals = [], update = null, 
             "How much work the standup's Today plans for, in GitLab weight.",
             `<p>Today lists your open tickets most urgent first and stops once their weights add up to this -- so one weight-5 ticket can be a whole day, where five weight-1 tickets fit together. A ticket with no weight counts as 1, and the first ticket always goes in even if it's bigger than the limit. Review requests are always added, whatever the limit.</p>`,
           )}`,
+        )}
+      </div>
+
+      <div class="stab" data-stab="ai" hidden>
+        <p class="hint">Standing notes for AI sessions: what you'd otherwise keep repeating. Sessions that follow the Previously conventions read them when they start. Your notes win over the AI's own memory, and a note for this space wins over one for every space.</p>
+        ${row(
+          "Every space",
+          `<textarea class="ai-notes" id="ai-notes-all" data-scope="all" rows="6" spellcheck="true" placeholder="e.g. Keep explanations short: start high level and expand when asked, unless it's critical, like a bug.">${esc(aiNotes.all ?? "")}</textarea>`,
+        )}
+        ${row(
+          "This space",
+          `<textarea class="ai-notes" id="ai-notes-space" data-scope="space" rows="6" spellcheck="true" placeholder="Notes for ${esc(aiNotes.spaceName ?? "this space")} only.">${esc(aiNotes.space ?? "")}</textarea>
+          ${about(
+            `Only for repos in ${esc(aiNotes.spaceName ?? "this space")}. Switch spaces to see another's.`,
+            `<p>Saved as you type, as Markdown files with your own data -- <code>ai-notes.md</code> beside the code for every space, and one in each space's folder -- never in the repo. A session finds them through the Previously section of your <code>CLAUDE.md</code> (<code>claude-section.md</code>).</p>
+            <p><b>Keep them short.</b> Every session reads all of them before anything else, so a long list costs room and the notes that matter get lost among the rest. Rules outlive their reasons: remove the ones you no longer need.</p>
+            <p><b>No secrets.</b> They are sent to the AI with each session, so passwords, tokens and keys don't belong here.</p>`,
+          )}
+          <p class="ai-notes-status" id="ai-notes-status" aria-live="polite"></p>`,
         )}
       </div>
 
@@ -1078,7 +1097,7 @@ ${nav(data)}
 <main>
 ${overview(data)}
 ${data.repos.map(project).join("\n")}
-${settingsPane(data.userName, data.sync?.weightLimit ?? 5, data.terminals, data.update, data.sync)}
+${settingsPane(data.userName, data.sync?.weightLimit ?? 5, data.terminals, data.update, data.sync, data.aiNotes)}
 </main>
 </div>
 <div class="scrim" id="standup" hidden>

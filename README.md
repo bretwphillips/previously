@@ -630,6 +630,7 @@ the rest sit beside the code. None of them are tracked by git.
 |---|---|
 | `spaces.json` | The spaces: each one's name, title-card word and folders, which one is showing, and the companion and menu-bar choices. Written by Settings → Projects. |
 | `settings.json` | The app's settings -- theme, markers, terminal, standup weight. Each space has its own too, holding only when it syncs. |
+| `ai-notes.md` | Your notes for AI sessions, for every space (**Settings → A.I.**). Each space keeps its own beside its other data. |
 | `update.json` | The last update check: the latest release and its notes, and why the last update stopped, if it did. |
 | `ledger.json` | Every commit counted toward the hoard, by hash. One beside the code when the companion is shared, else one per space. |
 
@@ -700,6 +701,7 @@ the rest sit beside the code. None of them are tracked by git.
 | `show.sh` | The terminal view. |
 | `done.sh` | Record that HEAD finished one or more scope lines. |
 | `install.sh` | One-time setup: checks what's needed, builds the app, opens it. |
+| `ai-notes.sh` | Prints your AI notes for a session to read: every space's, then a repo's space's. |
 | `update.mjs`, `update.sh` | The update check (GitHub's latest release, into `update.json`) and installing it: a git fast-forward to its tag, then `make.sh`. |
 | `VERSION` | This copy's version, compared with the latest release. |
 | `claude-section.md` | The Claude Code conventions, ready to paste into your `CLAUDE.md`. |
@@ -732,6 +734,7 @@ It says, in short:
 |---|---|
 | `worklog.json` | Claude's -- the one in the repo's own space (`node previously/spaces.mjs which <repo>` finds it). Updated at checkpoints — after a push, when a branch or ticket changes, when work is parked. |
 | `notes.md`, `tasks.json` | Yours. Claude reads `notes.md` at session start and never overwrites either. |
+| AI notes | Yours, from **Settings → A.I.** Claude reads them at session start (`sh previously/ai-notes.sh <repo>`) and follows them over its own memory. |
 | Scope lines | Ticked only by `done.sh`, which writes a git note. Never by editing the file. |
 | Source tags | Every narrative entry is `{ text, src }` — `ticket`, `git`, `mr`, or `read`. |
 | Blockers | A thread that cannot move until another lands carries `blockedBy` (`"#31"` or `"repo#31"`); fantasy mode draws its lock and key from it. |
@@ -744,6 +747,21 @@ Two habits make the difference between a page worth opening and a prettier
   not. That is what `read` marks — and what you should verify before acting on.
 - **Prune in the same breath as the work.** A `next` line that survives the commit
   satisfying it sends you to redo finished work, which is worse than a blank one.
+
+### Notes for the AI
+
+**Settings → A.I.** holds standing notes for AI sessions: the things you'd
+otherwise keep repeating ("start high level, expand when I ask"). There are two:
+**Every space**, and **This space** for the space you're viewing, so work rules
+needn't follow you into personal projects. They save as you type, to
+`ai-notes.md` beside the code and in each space's folder, never into the repo.
+
+A session that follows the conventions above runs `ai-notes.sh <repo>` when it
+starts, which prints the notes for every space and then the repo's space's. Your
+notes win over the AI's own memory, and a space's note wins over one for every
+space. Two cautions: every session reads all of them first, so keep the list
+short (the tab warns past 40 lines), and they are sent to the AI with each
+session, so no passwords or tokens.
 
 Nothing here needs a running Claude. The git half regenerates on its own, and the
 page, standup and companion all work with no model involved.

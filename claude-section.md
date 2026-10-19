@@ -13,6 +13,10 @@ lives in `~/Projects/previously/` — read `README.md` there before touching it.
   data folder and the repo's path. `worklog.json`, `notes.md` and `tasks.json`
   below are the files in that folder (`~/Projects/previously/spaces/<space>/`).
 
+- **Read the user's AI notes at session start:** `sh ~/Projects/previously/ai-notes.sh [repo]`
+  (Settings -> A.I. in the app). Follow them. They win over your own memory or
+  habits, and a space's note wins over one for every space.
+
 - **`worklog.json` is mine to maintain.** Update `now` / `next` at checkpoints —
   after a push, when a branch or ticket changes, when work is parked. Tag every
   entry `{ text, src }` with `ticket`, `git`, `mr`, or `read` (my inference).
