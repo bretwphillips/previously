@@ -31,6 +31,9 @@ const DARK = `
   --web-W: #77717f; --web-w: #55505e; --web-s: #45414d; --web-b: #c9c4d3; --web-B: #8a8496;
   --web-dew-g: #3d5f73; --web-dew: #8fd0f0; --web-dew-D: #e8f7ff;
   --web-spider: #5e5869; --web-eye: #c4383b; --web-thread: #4a4654;
+  /* Fantasy's ivy: deeper greens, brighter fireflies */
+  --ivy-V: #3f6a2c; --ivy-v: #4a7534; --ivy-L: #4f8635; --ivy-l: #6fa64a;
+  --ivy-P: #c97a98; --ivy-Y: #e0b84a; --ivy-o: #f0e3b0; --ivy-fly: #e4f57a;
 `;
 
 // Heavier type and harder edges rather than louder colour, so it stays readable
