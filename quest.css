@@ -5,6 +5,15 @@ canvas.pix { position: absolute; left: 0; top: 0; image-rendering: pixelated; po
 /* The wizard's HP bar says what the feed count did. */
 body.quest .pet-status { display: none; }
 .pet-line .questy, body.quest .pet-line .plain { display: none; }
+/* On a roll the health overruns the bar: the gold past its end pulsing bright, sparks spitting from the end. */
+.wizard .swell { transform-box: view-box; transform-origin: 17px 0; animation: hp-swell 1.4s ease-in-out infinite; }
+.wizard .swell.surge { animation: hp-swell 1.4s ease-in-out infinite, hp-surge 1.4s ease-in-out infinite; }
+@keyframes hp-swell { 50% { transform: scaleX(1.35); } }
+.wizard .spark { opacity: 0; transform-box: fill-box; animation: hp-spark 1.2s ease-out infinite; }
+/* brighter on dark; on light, deeper and more saturated, since brighter only fades into the page */
+@keyframes hp-surge { 50% { filter: var(--hp-pulse, saturate(1.3) brightness(0.92)); } }
+@keyframes hp-spark { 0% { opacity: 0; transform: translate(0, 0); } 20% { opacity: 1; } 100% { opacity: 0; transform: translate(1.5px, -1.5px); } }
+@media (prefers-reduced-motion: reduce) { .wizard .swell, .wizard .surge, .wizard .spark { animation: none; } .wizard .spark { opacity: .8; } }
 body.quest .pet-line .questy { display: inline; }
 .wizard { display: flex; justify-content: center; margin-bottom: 4px; }
 .wizard svg { display: block; shape-rendering: crispEdges; overflow: visible; }

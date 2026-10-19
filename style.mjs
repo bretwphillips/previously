@@ -27,6 +27,8 @@ const DARK = `
   /* ...and the companion's black hats and suits, and the ofrenda's outlines */
   --dotd-hat: #3a3642; --dotd-hat-band: #4f4a59; --dotd-trim: #48434f;
   --dotd-altar-o: #5a5048; --dotd-altar-k: #6e6576;
+  /* the broken HP bar's tip and sparks: pale on dark, deeper gold on light */
+  --hp-tip: #fff3b0; --hp-spark: #fff6c8; --hp-spill: #ffd34a; --hp-pulse: brightness(1.35);
 `;
 
 // Heavier type and harder edges rather than louder colour, so it stays readable
