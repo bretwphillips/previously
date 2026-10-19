@@ -16,7 +16,7 @@ import { petState } from "./pet.mjs";
 import { standup } from "./standup.mjs";
 import { quoteFor } from "./quotes.mjs";
 import { installedTerminals } from "./terminals.mjs";
-import { currentVersion, readUpdate, isNewer, isClone, branchOf } from "./update.mjs";
+import { currentVersion, readUpdate, isNewer, ownBranch, defaultBranch } from "./update.mjs";
 
 // The space this build is for: its own data folder, and the repos in its folders.
 const space = spaceFor();
@@ -471,12 +471,11 @@ const update = (() => {
   const state = readUpdate();
   const version = currentVersion();
   const latest = state.latest && isNewer(state.latest.version, version) ? { ...state.latest, notesHtml: markdown(state.latest.notes ?? "") } : null;
-  const branch = branchOf();
   return {
     version, latest, checkedAt: state.checkedAt ?? null, checkError: state.checkError ?? null, problem: state.problem ?? null,
     skipped: Boolean(latest && sync.skipVersion === latest.version),
-    // A clone on a branch of its own is yours to update with git.
-    ownBranch: isClone() && branch !== "main" ? branch : null,
+    ownBranch: ownBranch(),
+    defaultBranch: defaultBranch(),
   };
 })();
 

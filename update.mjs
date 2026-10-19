@@ -48,6 +48,15 @@ const git = (...args) => {
 };
 export const isClone = () => existsSync(join(CODE, ".git"));
 export const branchOf = () => (isClone() ? git("rev-parse", "--abbrev-ref", "HEAD").out : null);
+// The repo's own main branch -- main, master, whatever it was named -- as the
+// clone last heard it; "main" if it never did.
+export const defaultBranch = () =>
+  (isClone() && git("symbolic-ref", "--short", "refs/remotes/origin/HEAD").out.replace(/^origin\//, "")) || "main";
+// A clone on any other branch is someone working on it: theirs to update.
+export const ownBranch = () => {
+  const branch = branchOf();
+  return branch && branch !== defaultBranch() ? branch : null;
+};
 
 function repoSlug() {
   const url = isClone() ? git("remote", "get-url", "origin").out : "";
@@ -108,9 +117,10 @@ export async function install() {
   const slug = repoSlug();
 
   if (isClone()) {
-    const branch = branchOf();
-    if (branch !== "main") stop(`This copy is on the branch ${branch}, not main, so it is left for you to update with git.`);
     if (!git("fetch", "-q", "--tags", "origin").ok) stop("Couldn't reach GitHub to download it. Try again later.");
+    git("remote", "set-head", "origin", "--auto");
+    const branch = ownBranch();
+    if (branch) stop(`This copy is on the branch ${branch}, not ${defaultBranch()}, so it is left for you to update with git.`);
   } else {
     // A zip: the clone starts at the release it came from, so your edits since
     // show up as edits -- kept, or in the way, like a clone's.
@@ -119,6 +129,7 @@ export async function install() {
       ["init", "-q", "-b", "main"],
       ["remote", "add", "origin", process.env.PREVIOUSLY_UPDATE_ORIGIN ?? `https://github.com/${slug}.git`],
       ["fetch", "-q", "--tags", "origin"],
+      ["remote", "set-head", "origin", "--auto"],
     ];
     for (const step of steps) {
       if (!git(...step).ok) {
@@ -130,6 +141,7 @@ export async function install() {
       rmSync(join(CODE, ".git"), { recursive: true, force: true });
       stop(`This copy says it is version ${currentVersion()}, which GitHub has no release of, so it can't tell your changes from the release's. Download the new one instead.`);
     }
+    git("symbolic-ref", "HEAD", `refs/heads/${defaultBranch()}`);
     git("reset", "-q", from);
   }
 
@@ -137,7 +149,7 @@ export async function install() {
   if (!forward.ok) {
     const yours = listFiles(forward.out);
     if (yours.length) stop(`Your own changes to ${named(yours)} would be overwritten, so nothing was changed. Commit or undo them, then update again.`);
-    if (!git("merge-base", "--is-ancestor", "HEAD", latest.tag).ok) stop(`This copy has commits of its own on main, so it is left for you to update with git (merge ${latest.tag}).`);
+    if (!git("merge-base", "--is-ancestor", "HEAD", latest.tag).ok) stop(`This copy has commits of its own on ${defaultBranch()}, so it is left for you to update with git (merge ${latest.tag}).`);
     stop(`Git couldn't move to ${latest.tag}, so nothing was changed: ${forward.out.split("\n").pop() || "no reason given"}`);
   }
 

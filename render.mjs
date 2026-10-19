@@ -838,7 +838,7 @@ function updateRow(update, settings, row, about) {
           ${latest.notesHtml ? `<div class="update-notes">${latest.notesHtml}</div>` : ""}
           ${
             update.ownBranch
-              ? `<p class="hint">This copy is on the branch <code>${esc(update.ownBranch)}</code>, not main, so it is yours to update with git.</p>`
+              ? `<p class="hint">This copy is on the branch <code>${esc(update.ownBranch)}</code>, not ${esc(update.defaultBranch)}, so it is yours to update with git.</p>`
               : `<p><button class="mini primary" id="update-now">Update</button> <button class="mini" id="update-skip" data-version="${esc(latest.version)}">Skip this version</button></p>`
           }
         </div>`;
