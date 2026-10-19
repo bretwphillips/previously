@@ -1023,7 +1023,7 @@ function settingsPane(userName, weightLimit = 5, terminals = [], update = null, 
             )}
             ${row(
               "Holidays",
-              `<div class="themes" id="holiday-choice"><button data-holidays="auto">Switch</button><button data-holidays="ask">Ask</button><button data-holidays="off">Off</button></div>
+              `<div class="themes" id="holiday-choice"><button data-holidays="off">Off</button><button data-holidays="ask">Ask</button><button data-holidays="auto">Switch</button></div>
               <div class="holiday-skip" id="holiday-skip">${HOLIDAYS.map(
                 (h) => `<label><input type="checkbox" data-skip="${esc(h.id)}"> Skip ${esc(h.name)}</label>`,
               ).join("")}</div>
