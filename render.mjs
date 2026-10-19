@@ -880,7 +880,7 @@ function settingsPane(userName, weightLimit = 5, terminals = [], update = null, 
   const toggle = (id, key) =>
     `<div class="themes" id="${id}"><button data-${key}="off">Off</button><button data-${key}="on">On</button></div>`;
 
-  const tabs = [["general", "General"], ["projects", "Projects"], ["ai", "A.I."], ["markers", "Markers"], ["keys", "Shortcuts"], ["extras", "Extras"]];
+  const tabs = [["general", "General"], ["projects", "Projects"], ["markers", "Markers"], ["keys", "Shortcuts"], ["extras", "Extras"], ["ai", "A.I."]];
   return `<section id="pane-settings" hidden>
       <div class="settings-head">
         <h2 class="pane">Settings</h2>
