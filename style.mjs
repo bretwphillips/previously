@@ -92,6 +92,10 @@ code { font-family: var(--mono); font-size: 0.88em; background: var(--line-soft)
 .gear { border: 0; background: none; color: var(--muted); cursor: pointer; padding: 3px 8px;
         font-size: 19px; line-height: 1; border-radius: 6px; }
 .gear:hover { background: var(--line-soft); color: var(--ink); }
+/* A newer release: a dot on the gear until it is installed or skipped. */
+.gear.has-update { position: relative; }
+.gear.has-update::after { content: ""; position: absolute; top: 2px; right: 4px; width: 7px; height: 7px;
+                          border-radius: 50%; background: var(--mark-new); box-shadow: 0 0 0 2px var(--bg); }
 
 .wrap { display: flex; align-items: flex-start; }
 nav { width: 236px; flex: none; position: sticky; top: 38px; height: calc(100vh - 38px);
@@ -428,6 +432,15 @@ body.quest .thread-tabs .mark { display: none; }
 .builder-preview .text-companion { margin: 0; font-family: var(--mono); font-size: 15px; line-height: 1.25; color: var(--ink); white-space: pre; }
 .stab > .hint:first-child { margin: 0 0 12px; max-width: 640px; }
 /* A setting's short description, and its details behind Learn more. */
+#update-choice + .hint, #update-choice + .update-card { margin: 8px 0 0; }
+.update-card { margin: 8px 0 0; padding: 10px 14px; border: 1px solid var(--line); border-radius: 8px;
+               background: var(--panel); max-width: 560px; }
+.update-card p { margin: 0 0 6px; }
+.update-card p:last-child { margin-bottom: 0; }
+.update-notes { font-size: 12.5px; max-height: 220px; overflow-y: auto; margin: 0 0 10px; }
+#pane-settings .update-notes h3 { margin: 12px 0 4px; }
+#pane-settings .update-notes > :first-child { margin-top: 0; }
+.update-problem { margin: 8px 0 0; font-size: 12.5px; color: var(--blocked); max-width: 560px; }
 .about { margin: 6px 0 0; font-size: 12px; color: var(--muted); max-width: 560px; }
 .about details { display: inline; }
 .about summary { display: inline; cursor: pointer; color: var(--waiting); list-style: none; }

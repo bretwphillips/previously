@@ -21,5 +21,6 @@ swiftc -swift-version 5 -O -o "$APP/Contents/MacOS/Previously" "$HERE/src/main.s
 codesign --force --deep -s - "$APP" >/dev/null 2>&1
 touch "$APP"
 # Where this folder is, for the app to find -- kept in this user's preferences.
-defaults write local.previously dataDir "$HERE"
+# A build somewhere else (PREVIOUSLY_APP, for trying a copy) leaves it alone.
+[ -n "$PREVIOUSLY_APP" ] || defaults write local.previously dataDir "$HERE"
 echo "built $APP"

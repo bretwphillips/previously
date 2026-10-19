@@ -949,6 +949,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, WKN
             self?.model.reloadIfChanged()
             self?.followPage()
         }
+        checkForUpdate()
     }
 
     func applicationWillTerminate(_ notification: Notification) { drawer.terminateAll() }
@@ -1409,6 +1410,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, WKN
             return
         }
 
+        // Settings -> General -> Updates.
+        if message.name == "checkUpdate" {
+            checkForUpdate(force: true)
+            return
+        }
+        if message.name == "updateNow" {
+            installUpdate()
+            return
+        }
+
         // Settings are merged, not replaced: the page's copy of lastSyncAt can
         // be older than the one a sync just stamped.
         // When a space syncs is that space's; everything else is the app's.
@@ -1458,6 +1469,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, WKN
         config.userContentController.add(self, name: "copyText")
         config.userContentController.add(self, name: "saveSettings")
         config.userContentController.add(self, name: "syncNow")
+        config.userContentController.add(self, name: "checkUpdate")
+        config.userContentController.add(self, name: "updateNow")
         config.userContentController.add(self, name: "switchSpace")
         config.userContentController.add(self, name: "saveSpaces")
         config.userContentController.add(self, name: "pickFolder")
@@ -1556,6 +1569,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, WKN
         if window.isMiniaturized { window.deminiaturize(nil) }
         window.makeKeyAndOrderFront(nil)
         refresh()
+        checkForUpdate()
     }
 
     private func loadPage() {
@@ -1778,6 +1792,59 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, WKN
     /// Runs the local git walk for a space (the current one unless named).
     /// `cached` reuses the last one, for saves that change nothing git knows
     /// about. Only the current space's page is shown, so only it reloads.
+    // MARK: - Updates
+    //
+    // Once a day, the first time the window opens, update.sh asks GitHub for
+    // the latest release; the page shows it from update.json. Installing runs
+    // update.sh too, which rebuilds the app; this copy then opens the new one
+    // and quits.
+    private var updateRunning = false
+
+    private func checkForUpdate(force: Bool = false) {
+        guard !updateRunning else { return }
+        if !force {
+            let settings = (try? JSONSerialization.jsonObject(
+                with: Data(contentsOf: codeDir.appendingPathComponent("settings.json")))) as? [String: Any]
+            guard settings?["updates"] as? String != "off" else { return }
+            let state = (try? JSONSerialization.jsonObject(
+                with: Data(contentsOf: codeDir.appendingPathComponent("update.json")))) as? [String: Any]
+            let checked = state?["checkedAt"] as? Double ?? 0
+            guard Date().timeIntervalSince1970 - checked > 20 * 3600 else { return }
+        }
+        updateRunning = true
+        let task = script("update.sh", args: ["check"])
+        task.terminationHandler = { [weak self] _ in
+            DispatchQueue.main.async {
+                self?.updateRunning = false
+                self?.refresh(cached: true)
+            }
+        }
+        if (try? task.run()) == nil { updateRunning = false }
+    }
+
+    private func installUpdate() {
+        guard !updateRunning else { return }
+        updateRunning = true
+        let task = script("update.sh", args: ["install"])
+        task.terminationHandler = { [weak self] done in
+            DispatchQueue.main.async {
+                guard let self else { return }
+                self.updateRunning = false
+                guard done.terminationStatus == 0 else {
+                    self.refresh(cached: true)
+                    return
+                }
+                // The new app opens once this one has gone.
+                let relaunch = Process()
+                relaunch.executableURL = URL(fileURLWithPath: "/bin/sh")
+                relaunch.arguments = ["-c", "sleep 1; /usr/bin/open \"$0\"", Bundle.main.bundlePath]
+                try? relaunch.run()
+                NSApp.terminate(nil)
+            }
+        }
+        if (try? task.run()) == nil { updateRunning = false }
+    }
+
     private func refresh(cached: Bool = false, space: String? = nil) {
         let id = space ?? currentSpace()
         let task = script("refresh.sh", space: id, args: cached ? ["--cached"] : [])
