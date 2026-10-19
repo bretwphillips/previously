@@ -397,7 +397,7 @@ for (const repo of repos) {
 // one line per epic, tagged as GitLab's, unless a written goal already names it.
 const writtenGoals = state.goals ?? [];
 const goalText = (g) => (typeof g === "string" ? g : g?.text ?? "");
-// Epics are told apart by where they live: two groups can each have an &47,
+// Epics are told apart by where they live: two groups can each have an &12,
 // two repos each a #1. A number two of them share is written with its repo.
 // One with no address yet (typed into the narrative) is taken to be the one that has it.
 const refsSeen = new Map(); // ref -> the addresses behind it

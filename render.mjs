@@ -338,7 +338,7 @@ function problemLine(p, withRepo) {
     p.url && !withRepo ? link(p.url, esc(what)) : esc(what)
   }</span></li>`;
 }
-// Epic numbers in Goals, linked: "&47" and "repo#1" wherever they are written,
+// Epic numbers in Goals, linked: "&12" and "repo#1" wherever they are written,
 // a bare "#1" only as "parent issue #1" -- written alone it could be any ticket.
 function linkEpics(html, links = {}) {
   for (const [ref, url] of Object.entries(links).sort((a, b) => b[0].length - a[0].length)) {
