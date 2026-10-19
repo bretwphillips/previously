@@ -433,6 +433,20 @@ body.quest .thread-tabs .mark { display: none; }
 .stab > .hint:first-child { margin: 0 0 12px; max-width: 640px; }
 /* A setting's short description, and its details behind Learn more. */
 #update-choice + .hint, #update-choice + .update-card { margin: 8px 0 0; }
+/* Quest mode asking about a holiday theme: a card in the corner, never a dialog in the way. */
+.holiday-ask { position: fixed; right: 20px; bottom: calc(20px + var(--drawer, 0px)); z-index: 50; max-width: 340px;
+               padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel);
+               box-shadow: 0 10px 30px rgba(0,0,0,0.18); font-size: 13px; }
+.holiday-ask p { margin: 0 0 10px; }
+.holiday-ask p:last-child { margin: 0; }
+.holiday-pick { margin: 8px 0 0; font-size: 13px; }
+.holiday-pick summary { cursor: pointer; list-style: none; color: var(--muted); }
+.holiday-pick summary::-webkit-details-marker { display: none; }
+.holiday-pick summary .choose { color: var(--waiting); }
+.holiday-pick[open] summary .choose { color: var(--muted); }
+.holiday-skip { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 4px 16px; margin: 8px 0 0;
+                padding: 8px 12px; border-left: 2px solid var(--line); max-width: 560px; }
+.holiday-skip label { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
 .ai-notes { display: block; width: 560px; max-width: 100%; box-sizing: border-box; padding: 8px 10px; resize: vertical;
             font: 13px/1.5 var(--sans); color: var(--ink); background: var(--panel);
             border: 1px solid var(--line); border-radius: 6px; }

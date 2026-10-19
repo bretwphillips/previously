@@ -1045,8 +1045,10 @@ document.addEventListener('DOMContentLoaded', function () {
     var theme = store.get('worklog.questTheme', 'quest');
     modeButtons.forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.qmode === (q ? 'on' : 'off'))); });
     overlayButtons.forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.overlay === theme)); });
-    var row = sheet.querySelector('#overlay-choice');
-    if (row) row.closest('.srow').hidden = !q;
+    ['#overlay-choice', '#holiday-choice'].forEach(function (sel) {
+      var row = sheet.querySelector(sel);
+      if (row) row.closest('.srow').hidden = !q;
+    });
   }
   function applyOverlay(on, theme) {
     var press = function (sel) { var el = sheet.querySelector(sel); if (el) el.click(); };
@@ -1064,15 +1066,164 @@ document.addEventListener('DOMContentLoaded', function () {
   modeButtons.forEach(function (b) {
     b.addEventListener('click', function () {
       applyOverlay(this.dataset.qmode === 'on', store.get('worklog.questTheme', 'quest'));
+      holidays.check(new Date());
     });
   });
   overlayButtons.forEach(function (b) {
     b.addEventListener('click', function () {
       store.set('worklog.questTheme', this.dataset.overlay);
+      holidays.chosen();
       applyOverlay(true, this.dataset.overlay);
     });
   });
   paintOverlay();
+
+  /* Holidays: near one, quest mode wears its theme -- switched on its own, or
+     asked first -- then goes back to the theme you had. Kept in this page's
+     storage with the theme itself:
+       worklog.holidays        auto | ask | off
+       worklog.holidaySkip     ids you don't celebrate, comma-separated
+       worklog.holidayOn       the holiday (id:year) the theme was switched for
+       worklog.holidayBefore   the theme before it
+       worklog.holidayAnswered the holiday (id:year) last asked about, so it isn't asked twice
+       worklog.holidayDeclined holidays (id:year) turned down -- skipped for that year */
+  var holidays = (function () {
+    var LIST = JSON.parse(document.getElementById('holidays-data').textContent);
+    var DAY = 86400000;
+    var byId = function (id) { return LIST.filter(function (h) { return h.id === id; })[0]; };
+    var skipped = function () { return store.get('worklog.holidaySkip', '').split(',').filter(Boolean); };
+    var mode = function () { return store.get('worklog.holidays', 'ask'); };
+    var declined = function () { return store.get('worklog.holidayDeclined', '').split(',').filter(Boolean); };
+    function decline(key, yes) {
+      var keep = declined().filter(function (k) { return k !== key && k.split(':')[1] >= String(new Date().getFullYear() - 1); });
+      if (!yes) keep.push(key);
+      store.set('worklog.holidayDeclined', keep.join(','));
+    }
+
+    // [start, end] of a holiday in a year, as midnight dates; end is inclusive.
+    function windowOf(h, year) {
+      if (h.month) return [new Date(year, h.month - 1, 1), new Date(year, h.month, 0)];
+      var day = new Date(year, h.date[0] - 1, h.date[1]);
+      var start = new Date(day.getTime() - 14 * DAY);
+      start = new Date(start.getFullYear(), start.getMonth(), start.getDate() - ((start.getDay() + 6) % 7));
+      var end = h.end ? new Date(year, h.end[0] - 1, h.end[1]) : day;
+      // Only a bigger holiday you keep -- not skipped, not turned down that year -- pushes this one back.
+      var bigger = h.after && skipped().indexOf(h.after) < 0 && declined().indexOf(h.after + ':' + year) < 0 && byId(h.after);
+      if (bigger) {
+        var over = windowOf(bigger, year)[1];
+        if (start <= over) start = new Date(over.getFullYear(), over.getMonth(), over.getDate() + 1);
+      }
+      return [start, end];
+    }
+    // The holiday a day falls in (skipped ones aside), with the year it belongs to.
+    function at(today) {
+      var day = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      var skip = skipped();
+      for (var i = 0; i < LIST.length; i++) {
+        if (skip.indexOf(LIST[i].id) >= 0) continue;
+        for (var y = day.getFullYear() - 1; y <= day.getFullYear() + 1; y++) {
+          if (declined().indexOf(LIST[i].id + ':' + y) >= 0) continue;
+          var w = windowOf(LIST[i], y);
+          if (day >= w[0] && day <= w[1]) return { h: LIST[i], key: LIST[i].id + ':' + y };
+        }
+      }
+      return null;
+    }
+    function wear(now) {
+      if (!store.get('worklog.holidayOn', '')) store.set('worklog.holidayBefore', store.get('worklog.questTheme', 'quest'));
+      store.set('worklog.holidayOn', now.key);
+      store.set('worklog.questTheme', now.h.theme);
+      applyOverlay(true, now.h.theme);
+    }
+    function takeOff() {
+      var before = store.get('worklog.holidayBefore', 'quest');
+      store.set('worklog.holidayOn', '');
+      store.set('worklog.holidayBefore', '');
+      store.set('worklog.questTheme', before);
+      applyOverlay(true, before);
+    }
+
+    var ask = document.getElementById('holiday-ask');
+    var asking = null;
+    function prompt(now) {
+      if (!ask) return;
+      asking = now;
+      // Asked once: left unanswered, it counts as Not now.
+      store.set('worklog.holidayAnswered', now.key);
+      decline(now.key);
+      document.getElementById('holiday-ask-text').textContent =
+        now.h.name + ' is coming up. Switch quest mode to its theme until it\u2019s over?';
+      ask.hidden = false;
+    }
+    if (ask) ask.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-answer]');
+      if (!b || !asking) return;
+      store.set('worklog.holidayAnswered', asking.key);
+      if (b.dataset.answer === 'yes') { decline(asking.key, true); wear(asking); }
+      if (b.dataset.answer === 'never') { store.set('worklog.holidays', 'off'); paintHolidays(); }
+      ask.hidden = true;
+      asking = null;
+      // Not now: a smaller holiday it was holding back may be due already.
+      if (b.dataset.answer === 'no') check(new Date());
+    });
+
+    function check(today) {
+      if (store.get('worklog.quest', 'off') !== 'on') return;
+      var now = at(today), on = store.get('worklog.holidayOn', '');
+      if (on && (!now || now.key !== on)) {
+        // What it was switched for is over: straight into the next, or back.
+        if (now && mode() !== 'off' && store.get('worklog.questTheme', 'quest') !== now.h.theme) { wear(now); return; }
+        takeOff();
+        on = '';
+      }
+      if (!now || on || store.get('worklog.questTheme', 'quest') === now.h.theme) return;
+      if (mode() === 'auto') wear(now);
+      else if (mode() === 'ask' && store.get('worklog.holidayAnswered', '') !== now.key) prompt(now);
+    }
+    // A theme picked by hand is yours, holiday or not.
+    function chosen() {
+      var now = at(new Date());
+      store.set('worklog.holidayOn', '');
+      store.set('worklog.holidayBefore', '');
+      if (now) store.set('worklog.holidayAnswered', now.key);
+      if (ask) ask.hidden = true;
+    }
+
+    function paintHolidays() {
+      sheet.querySelectorAll('#holiday-choice button').forEach(function (b) {
+        b.setAttribute('aria-pressed', String(b.dataset.holidays === mode()));
+      });
+      var skip = skipped();
+      // Ticked: a holiday you celebrate. Kept as the list of the ones you don't.
+      var boxes = sheet.querySelectorAll('#holiday-skip input');
+      boxes.forEach(function (box) { box.checked = skip.indexOf(box.dataset.skip) < 0; });
+      var kept = LIST.length - skip.filter(function (id) { return byId(id); }).length;
+      var count = sheet.querySelector('#holiday-count');
+      if (count) count.textContent = (kept === LIST.length ? 'All ' + kept : kept + ' of ' + LIST.length) + ' celebrated';
+    }
+    sheet.querySelectorAll('#holiday-choice button').forEach(function (b) {
+      b.addEventListener('click', function () {
+        store.set('worklog.holidays', this.dataset.holidays);
+        // Off while a holiday is on: back to your theme now.
+        if (this.dataset.holidays === 'off' && store.get('worklog.holidayOn', '')) takeOff();
+        paintHolidays();
+        check(new Date());
+      });
+    });
+    sheet.querySelectorAll('#holiday-skip input').forEach(function (box) {
+      box.addEventListener('change', function () {
+        var skip = skipped().filter(function (id) { return id !== box.dataset.skip; });
+        if (!box.checked) skip.push(box.dataset.skip);
+        store.set('worklog.holidaySkip', skip.join(','));
+        paintHolidays();
+        check(new Date());
+      });
+    });
+    paintHolidays();
+    return { check: check, chosen: chosen, at: at, windowOf: windowOf };
+  })();
+  window.holidayCheck = holidays.check;
+  holidays.check(new Date());
 
   /* The switcher above Overview: another space's dashboard, from the app. */
   var spaceSwitch = document.getElementById('space-switch');

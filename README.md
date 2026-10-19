@@ -702,6 +702,7 @@ the rest sit beside the code. None of them are tracked by git.
 | `done.sh` | Record that HEAD finished one or more scope lines. |
 | `install.sh` | One-time setup: checks what's needed, builds the app, opens it. |
 | `session-hook.sh`, `claude-hook.mjs` | Auto-resume: the Claude Code hook that notes which session runs in which terminal tab, and adding or removing it from `~/.claude/settings.json`. |
+| `holidays.mjs` | The holidays quest mode can dress up for: each one's theme and when it starts and ends. |
 | `ai-notes.sh` | Prints your AI notes for a session to read: every space's, then those of the space the repo is in. |
 | `update.mjs`, `update.sh` | The update check (GitHub's latest release, into `update.json`) and installing it: a git fast-forward to its tag, then `make.sh`. |
 | `VERSION` | This copy's version, compared with the latest release. |
@@ -786,6 +787,16 @@ page, standup and companion all work with no model involved.
 ## Fantasy mode (optional, off by default)
 
 Settings → Extras → **Quest mode** turns the thread tabs into a small game, dressed by its **Theme**: Fantasy, Halloween or Día de los Muertos.
+
+**Holidays** (under Theme) lets the theme follow the calendar. **Switch** changes
+it when a holiday is near and back afterwards; **Ask** asks first, with **Switch**,
+**Not now** and **Don't ask again** (which turns this Off). A big holiday takes its
+whole month (Halloween: October); a smaller one starts the Monday two weeks before,
+or once a bigger one it overlaps is over (Día de los Muertos: November 1–2) --
+unless you turned that one down, when it gets its two weeks after all. One
+that follows straight on takes over; otherwise your own theme comes back. Picking
+a theme yourself always wins, and under **Choose** you untick the holidays you
+don't celebrate. The list is `holidays.mjs`: a new holiday is one line once its theme exists.
 
 - **Locks.** A ticket blocked by another is wrapped in chains with a padlock
   until the blocker's MRs are seen merged or closed. Blockers are gathered from
