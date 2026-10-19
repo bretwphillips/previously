@@ -370,9 +370,10 @@ function overview(data) {
       <button class="mini" data-sync-now>Sync now</button></p>
 
     <h3 data-fold="goals" data-edit="goals" data-count="${(data.goals ?? []).length}">Goals${PENCIL}</h3>
-    ${list(data.goals, "No goals recorded.").replace(/&amp;(\d+)\b(?![^<]*<\/a>)/g, (whole, n) =>
-      data.epicLinks?.[`&${n}`] ? link(data.epicLinks[`&${n}`], `&amp;${n}`) : whole,
-    )}
+    ${list(data.goals, "No goals recorded.").replace(/(&amp;|(?<=parent issue )#)(\d+)\b(?![^<]*<\/a>)/g, (whole, mark, n) => {
+      const ref = `${mark === "#" ? "#" : "&"}${n}`;
+      return data.epicLinks?.[ref] ? link(data.epicLinks[ref], whole) : whole;
+    })}
     ${sectionEditor("goals", rawLines(data.writtenGoals ?? data.goals), "One goal per line. Epics your tickets belong to are added on their own.")}
 
     <h3 data-fold="needs" data-count="${needs.length + heard.length + reviews.length + problems.length}">Needs you</h3>
