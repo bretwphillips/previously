@@ -601,6 +601,11 @@ ul.local-log code { background: none; padding: 0; font-family: var(--mono); font
 /* What blocks a ticket, and where that came from; "+ blocker" links one. */
 .thread-blockers { font-size: 12.5px; color: var(--muted); margin: 10px 0 0; display: flex; flex-wrap: wrap; gap: 6px; align-items: baseline; }
 .thread-blockers + h3 { margin-top: 18px; }
+.thread-children { font-size: 12.5px; color: var(--muted); margin: 8px 0 0; line-height: 1.6; }
+.thread-children + h3 { margin-top: 18px; }
+.thread-children .tally { font-family: var(--mono); font-size: 11px; margin-right: 4px; }
+.thread-children .child { color: var(--ink); }
+.thread-children .child.done { color: var(--muted); text-decoration: line-through; }
 .thread-blockers .blocker { color: var(--ink); }
 .thread-blockers .src { margin-left: 6px; }
 .thread-blockers button { font: inherit; font-size: 11.5px; border: 0; background: none; color: var(--muted); cursor: pointer; padding: 0 2px; }

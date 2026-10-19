@@ -213,6 +213,9 @@ if (!quick) {
   for (const key of Object.keys(cache.issues)) if (!keep.has(key)) delete cache.issues[key];
 }
 
+// "#12" in the same repo, "api#12" in another, as the page writes references.
+const refIn = (slug, item) => (item.repository.nameWithOwner.toLowerCase() === slug ? `#${item.number}` : `${item.repository.name}#${item.number}`);
+
 // One query for all of them, each by its repo and number; a number that turns
 // out to be a pull request is left alone. "Blocked by" links are newer than some
 // GitHub installs, so a query refused for them is asked again without.
@@ -224,7 +227,9 @@ if (!quick && issues.length) {
     return `r${i}: repository(owner: ${JSON.stringify(owner)}, name: ${JSON.stringify(name)}) { ${numbers.map((n) =>
       `n${n}: issueOrPullRequest(number: ${n}) { ... on Issue { number title state body updatedAt comments { totalCount }
         timelineItems(itemTypes: [CLOSED_EVENT], last: 1) { nodes { ... on ClosedEvent { actor { login ... on User { name } } } } }
-        ${deps ? "blockedBy(first: 20) { nodes { number state repository { name nameWithOwner } } }" : ""} } }`).join(" ")} }`;
+        ${deps ? `blockedBy(first: 20) { nodes { number state repository { name nameWithOwner } } }
+          parent { number title state url repository { name nameWithOwner } }
+          subIssues(first: 50) { nodes { number title state repository { name nameWithOwner } } }` : ""} } }`).join(" ")} }`;
   }).join(" ")} }`);
   let answer = cache.noDeps ? null : await ask(true);
   if (!answer?.data) { cache.noDeps = Boolean(answer?.errors); answer = await ask(false); }
@@ -237,8 +242,10 @@ if (!quick && issues.length) {
       cache.issues[key] = {
         slug, number: issue.number, title: issue.title, state: issue.state, body: issue.body ?? "",
         comments: issue.comments.totalCount,
-        blockedBy: (issue.blockedBy?.nodes ?? []).filter((b) => b.state === "OPEN")
-          .map((b) => (b.repository.nameWithOwner.toLowerCase() === slug ? `#${b.number}` : `${b.repository.name}#${b.number}`)),
+        blockedBy: (issue.blockedBy?.nodes ?? []).filter((b) => b.state === "OPEN").map((b) => refIn(slug, b)),
+        // Sub-issues: GitHub's parent and children, the closest it has to an epic.
+        parent: issue.parent ? { ref: refIn(slug, issue.parent), title: issue.parent.title, url: issue.parent.url, open: issue.parent.state === "OPEN" } : null,
+        children: (issue.subIssues?.nodes ?? []).map((c) => ({ ref: refIn(slug, c), title: c.title, open: c.state === "OPEN" })),
       };
     }
   });
@@ -296,6 +303,18 @@ for (const e of Object.values(cache.events)) {
   entry.last = Math.max(entry.last, e.at);
   entry.title ||= e.title ?? "";
 }
+// "- [ ] #13" / "- [x] api#14" lines in a description: the children of an issue
+// used as an epic before GitHub had sub-issues.
+const checklist = (body, here) => [...(body ?? "").matchAll(/^\s*[-*]\s+\[([ xX])\]\s+((?:[\w.\/-]*)#\d+)\b/gm)]
+  .map(([, box, raw]) => {
+    const [, path, n] = /^(?:(?:[\w.-]+\/)?([\w.-]+))?#(\d+)$/.exec(raw) ?? [];
+    return n ? { ref: path && path !== here ? `${path}#${n}` : `#${n}`, open: box === " " } : null;
+  })
+  .filter(Boolean);
+const urlOf = (issue) => {
+  const slug = [...repos].find(([, name]) => name === issue.repo)?.[0];
+  return slug ? `https://github.com/${slug}/issues/${issue.ticket.slice(1)}` : null;
+};
 const STATE = (pr) => (pr.state === "MERGED" ? "merged" : pr.state === "CLOSED" ? "closed" : pr.draft ? "draft" : "rfr");
 const activity = {
   fetchedAt: now,
@@ -306,15 +325,35 @@ const activity = {
     const ticket = /^(\d+)-/.exec(pr.branch ?? "")?.[1];
     return ticket ? { repo: repos.get(pr.slug), ticket: `#${ticket}`, number: pr.number, state: STATE(pr), title: pr.title ?? "" } : null;
   }).filter(Boolean),
-  issues: Object.values(cache.issues).map((t) => {
-    const repo = repos.get(t.slug);
-    const blockedBy = new Map(t.blockedBy.map((ref) => [ref, "github"]));
-    for (const ref of blockersIn(t.body, repo)) if (!blockedBy.has(ref)) blockedBy.set(ref, "description");
-    return {
-      repo, ticket: `#${t.number}`, title: t.title ?? "", state: t.state === "OPEN" ? "opened" : "closed",
-      weight: null, epic: null, blockedBy: [...blockedBy].map(([ref, source]) => ({ ref, source })), description: t.body,
-    };
-  }),
+  issues: (() => {
+    const out = Object.values(cache.issues).map((t) => {
+      const repo = repos.get(t.slug);
+      const blockedBy = new Map((t.blockedBy ?? []).map((ref) => [ref, "github"]));
+      for (const ref of blockersIn(t.body, repo)) if (!blockedBy.has(ref)) blockedBy.set(ref, "description");
+      // A parent stands in as the epic. The makeshift kind -- an issue whose
+      // description is a checklist of other issues -- counts as a parent too.
+      const listed = checklist(t.body, repo);
+      return {
+        repo, ticket: `#${t.number}`, title: t.title ?? "", state: t.state === "OPEN" ? "opened" : "closed", weight: null,
+        epic: t.parent ? { ...t.parent, source: "GitHub", parent: true } : null,
+        children: t.children?.length ? t.children : listed.map(({ ref, open }) => ({ ref, title: "", open })),
+        blockedBy: [...blockedBy].map(([ref, source]) => ({ ref, source })), description: t.body,
+      };
+    });
+    // A child named only in its parent's checklist gets that parent as its epic.
+    for (const parent of out) {
+      if (!parent.children.length) continue;
+      const url = parent.url ?? null;
+      for (const c of parent.children) {
+        const [, other, n] = /^([^#]*)#(\d+)$/.exec(c.ref) ?? [];
+        const child = out.find((i) => i.repo === (other || parent.repo) && i.ticket === `#${n}`);
+        if (child && !child.epic) child.epic = { ref: parent.repo === child.repo ? parent.ticket : `${parent.repo}${parent.ticket}`,
+          title: parent.title, url: urlOf(parent), open: parent.state === "opened", source: "GitHub", parent: true };
+        if (child && !c.title) c.title = child.title;
+      }
+    }
+    return out;
+  })(),
   messages: Object.values(cache.messages).map(({ kind, repo, ref, title, count, who, at }) => ({ kind, repo, ref, title, count, who, at })),
   reviews: cache.reviews.map(({ repo, number, title, who, url }) => ({ repo, number, title, who, url })),
   problems: cache.problems,

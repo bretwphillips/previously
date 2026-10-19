@@ -345,8 +345,10 @@ for (const repo of repos) {
       t.blockedBy = [...sources.keys()];
       t.blockerSources = Object.fromEntries(sources);
       if (fromSync?.weight != null) t.weight = { value: fromSync.weight, seenAt: syncedDate };
-      // The epic from the ticket itself, unless the narrative names one.
+      // The epic from the ticket itself, unless the narrative names one; on
+      // GitHub, its parent issue.
       if (!t.epic && fromSync?.epic) t.epic = fromSync.epic;
+      if (fromSync?.children?.length) t.children = fromSync.children;
       if (fromSync?.description?.trim()) {
         t.brief = { text: fromSync.description, seenAt: syncedDate, key: `${r.name}${t.ticket}` };
       }
@@ -403,7 +405,12 @@ for (const r of repos) {
     const named = [...writtenGoals.map(goalText), ...epicGoals.map(goalText)].some((g) =>
       new RegExp(`${t.epic.ref.replace("&", "&")}\\b`).test(g),
     );
-    if (!named) epicGoals.push({ text: `${t.epic.title || "Epic"} \u2014 epic ${t.epic.ref}`, src: "GitLab" });
+    if (!named) {
+      epicGoals.push({
+        text: `${t.epic.title || "Epic"} \u2014 ${t.epic.parent ? "parent issue" : "epic"} ${t.epic.ref}`,
+        src: t.epic.source ?? "GitLab",
+      });
+    }
   }
 }
 

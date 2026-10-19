@@ -496,7 +496,18 @@ const SECTION_NAMES = { now: "Now", next: "Next", plan: "Scope", notes: "Notes" 
 // replaces, so a repo with one thread looks exactly as it did.
 // Where a blocker came from, in a word. Only the ones you linked here can be
 // removed here; the rest are changed where they were written.
-const BLOCKER_SOURCE = { narrative: "noted", you: "you", gitlab: "GitLab", description: "ticket" };
+const BLOCKER_SOURCE = { narrative: "noted", you: "you", gitlab: "GitLab", github: "GitHub", description: "ticket" };
+
+// A parent ticket's children (GitHub sub-issues, or a checklist of issues in its
+// description): each linked, the closed ones struck through, with a tally.
+function childrenLine(thread) {
+  const kids = thread.children ?? [];
+  if (!kids.length) return "";
+  const done = kids.filter((c) => !c.open).length;
+  return `<div class="thread-children">sub-issues <span class="tally">${done} of ${kids.length} closed</span> ${kids
+    .map((c) => `<span class="child${c.open ? "" : " done"}">${prose(`${c.ref}${c.title ? ` ${c.title}` : ""}`)}</span>`)
+    .join(" \u00b7 ")}</div>`;
+}
 
 function blockerLine(r, thread) {
   if (!thread.ticket) return "";
@@ -551,6 +562,7 @@ function threadBody(r, thread, index, current) {
         : ""
     }
     ${blockerLine(r, thread)}
+    ${childrenLine(thread)}
 
     ${!thread.plan?.length && thread.brief && thread.kind !== "review" ? briefSection(thread) : ""}
     ${unwritten(thread) ? localWork(r) : ""}

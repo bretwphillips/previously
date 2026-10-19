@@ -117,7 +117,7 @@ export function standup(repos, tasks, activity, now = new Date(), { weightLimit 
         scopeDone.length > 0 ||
         discussed;
       const epic = thread.epic
-        ? { ...thread.epic, url: epicUrlFor(repo.web, thread.epic.ref) }
+        ? { ...thread.epic, url: thread.epic.url ?? epicUrlFor(repo.web, thread.epic.ref) }
         : null;
       // A review thread reports the review, not the work. What you actually
       // did comes from approvals and comments; what is left to do is whether
