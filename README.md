@@ -757,9 +757,11 @@ needn't follow you into personal projects. They save as you type, to
 `ai-notes.md` beside the code and in each space's folder, never into the repo.
 
 A session that follows the conventions above runs `ai-notes.sh <repo>` when it
-starts, which prints the notes for every space and then the repo's space's. Your
+starts, which prints the notes for every space and then the repo's space's
+(started outside a repo, just the first, until it knows which repo). Your
 notes win over the AI's own memory, and a space's note wins over one for every
-space. Two cautions: every session reads all of them first, so keep the list
+space. Other spaces' notes are never read. Two cautions: a session reads them
+before anything else, so keep the list
 short (the tab warns past 40 lines), and they are sent to the AI with each
 session, so no passwords or tokens.
 

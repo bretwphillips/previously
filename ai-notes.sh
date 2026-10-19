@@ -1,7 +1,7 @@
 #!/bin/sh
 # Your notes for AI sessions (Settings -> A.I.), for a session to read when it starts:
 #   sh ai-notes.sh <repo>    the notes for every space, then those of the repo's space
-#   sh ai-notes.sh           the notes for every space, then each space's own
+#   sh ai-notes.sh           only the notes for every space, until the repo is known
 HERE=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 . "$HERE/env.sh"
 show() { [ -s "$2" ] && { printf '## %s\n\n' "$1"; cat "$2"; printf '\n\n'; }; }
@@ -11,8 +11,6 @@ if [ -n "$1" ]; then
   space=$(printf '%s' "$line" | cut -f1)
   show "Space: $space (wins over the above)" "$(printf '%s' "$line" | cut -f2)/ai-notes.md"
 else
-  for id in $("$NODE" "$HERE/spaces.mjs" ids); do
-    show "Space: $id (wins over the above, for its repos)" "$HERE/spaces/$id/ai-notes.md"
-  done
+  printf '(Once you know the repo, run this again with its name for its space'"'"'s notes too.)\n'
 fi
 exit 0

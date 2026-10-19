@@ -940,7 +940,7 @@ function settingsPane(userName, weightLimit = 5, terminals = [], update = null, 
           ${about(
             `Only for repos in ${esc(aiNotes.spaceName ?? "this space")}. Switch spaces to see another's.`,
             `<p>Saved as you type, as Markdown files with your own data -- <code>ai-notes.md</code> beside the code for every space, and one in each space's folder -- never in the repo. A session finds them through the Previously section of your <code>CLAUDE.md</code> (<code>claude-section.md</code>).</p>
-            <p><b>Keep them short.</b> Every session reads all of them before anything else, so a long list costs room and the notes that matter get lost among the rest. Rules outlive their reasons: remove the ones you no longer need.</p>
+            <p><b>Keep them short.</b> Every session reads the notes for every space, and its own space\u2019s, before anything else, so a long list costs room and the notes that matter get lost among the rest. Other spaces\u2019 notes are never read. Rules outlive their reasons: remove the ones you no longer need.</p>
             <p><b>No secrets.</b> They are sent to the AI with each session, so passwords, tokens and keys don't belong here.</p>`,
           )}
           <p class="ai-notes-status" id="ai-notes-status" aria-live="polite"></p>`,

@@ -817,7 +817,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var n = aiLines();
     aiStatus.classList.toggle('warn', n > AI_NOTES_LIMIT);
     aiStatus.textContent = n > AI_NOTES_LIMIT
-      ? n + ' lines of notes. Every session reads all of them first; a long list costs room and the important ones get lost. Worth trimming.'
+      ? n + ' lines of notes. Sessions in this space read all of these first; a long list costs room and the important ones get lost. Worth trimming.'
       : saved ? 'Saved.' : '';
   }
   for (var ai = 0; ai < aiBoxes.length; ai++) {
