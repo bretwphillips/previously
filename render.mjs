@@ -13,6 +13,7 @@ const QUEST_CSS = readFileSync(new URL("quest.css", here), "utf8");
 const QUEST_DEFS = readFileSync(new URL("quest-defs.svg", here), "utf8");
 import { HOARD, HOARD_PALETTE } from "./hoard.mjs";
 import { CANDY, pile, HOUSES, HOUSE_COLOURS, POTION_CSS } from "./halloween.mjs";
+import { issueUrl, mrUrl, branchUrl, isGitHub } from "./hosts.mjs";
 import { OFRENDA, ofrendaArt, DOTD_STOPS, PAPEL_PICADO, MUERTOS_CSS } from "./muertos.mjs";
 import { TRIGGERS, COLOURS, DEFAULT_MARKERS, readMarkers, triggerOf } from "./markers.mjs";
 import { textArts } from "./pet.mjs";
@@ -50,7 +51,6 @@ const prose = (text) => linkRefs(markdownInline(text), CURRENT_WEB);
 const link = (href, text, cls) =>
   href ? `<a href="${href}"${cls ? ` class="${cls}"` : ""}>${text}</a>` : text;
 
-// This GitLab serves issues as work items; /-/issues/<n> is a 404.
 // Fantasy mode's journey, drawn from rows like the gems: a dot at each earlier stop,
 // the tent where you are now. quest.js lays the road between them.
 const pixelArt = (rows, scale) => {
@@ -83,13 +83,11 @@ const WEB_PRINTS = (() => {
     <g transform="translate(0 11) rotate(-14 6 6)">${foot}</g><g transform="translate(12 0) rotate(12 6 6)">${foot}</g></svg>`;
 })();
 
-export const issueUrl = (web, n) => (web ? `${web}/-/work_items/${n}` : null);
-const mrUrl = (web, n) => (web ? `${web}/-/merge_requests/${n}` : null);
-const branchUrl = (web, b) => (web ? `${web}/-/tree/${encodeURIComponent(b)}` : null);
+export { issueUrl };
 
-// Epics belong to the group, under /groups/, not to the project.
+// Epics belong to the group, under /groups/, not to the project. GitHub has none.
 const epicUrl = (web, n) => {
-  if (!web) return null;
+  if (!web || isGitHub(web)) return null;
   const parts = web.split("/");
   parts.pop();
   const origin = parts.slice(0, 3).join("/");
@@ -238,7 +236,7 @@ function mrLine(r, thread) {
   return [...mrs.filter((m) => !finished(m)), ...mrs.filter(finished)]
     .map((m) => {
       const label = `!${m.number}`;
-      const href = r.web ? `${r.web}/-/merge_requests/${m.number}` : null;
+      const href = mrUrl(r.web, m.number);
       return `<span${finished(m) ? ' class="done"' : ""}>${link(href, label)} ${esc(
         MR_STATE[m.state] ?? m.state,
       )}${m.seenAt ? ` <span class="seen">seen ${esc(m.seenAt)}</span>` : ""}</span>`;
@@ -302,7 +300,7 @@ function alertLine(a, withRepo) {
 // Someone else commented on a ticket or merge request of yours.
 function messageLine(m, withRepo) {
   const web = REPO_WEB.get(m.repo);
-  const url = web ? `${web}/-/${m.ref.startsWith("!") ? "merge_requests" : "work_items"}/${m.ref.slice(1)}` : null;
+  const url = m.ref.startsWith("!") ? mrUrl(web, m.ref.slice(1)) : issueUrl(web, m.ref.slice(1));
   const by = (m.who ?? []).join(", ");
   const did =
     m.kind === "review" ? `${by} asked you to review`
@@ -883,7 +881,7 @@ function settingsPane(userName, weightLimit = 5, terminals = []) {
           `<p class="hint"><button class="mini" id="sync-all">Sync all</button></p>
           ${about(
             "A normal sync of every space, one after another.",
-            `<p><b>What a sync does.</b> It runs <code>git fetch</code> across a space's repos (ahead/behind, merged branches, others' pushes) and asks GitLab, through <code>glab</code>, for what a clone can't see: your comments and approvals, review requests, your merge requests' state, conflicts, pipelines and threads, and your tickets' weight, epic and blockers.</p>
+            `<p><b>What a sync does.</b> It runs <code>git fetch</code> across a space's repos (ahead/behind, merged branches, others' pushes) and asks the repos' host -- GitLab through <code>glab</code>, GitHub through <code>gh</code> -- for what a clone can't see: your comments and approvals, review requests, your merge and pull requests' state, conflicts, pipelines or checks and threads, and your tickets' weight, epic and blockers (GitHub has no weights or epics).</p>
             <p><b>How much.</b> Only what changed since the last sync is asked for, and the rest is kept on disk -- a typical sync is a handful of small calls.</p>
             <p><b>Each space's Sync.</b> Weekly or Daily sync the first time you're at the Mac after that long. Hourly also asks GitLab once an hour. Every 15 min adds a two-call check for comments, approvals and review requests between those. Nothing runs while the screen is locked or asleep, after 15 minutes idle, or with the window hidden; a sync that comes due then waits for you. Spaces take turns, never two at once.</p>
             <p><b>Sync now</b> runs a normal sync of that space straight away. <b>Full refresh</b> forgets what was kept and asks GitLab for everything again -- a few dozen calls rather than a handful. Use it only if something looks out of date that an ordinary sync can't see, like a comment you deleted or a blocking link removed in GitLab.</p>`,

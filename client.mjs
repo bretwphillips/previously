@@ -1824,7 +1824,9 @@ document.addEventListener('DOMContentLoaded', function () {
           var known = refMap[kind + n];
           if (known) return '<a href="' + known + '">' + kind + n + '</a>';
           if (!web) return whole;
-          var path = kind === '!' ? '/-/merge_requests/' : '/-/work_items/';
+          // GitHub keeps pull requests and issues at the top level; GitLab under /-/.
+          var gh = web.indexOf('https://github.com/') === 0;
+          var path = kind === '!' ? (gh ? '/pull/' : '/-/merge_requests/') : (gh ? '/issues/' : '/-/work_items/');
           return '<a href="' + web + path + n + '">' + kind + n + '</a>';
         }
       );

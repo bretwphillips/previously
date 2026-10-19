@@ -2,6 +2,8 @@
 // Turns raw GitLab events into per-ticket activity. Reads from the environment
 // so gitlab-sync.mjs owns every network call and this owns none.
 
+import { refOf, blockersIn } from "./blockers.mjs";
+
 const parse = (raw) => {
   try {
     const value = JSON.parse(raw ?? "[]");
@@ -73,13 +75,7 @@ const mrs = parse(process.env.MRS)
 
 // The tickets you are working on: weight, and what blocks each -- from GitLab's
 // blocking links where the tier has them, and from "blocked by #31" in the
-// description anywhere. A reference to another project keeps its repo name.
-const BLOCKED = /\b(?:blocked\s+(?:by|on)|depends\s+on|waiting\s+(?:on|for))\b\s*:?\s*((?:[\w.\/-]*#\d+[\s,]*(?:and\s+)?)+)/gi;
-const refOf = (full, here) => {
-  const m = /^(?:(.*\/)?([\w.-]+))?#(\d+)$/.exec(full.trim());
-  if (!m) return null;
-  return m[2] && m[2] !== here ? `${m[2]}#${m[3]}` : `#${m[3]}`;
-};
+// description anywhere.
 // Epics looked up on their own: open or closed, and their real address. Without
 // a lookup (no epics on the tier) an epic counts as open, at the ticket's path.
 const epics = new Map(parse(process.env.EPICS).map((e) => [`${e.group_id}/${e.iid}`, e]));
@@ -104,12 +100,7 @@ const issues = parse(process.env.ISSUES)
       const ref = refOf(link.references?.full ?? `#${link.iid}`, repo);
       if (ref) blockedBy.set(ref, "gitlab");
     }
-    for (const match of (issue.description ?? "").matchAll(BLOCKED)) {
-      for (const raw of match[1].match(/[\w.\/-]*#\d+/g) ?? []) {
-        const ref = refOf(raw, repo);
-        if (ref && !blockedBy.has(ref)) blockedBy.set(ref, "description");
-      }
-    }
+    for (const ref of blockersIn(issue.description, repo)) if (!blockedBy.has(ref)) blockedBy.set(ref, "description");
     return {
       repo,
       ticket: `#${issue.iid}`,

@@ -1750,7 +1750,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, WKN
 
     private func runApiSync(quick: Bool = false, space id: String) {
         hourlyRunning = true
-        let task = script("gitlab.sh", space: id, env: quick ? ["QUICK": "1"] : [:])
+        let task = script("hosts.sh", space: id, env: quick ? ["QUICK": "1"] : [:])
         task.terminationHandler = { [weak self] done in
             DispatchQueue.main.async {
                 guard let self else { return }

@@ -69,10 +69,11 @@ code and keeps your own files (each space's worklog, tasks and notes, and your s
 From a git clone, `git pull` in the `previously` folder and then `sh make.sh`
 there does the same.
 
-Optional, for Sync: install `glab` and `glab auth login` to your GitLab. Each
-space's host is worked out from its own clones; nothing is configured. Sync only
-talks to GitLab so far: repos on GitHub or elsewhere get `git fetch`, but not
-comments, reviews or merge-request state.
+Optional, for Sync: `glab` (`glab auth login`) for repos on GitLab, `gh`
+(`gh auth login`) for repos on GitHub -- whichever your repos use. Each repo is
+asked through its own host, worked out from its remote; nothing is configured.
+Repos hosted anywhere else still get `git fetch`, just not comments, reviews or
+merge-request state.
 
 Branches named `<ticket>-<title>` (GitLab's default) are what tie a branch to a
 ticket. Each space keeps its `worklog.json`, `tasks.json` and `notes.md` in
@@ -367,8 +368,7 @@ shows, with whose branch it is on its pane and under *Good to know*. A branch wi
 no commits yet counts as yours: you checked it out to start something.
 
 Nothing is hardcoded: the host is counted from your own clones, so this works
-unchanged for someone whose team is on github.com (Sync's extras, though, are
-GitLab-only for now).
+unchanged for someone whose team is on github.com.
 
 Epic is recorded per thread, but for **grouping** rather than filtering — it says
 which body of work a line belongs to, while authorship answers whether it is yours
@@ -423,7 +423,9 @@ to four times as long. Each kind keeps its own "since", so a quick check never
 makes the hourly one skip anything. No polling loops, nothing overnight. Spaces
 take turns, never two at once.
 
-A sync does two things:
+A sync does two things, on each repo's own host -- GitLab through `glab`, GitHub
+through `gh`, side by side when a space has both (GitHub's side is described
+after GitLab's, below):
 
 - `git fetch --prune` across your repos, so ahead/behind and `[gone]` are honest
 - GitLab calls for what a clone can't see -- your comments and approvals (your
@@ -472,6 +474,18 @@ build time, dated with the sync, so the standup links MRs, *Needs review* fills
 itself, and fantasy mode's locks open when a blocker merges. Nothing is written back
 to `worklog.json`; the sync's answer lives in `activity.json` and wins over an
 older recorded state.
+
+**On GitHub** the same picture comes from a handful of calls too: your recent
+activity (comments, reviews and approvals, a page or two of your event feed), one
+search for your pull requests -- which brings their conflicts, unresolved review
+threads and failing checks with them -- one for pull requests waiting on your
+review, and one batched query for the issues you're working on, with what blocks
+them. Pull requests show as `!` refs, the way merge requests do, so a `#` is
+always an issue; branches named `<issue>-<title>` (GitHub's own suggestion when
+you create a branch from an issue) tie a branch to its issue. GitHub has no
+weights or epics, so fantasy mode's monsters and the standup's epic headings come
+only from what the narrative records. It keeps its own `sync-cache-github.json`
+and writes `activity-github.json` beside GitLab's.
 
 Note the distinction: a repo is left out of the standup when you are sitting on
 **someone else's branch**, but comments and approvals only need it to be a **work
@@ -625,8 +639,8 @@ the rest sit beside the code. None of them are tracked by git.
 | `resolved.json` | The narrative with completion filled in. What `show.sh` reads. |
 | `build.log` | Stderr from the last build. Empty means clean. |
 | `standup.json` | The standup on its own, handed to an open standup window after a rebuild. |
-| `activity.json` | Comments, approvals and your MRs from the last sync. Rewritten whole; never edit. |
-| `sync-cache.json` | What the last sync kept, so the next asks only for what changed. |
+| `activity.json`, `activity-github.json` | Comments, approvals and your merge or pull requests from the last sync, one per host. Rewritten whole; never edit. |
+| `sync-cache.json`, `sync-cache-github.json` | What the last sync kept, one per host, so the next asks only for what changed. |
 | `feeds.json` | What fed the companion in this space, for a shared companion to eat from every space. |
 | `git-cache.json` | The last git walk. Task and notes saves rebuild from it (`refresh.sh --cached`) in a tenth of a second instead of re-reading every repo. |
 
@@ -645,6 +659,9 @@ the rest sit beside the code. None of them are tracked by git.
 | `ledger.mjs` | Counts your commits since you started using the app into `ledger.json`, by hash, so the count never drops. |
 | `hoard.mjs` | Fantasy mode's commit hoard: the pixel art for each stage and where it begins. |
 | `quest.js`, `quest.css`, `quest-defs.svg` | Fantasy mode: locks, keys, monsters, the companion in costume, the road to the tent. Plain files inlined at build time. |
+| `github-sync.mjs` | The GitHub half of a sync, in the same shape as GitLab's; keeps `sync-cache-github.json`, writes `activity-github.json`. `github.sh` runs it. |
+| `hosts.mjs` | Where a ticket, merge or pull request, or branch lives on its repo's host. |
+| `blockers.mjs` | "Blocked by #12" and its kin, read from a ticket's description on either host. |
 | `gitlab-sync.mjs` | A sync's GitLab calls, asking only for what changed since the last one; keeps the rest in `sync-cache.json`. `gitlab.sh` finds the host and runs it. |
 | `halloween.mjs` | Halloween's candy hoard and haunted houses, drawn at build time; the monsters and their candy are in `quest.js`. |
 | `spaces.mjs` | The spaces: which folders each tracks (`spaces.json`), each one's data folder, and a small CLI the scripts use to find them. |
@@ -675,6 +692,8 @@ the rest sit beside the code. None of them are tracked by git.
 | `make.sh` | Build the app into `~/Applications` after editing `src/main.swift`. |
 | `sync.sh` | Everything a sync does. Run by the app, never on its own. |
 | `fetch.sh` | `git fetch --prune` across a space's repos. |
+| `hosts.sh` | A sync's host calls for one space: `gitlab.sh` and `github.sh` side by side. |
+| `github.sh` | Runs `github-sync.mjs` for a space's github.com repos, through `gh`. |
 | `gitlab.sh` | Finds a space's GitLab host and a clone to call it from, then runs `gitlab-sync.mjs` -- the only file here that talks to the GitLab API. |
 | `tools/makeicon.swift` | Draws the app icon. |
 
@@ -724,7 +743,8 @@ Settings → Extras → Overlay → **Fantasy** turns the thread tabs into a sma
   until the blocker's MRs are seen merged or closed. Blockers are gathered from
   wherever they are written, none of it required:
   - **GitLab's "is blocked by" links**, on tiers that have them (paid GitLab;
-    on Free the call simply returns none);
+    on Free the call simply returns none), and **GitHub's "blocked by"** issue
+    relationships;
   - **the ticket's description** -- "Blocked by #31", "Depends on #31",
     "Waiting on api#31" -- on any host or tier;
   - **links you make in the app** -- *+ blocker* on a ticket's pane, kept in your
@@ -955,7 +975,7 @@ forward.
 
 ## What it will never do
 
-- Contact GitLab unless you ask it to. Everything else comes from clones on disk;
+- Contact GitLab or GitHub unless you ask it to. Everything else comes from clones on disk;
   syncing is opt-in, per space, in **Settings → Projects** (see *Sync*).
 - Run in the background. No daemon, no cron; with the app closed, the laptop shut
   or you away, nothing happens.

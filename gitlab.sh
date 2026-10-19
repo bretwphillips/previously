@@ -24,10 +24,10 @@ LIST
 [ -n "$ANCHOR" ] || exit 0
 
 # The GitLab this space's work lives on: whichever host most of its clones point
-# at, the same rule the standup uses -- nothing names a host in the code.
+# at, the same rule the standup uses, leaving github.com to github.sh.
 HOST=$(printf '%s\n' "$REPOS" | while IFS="$TAB" read -r name path; do
   git -C "$path" config --get remote.origin.url 2>/dev/null
-done | sed -E 's#^[a-z+]+://##; s#^[^@]*@##; s#[:/].*##' | sort | uniq -c | sort -rn | awk 'NR==1{print $2}')
+done | sed -E 's#^[a-z+]+://##; s#^[^@]*@##; s#[:/].*##' | grep -v '^github\.com$' | sort | uniq -c | sort -rn | awk 'NR==1{print $2}')
 [ -n "$HOST" ] || exit 0
 export GITLAB_HOST="$HOST"
 

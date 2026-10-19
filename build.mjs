@@ -50,7 +50,21 @@ const sync = {
   ...Object.fromEntries(SPACE_SETTINGS.filter((k) => k in spaceSettings).map((k) => [k, spaceSettings[k]])),
 };
 // Comments and approvals, captured during a sync. A clone cannot see either.
-const activity = readJson(join(here, "activity.json"), { comments: {}, approvals: [] });
+// Comments, approvals and pull/merge requests from the last sync: GitLab's and
+// GitHub's, each written by its own sync in the same shape, read as one.
+const activity = (() => {
+  const lab = readJson(join(here, "activity.json"), {});
+  const hub = readJson(join(here, "activity-github.json"), {});
+  const comments = { ...lab.comments };
+  for (const [repo, refs] of Object.entries(hub.comments ?? {})) comments[repo] = { ...comments[repo], ...refs };
+  const list = (k) => [...(lab[k] ?? []), ...(hub[k] ?? [])];
+  const when = (k) => Math.max(lab[k] ?? 0, hub[k] ?? 0) || null;
+  return {
+    fetchedAt: when("fetchedAt"), mrsFetchedAt: when("mrsFetchedAt"), comments,
+    approvals: list("approvals"), mrs: list("mrs"), issues: list("issues"),
+    messages: list("messages"), reviews: list("reviews"), problems: list("problems"),
+  };
+})();
 const notes = existsSync(join(here, "notes.md"))
   ? readFileSync(join(here, "notes.md"), "utf8")
   : "";
