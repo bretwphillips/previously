@@ -397,7 +397,7 @@ const LOOK_OUTFITS = {
 };
 const LOOKS = { catrina: ["catrina", "dress"], catrin: ["topHat", "suit"], crown: ["crown", "rebozo"], fedora: ["fedora", "waistcoat"] };
 const LOOK_FUR = { C: 1, h: 1, c: 1, D: 1, i: 1, k: 1 }, LOOK_FEATURES = { e: 1, w: 1, p: 1, m: 1 };
-function calavera(grid, a, ox, oy) {
+function calavera(grid, a, ox, oy, calm) {
   const eyes = [], mid = W / 2;
   for (let y = oy; y < oy + a.neck; y++) for (let x = 0; x < W; x++) {
     const c = grid[y][x];
@@ -406,12 +406,29 @@ function calavera(grid, a, ox, oy) {
     if (LOOK_FUR[c]) grid[y][x] = "Q"; else if (LOOK_FEATURES[c]) grid[y][x] = "K";
   }
   const bone = (x, y) => y >= oy && y < oy + a.neck && grid[y][x] === "Q";
-  const sockets = [];
-  for (const [ex, ey] of eyes) for (const dx of [0, ex < mid ? -1 : 1]) {
-    if (bone(ex + dx, ey)) { grid[ey][ex + dx] = "K"; sockets.push([ex + dx, ey, ex < mid]); }
-  }
-  for (const [sx, sy, left] of sockets) for (const [dx, dy] of [[0, -1], [0, 1], [-1, 0], [1, 0]]) {
-    if (bone(sx + dx, sy + dy)) grid[sy + dy][sx + dx] = left ? "1" : "2";
+  // the eyes as the mood draws them, squint and all, painted dark and widened outward
+  const widen = (list) => list.flatMap(([ex, ey]) => [[ex, ey, ex < mid], [ex + (ex < mid ? -1 : 1), ey, ex < mid]]);
+  for (const [sx, sy] of widen(eyes)) if (bone(sx, sy)) grid[sy][sx] = "K";
+  // The coloured paint keeps the calm face's place in every mood, so a squint
+  // doesn't move it: down each socket's outer side, a dot above and below at that edge.
+  const calmEyes = [];
+  calm.forEach((row, y) => [...row].forEach((c, x) => {
+    if ((c === "e" || c === "w") && y <= a.eyes + 1) calmEyes.push([ox + x, oy + y]);
+  }));
+  const sockets = widen(calmEyes);
+  for (const left of [true, false]) {
+    const own = sockets.filter((k) => k[2] === left);
+    if (!own.length) continue;
+    const xs = own.map((k) => k[0]), ys = own.map((k) => k[1]);
+    const outer = left ? Math.min(...xs) : Math.max(...xs), side = left ? outer - 1 : outer + 1;
+    const [top, bottom] = [Math.min(...ys), Math.max(...ys)], paint = left ? "1" : "2";
+    // down the outer side -- nudged in a pixel on a row where the eye stops short, so it never floats free
+    const inward = left ? 1 : -1;
+    for (let y = top; y <= bottom; y++) {
+      const x = bone(side + inward, y) && grid[y][side + 2 * inward] === "K" ? side + inward : side;
+      if (bone(x, y)) grid[y][x] = paint;
+    }
+    for (const y of [top - 1, bottom + 1]) if (bone(outer, y)) grid[y][outer] = paint;
   }
   // the animal's own nose and mouth painted over, the same stitched grin on every one
   const top = oy + a.neck - 3;
@@ -432,7 +449,7 @@ function dressUp(grid, animal, mood, costume) {
   }));
   if (LOOKS[costume]) {
     const [head, outfit] = LOOKS[costume];
-    calavera(grid, a, ox, oy);
+    calavera(grid, a, ox, oy, layerRows(a, "happy"));
     const hat = LOOK_HEADS[head];
     put(hat, oy + a.headTop + (a.hatDrop || 0) - (hat.length - 1));
     put(LOOK_OUTFITS[outfit], oy + a.neck);
@@ -505,13 +522,13 @@ const FX = {
   hungry: [["bigdrop", 17, 4]],
   sad: [["skull", 18, 4]],
 };
-// Full at "full health"; past it, on a roll, the bar overflows gold with a glint.
+// Full at "full health"; past it, on a roll, the health breaks the bar (drawn in companion()).
 // It drains from the right, as game health bars do.
 const BAR = {
   dancing: "..oluuuluuuuluo..", happy: "..ogggggggggggo..", content: "..oggggggggvvvo..",
   peckish: "..oyyyyyvvvvvvo..", hungry: "..orrrvvvvvvvvo..", sad: "..orvvvvvvvvvvo..",
 };
-const BAR_PAL = { g: "#4caf50", y: "#f2c94c", r: "#e5383b", v: "#efe9df", o: "#3a2a1a", u: "#e8b021", l: "#fff3b0" };
+const BAR_PAL = { g: "#4caf50", y: "#f2c94c", r: "#e5383b", v: "#efe9df", o: "#3a2a1a", u: "#e8b021", l: "#fff3b0", f: "#9a6a1c", J: "var(--hp-spill, #ecaa1e)", I: "var(--hp-tip, #e8941c)", z: "var(--hp-spark, #e8901a)" };
 
 // { rows, pal, fx } for the sidebar: the picked animal, coat, class and colour.
 function companion(pick, mood) {
@@ -523,9 +540,21 @@ function companion(pick, mood) {
   const pal = spooky ? { ...dressed, ...dressUp(grid, pick.race, mood, spooky) } : dressed;
   const rows = grid.slice(CROP).map((r) => r.join(""));
   const pad = ".".repeat((W - 17) / 2);
-  rows.push(".".repeat(W), pad + "..ooooooooooooo.." + pad, pad + (BAR[mood] || BAR.content) + pad, pad + "..ooooooooooooo.." + pad);
-  // old frame: x + 2 for the wider canvas, y + 10 for the taller one, less the crop
-  const fx = (FX[mood] || []).map(([kind, x, y]) => [kind, x + (W - 17) / 2, y + (H - 20) - CROP]);
+  // On a roll the health overruns the bar: the frame whole, the gold running over its
+  // end (f, gold over the frame's darker end) and out past it (J and I surge), sparks
+  // spitting from the end (z). Letters no animal or costume uses: BAR_PAL is laid over them all.
+  if (mood === "dancing") rows.push(...(W === 21 ? [".................z.z.", "....ooooooooooooo....", "....ouuuuuuuuuuufJI.z", "....ooooooooooooo..z."]
+    : [".".repeat(W), pad + "..ooooooooooooo.." + pad, pad + BAR.dancing + pad, pad + "..ooooooooooooo.." + pad]));
+  else rows.push(".".repeat(W), pad + "..ooooooooooooo.." + pad, pad + (BAR[mood] || BAR.content) + pad, pad + "..ooooooooooooo.." + pad);
+  // The effects were placed around the old wizard cat (17 wide, rows 0-19); they
+  // are mapped onto this animal's own outline, so a small frog's sparkles hug the
+  // frog and a big costume's spread to its edges.
+  const filled = rows.slice(0, rows.length - 4).flatMap((r, y) => [...r].map((c, x) => (c !== "." && pal[c] ? [x, y] : null))).filter(Boolean);
+  const xs = filled.map((p) => p[0]), ys = filled.map((p) => p[1]);
+  const [x0, x1, y0, y1] = filled.length ? [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)]
+    : [(W - 17) / 2, (W - 17) / 2 + 16, H - 20 - CROP, H - 1 - CROP];
+  const fx = (FX[mood] || []).map(([kind, x, y]) => [kind,
+    Math.round(x0 - 1 + (x / 16) * (x1 - x0 + 2)), Math.round(y0 - 1 + (y / 19) * (y1 - y0 + 2))]);
   return { rows, pal: { ...pal, ...BAR_PAL, o: pal.o }, fx };
 }
 
