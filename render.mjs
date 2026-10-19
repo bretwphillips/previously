@@ -945,6 +945,17 @@ function settingsPane(userName, weightLimit = 5, terminals = [], update = null, 
           )}
           <p class="ai-notes-status" id="ai-notes-status" aria-live="polite"></p>`,
         )}
+        <h3>Sessions</h3>
+        ${row(
+          "Auto-resume",
+          `<div class="themes" id="resume-choice"><button data-resume="off">Off</button><button data-resume="on">On</button></div>
+          ${about(
+            "Claude sessions running in the in-app terminal when the app quits or crashes come back in their tabs next time.",
+            `<p>Each tab of the in-app terminal (Settings \u2192 General \u2192 Terminal: In app) remembers the Claude Code session running in it, by its ID. When the app opens again, a tab that had one starts <code>claude --resume</code> with that ID, then is an ordinary shell once you leave Claude. Resuming only reloads the conversation; nothing is sent until you type.</p>
+            <p><b>What turning it on changes.</b> A small hook is added to <code>~/.claude/settings.json</code>, so each session tells Previously its ID as it starts; turning it off takes the hook out again and leaves the rest of that file as it was. Only IDs are kept, never what was said -- the conversations stay where Claude Code keeps them.</p>
+            <p>A session that has since been deleted opens a plain shell with a note instead. Sessions in another terminal app are out of reach.</p>`,
+          )}`,
+        )}
       </div>
 
       <div class="stab" data-stab="projects" hidden>

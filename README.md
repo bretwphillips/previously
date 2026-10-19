@@ -701,6 +701,7 @@ the rest sit beside the code. None of them are tracked by git.
 | `show.sh` | The terminal view. |
 | `done.sh` | Record that HEAD finished one or more scope lines. |
 | `install.sh` | One-time setup: checks what's needed, builds the app, opens it. |
+| `session-hook.sh`, `claude-hook.mjs` | Auto-resume: the Claude Code hook that notes which session runs in which terminal tab, and adding or removing it from `~/.claude/settings.json`. |
 | `ai-notes.sh` | Prints your AI notes for a session to read: every space's, then those of the space the repo is in. |
 | `update.mjs`, `update.sh` | The update check (GitHub's latest release, into `update.json`) and installing it: a git fast-forward to its tag, then `make.sh`. |
 | `VERSION` | This copy's version, compared with the latest release. |
@@ -763,6 +764,19 @@ Your notes win over the AI's own memory, and a space's note wins over one for
 every space; other spaces' notes are never read. Two cautions: a session reads
 them before anything else, so keep the list short (the tab warns past 40 lines),
 and they are sent to the AI with each session, so no passwords or tokens.
+
+### Auto-resume (off by default)
+
+With **Settings → A.I. → Auto-resume** on, a Claude session running in the in-app
+terminal when the app quits or crashes comes back in its tab next time: the tab
+starts `claude --resume <id>` and is an ordinary shell once you leave Claude.
+Several sessions, even in one repo, each come back to their own tab.
+
+It knows which session is which because turning it on adds a small hook to
+`~/.claude/settings.json` (`session-hook.sh`): each session started in a drawer
+tab tells Previously its ID. Turning it off takes the hook out again and leaves
+the rest of that file alone. Only IDs are kept (`terminal-sessions/`), never the
+conversation. A session since deleted opens a plain shell with a note instead.
 
 Nothing here needs a running Claude. The git half regenerates on its own, and the
 page, standup and companion all work with no model involved.

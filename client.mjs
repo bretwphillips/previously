@@ -844,6 +844,23 @@ document.addEventListener('DOMContentLoaded', function () {
   }
   paintAiStatus(false);
 
+  /* Settings -> A.I. -> Auto-resume: off unless chosen; the app adds or removes Claude's hook. */
+  function paintResume() {
+    var buttons = document.querySelectorAll('#resume-choice button');
+    for (var i = 0; i < buttons.length; i++) {
+      buttons[i].setAttribute('aria-pressed', String(buttons[i].dataset.resume === (syncState.autoResume || 'off')));
+    }
+  }
+  paintResume();
+  var resumeButtons = document.querySelectorAll('#resume-choice button');
+  for (var rb = 0; rb < resumeButtons.length; rb++) {
+    resumeButtons[rb].addEventListener('click', function () {
+      syncState.autoResume = this.dataset.resume;
+      paintResume();
+      if (settingsBridge) settingsBridge.postMessage(JSON.stringify(syncState));
+    });
+  }
+
   var syncButtons = document.querySelectorAll('#sync-choice button');
   for (var sb = 0; sb < syncButtons.length; sb++) {
     syncButtons[sb].addEventListener('click', function () {

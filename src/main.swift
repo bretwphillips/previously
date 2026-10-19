@@ -439,18 +439,26 @@ final class Shell {
     var repo: String?
     var label: String
     var inspectWork: DispatchWorkItem?
+    /// Stays with the tab across launches; Claude Code's session hook files
+    /// the session it starts under it (PREVIOUSLY_TERM).
+    let key: String
+    /// Claude Code is what's running in it, as last seen.
+    var claude = false
 
-    init(id: Int, pid: pid_t, master: Int32, repo: String?, label: String) {
+    init(id: Int, pid: pid_t, master: Int32, repo: String?, label: String, key: String) {
         self.id = id
         self.pid = pid
         self.master = master
         self.repo = repo
         self.label = label
+        self.key = key
     }
 
     /// Starts the user's login shell in `dir`. Everything the child needs is
     /// built before the fork: after it, only chdir/close/execve run.
-    static func spawn(in dir: URL) -> (pid: pid_t, master: Int32)? {
+    /// With `resume`, the shell runs `claude --resume <id>` first and is an
+    /// ordinary shell once that ends -- started that way, never typed into.
+    static func spawn(in dir: URL, key: String, resume: String? = nil) -> (pid: pid_t, master: Int32)? {
         let path = getpwuid(getuid()).flatMap { $0.pointee.pw_shell.map { String(cString: $0) } }
         let shellPath = (path?.isEmpty == false ? path : nil) ?? "/bin/zsh"
         let name = "-" + (shellPath as NSString).lastPathComponent
@@ -462,8 +470,13 @@ final class Shell {
         env["PWD"] = dir.path
         if env["LANG"] == nil { env["LANG"] = "en_US.UTF-8" }
         env.removeValue(forKey: "TERM_SESSION_ID")
+        env["PREVIOUSLY_TERM"] = key
 
-        let argv: [UnsafeMutablePointer<CChar>?] = [strdup(name), nil]
+        var args = [name]
+        if let resume, resume.allSatisfy({ $0.isHexDigit || $0 == "-" }) {
+            args += ["-i", "-c", "claude --resume \(resume); exec \(shellPath) -l"]
+        }
+        let argv: [UnsafeMutablePointer<CChar>?] = args.map { strdup($0) } + [nil]
         let envp: [UnsafeMutablePointer<CChar>?] = env.map { strdup("\($0.key)=\($0.value)") } + [nil]
         let file = strdup(shellPath)!
         let cwd = strdup(dir.path)!
@@ -602,9 +615,10 @@ final class TerminalDrawer: NSObject, WKScriptMessageHandler, WKNavigationDelega
     func requestSplit() { call("window.termRequestSplit()") }
 
     @discardableResult
-    private func open(in dir: URL, repo: String?, beside: Int? = nil) -> Int? {
-        guard let (pid, master) = Shell.spawn(in: dir) else { return nil }
-        let shell = Shell(id: nextId, pid: pid, master: master, repo: repo, label: label(for: dir.path))
+    private func open(in dir: URL, repo: String?, beside: Int? = nil, key: String? = nil, resume: String? = nil) -> Int? {
+        let key = key ?? UUID().uuidString
+        guard let (pid, master) = Shell.spawn(in: dir, key: key, resume: resume) else { return nil }
+        let shell = Shell(id: nextId, pid: pid, master: master, repo: repo, label: label(for: dir.path), key: key)
         nextId += 1
         shells[shell.id] = shell
 
@@ -656,7 +670,7 @@ final class TerminalDrawer: NSObject, WKScriptMessageHandler, WKNavigationDelega
             var panes: [[String: Any]] = []
             for (i, id) in ids.enumerated() {
                 guard let shell = shells[id], let dir = workingDirectory(of: shell) else { continue }
-                panes.append(["dir": dir, "grow": i < grow.count ? grow[i] : 1])
+                panes.append(["dir": dir, "grow": i < grow.count ? grow[i] : 1, "key": shell.key])
             }
             guard !panes.isEmpty else { continue }
             let focused = (tab["focused"] as? Int).flatMap { ids.firstIndex(of: $0) } ?? 0
@@ -672,6 +686,9 @@ final class TerminalDrawer: NSObject, WKScriptMessageHandler, WKNavigationDelega
         guard let saved = UserDefaults.standard.dictionary(forKey: Self.layoutKey),
               let tabs = saved["tabs"] as? [[String: Any]], !tabs.isEmpty
         else { return false }
+        // Tabs Claude was running in when the app last stopped, quit or crashed.
+        let running = Set(UserDefaults.standard.stringArray(forKey: Self.claudeKey) ?? [])
+        let resuming = autoResume()
         var focusedIds: [Int] = []
         for tab in tabs {
             var previous: Int?
@@ -684,7 +701,18 @@ final class TerminalDrawer: NSObject, WKScriptMessageHandler, WKNavigationDelega
                 {
                     dir = URL(fileURLWithPath: path)
                 }
-                guard let id = open(in: dir, repo: repoName(for: dir), beside: previous) else { continue }
+                let key = pane["key"] as? String
+                var resume: String?
+                var stale = false
+                if resuming, let key, running.contains(key) {
+                    resume = sessionId(for: key, in: dir)
+                    stale = resume == nil
+                }
+                guard let id = open(in: dir, repo: repoName(for: dir), beside: previous, key: key, resume: resume)
+                else { continue }
+                if stale {
+                    note("Claude was running here, but its session couldn't be found to resume.", in: id)
+                }
                 if let grow = pane["grow"] as? Double, grow > 0 {
                     call("window.termGrow(\(id), \(grow))")
                 }
@@ -699,8 +727,58 @@ final class TerminalDrawer: NSObject, WKScriptMessageHandler, WKNavigationDelega
         return true
     }
 
-    func terminateAll() {
+    /// When the app is quitting, the tabs Claude was running in are kept for
+    /// next time rather than forgotten as their shells end.
+    func terminateAll(quitting: Bool = false) {
+        if quitting { self.quitting = true }
         for shell in shells.values { kill(shell.pid, SIGHUP) }
+    }
+
+    // MARK: Auto-resume
+
+    /// The keys of tabs Claude Code is running in, kept as it changes, so a
+    /// crash leaves the last word.
+    private static let claudeKey = "TerminalClaude"
+    private var quitting = false
+
+    private func autoResume() -> Bool {
+        let file = codeDir.appendingPathComponent("settings.json")
+        let settings = (try? JSONSerialization.jsonObject(with: Data(contentsOf: file))) as? [String: Any]
+        return settings?["autoResume"] as? String == "on"
+    }
+
+    private func saveClaudeTabs() {
+        guard !quitting else { return }
+        UserDefaults.standard.set(shells.values.filter(\.claude).map(\.key), forKey: Self.claudeKey)
+    }
+
+    /// The session a tab was running: what the hook filed under its key, else
+    /// the newest in that folder. Only one Claude Code still has on disk.
+    private func sessionId(for key: String, in dir: URL) -> String? {
+        let folder = FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent(".claude/projects")
+            .appendingPathComponent(String(dir.standardizedFileURL.path.map { $0.isLetter || $0.isNumber ? $0 : "-" }))
+        let exists = { (id: String) in
+            FileManager.default.fileExists(atPath: folder.appendingPathComponent("\(id).jsonl").path)
+        }
+        let filed = (try? String(contentsOf: codeDir.appendingPathComponent("terminal-sessions/\(key)"), encoding: .utf8))?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        if let filed, !filed.isEmpty { return exists(filed) ? filed : nil }
+        let newest = (try? FileManager.default.contentsOfDirectory(
+            at: folder, includingPropertiesForKeys: [.contentModificationDateKey]))?
+            .filter { $0.pathExtension == "jsonl" }
+            .max { a, b in
+                let da = (try? a.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate ?? .distantPast
+                let db = (try? b.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate ?? .distantPast
+                return da < db
+            }
+        return newest.map { $0.deletingPathExtension().lastPathComponent }
+    }
+
+    /// A line in a tab's view, from Previously -- shown, never sent to the shell.
+    private func note(_ text: String, in id: Int) {
+        let line = "\u{1b}[2m[Previously] \(text)\u{1b}[0m\r\n"
+        call("window.termWrite(\(id), '\(Data(line.utf8).base64EncodedString())')")
     }
 
     // MARK: Page
@@ -846,6 +924,7 @@ final class TerminalDrawer: NSObject, WKScriptMessageHandler, WKNavigationDelega
         shell.reader?.cancel()
         shell.exitWatch?.cancel()
         shells[shell.id] = nil
+        saveClaudeTabs()
         // Whatever it printed last is dropped: its tab is going.
         call("window.termClosed(\(shell.id))")
         if shells.isEmpty { onEmpty?() }
@@ -873,7 +952,16 @@ final class TerminalDrawer: NSObject, WKScriptMessageHandler, WKNavigationDelega
     /// Only while the shell itself is in the foreground -- at its prompt; a
     /// running program keeps the last answer.
     private func inspect(_ shell: Shell, react: Bool = false) {
-        guard !shell.closed, tcgetpgrp(shell.master) == shell.pid,
+        guard !shell.closed else { return }
+        let front = tcgetpgrp(shell.master)
+        var name = [CChar](repeating: 0, count: 256)
+        let claude = front > 0 && front != shell.pid
+            && proc_name(front, &name, UInt32(name.count)) > 0 && String(cString: name) == "claude"
+        if claude != shell.claude {
+            shell.claude = claude
+            saveClaudeTabs()
+        }
+        guard front == shell.pid,
               let cwd = workingDirectory(of: shell)
         else { return }
 
@@ -952,7 +1040,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, WKN
         checkForUpdate()
     }
 
-    func applicationWillTerminate(_ notification: Notification) { drawer.terminateAll() }
+    func applicationWillTerminate(_ notification: Notification) { drawer.terminateAll(quitting: true) }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { false }
 
@@ -1440,6 +1528,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, WKN
             else { return }
             let own = spaceDir().appendingPathComponent("settings.json")
             let app = codeDir.appendingPathComponent("settings.json")
+            let resumeWas = ((try? JSONSerialization.jsonObject(with: Data(contentsOf: app))) as? [String: Any])?["autoResume"] as? String ?? "off"
             for file in [own, app] {
                 var settings =
                     (try? JSONSerialization.jsonObject(with: Data(contentsOf: file)) as? [String: Any])
@@ -1456,6 +1545,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, WKN
             if terminalChoice() != "app" {
                 if drawerShown { hideTerminal() }
                 drawer.terminateAll()
+            }
+            // Auto-resume needs Claude Code's session hook, and only while it's on.
+            if let resume = incoming["autoResume"] as? String, resume != resumeWas {
+                try? script("session-hook.sh", args: [resume == "on" ? "install" : "remove"]).run()
             }
             refresh(cached: true)
             return
