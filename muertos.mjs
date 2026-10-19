@@ -159,9 +159,11 @@ const STOPS = [
 export const DOTD_STOPS = STOPS.map(([rows, pal, scale]) => svgOf(rows, { ...STOP_PAL, ...pal }, scale, "dotd-stop"));
 
 // ---------- papel picado across the top of the page, each flag swaying on its own beat.
-const FLAG = ["XXXXXXXXX", "XX.XXX.XX", "X.X.X.X.X", "XX.XXX.XX", "XXXX.XXXX", "XXX...XXX", "XXXX.XXXX", "XX.XXX.XX", "XXXXXXXXX", "X.X.X.X.X"];
+// Cut paper: a border of holes, a flower cut in the middle, a fringed hem.
+const FLAG = ["XXXXXXXXXXXXX", "XX.XX.X.XX.XX", "X.X.XXXXX.X.X", "XX.XX...XX.XX", "XXXX.X.X.XXXX", "XXX.X...X.XXX", "XX.X..X..X.XX",
+  "XXX.X...X.XXX", "XXXX.X.X.XXXX", "XX.XX...XX.XX", "X.X.XXXXX.X.X", "XX.XX.X.XX.XX", "XXXXXXXXXXXXX", "X.X.X.X.X.X.X"];
 const FLAG_COLOURS = ["#e8508a", "#f08a1c", "#8a55c9", "#2fb3c4", "#f2c94c", "#3f8a3a"];
-export const PAPEL_PICADO = `<div class="picado" aria-hidden="true">${Array.from({ length: 140 }, (_, i) =>
+export const PAPEL_PICADO = `<div class="picado" aria-hidden="true">${Array.from({ length: 110 }, (_, i) =>
   `<i style="animation-delay:-${((i * 0.37) % 2.4).toFixed(2)}s">${svgOf(FLAG, { X: FLAG_COLOURS[i % 6] }, 1.6, "flag")}</i>`).join("")}</div>`;
 
 export const MUERTOS_CSS = `
@@ -175,9 +177,9 @@ ${candleRules(':root[data-theme="dark"]', GLASS.dark, "dark")}
 
 /* the banner: hung from the bottom edge of the bar, over the page as it scrolls */
 .top .picado { display: none; }
-body.quest.muertos .top .picado { display: block; position: absolute; top: 100%; left: 0; right: 0; height: 20px; overflow: hidden;
+body.quest.muertos .top .picado { display: block; position: absolute; top: 100%; left: 0; right: 0; height: 28px; overflow: hidden;
   white-space: nowrap; pointer-events: none; background: linear-gradient(#2a2420, #2a2420) 0 0 / 100% 1px no-repeat; }
-body.quest.muertos .picado i { display: inline-block; margin: 0 2px; transform-origin: top center; animation: sway 2.4s ease-in-out infinite; }
+body.quest.muertos .picado i { display: inline-block; margin: 0 3px; transform-origin: top center; animation: sway 2.4s ease-in-out infinite; }
 body.quest.muertos .picado svg { display: block; }
 @keyframes sway { 0%, 100% { transform: rotate(-5deg); } 50% { transform: rotate(5deg); } }
 @media (prefers-reduced-motion: reduce) { body.quest.muertos .picado i { animation: none; } }
