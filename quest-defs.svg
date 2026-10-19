@@ -1,0 +1,14 @@
+<svg id="quest-defs" width="0" height="0" style="position:absolute">
+  <defs>
+    <linearGradient id="iron" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="var(--iron-hi)"/><stop offset=".45" stop-color="var(--iron)"/><stop offset="1" stop-color="var(--iron-lo)"/>
+    </linearGradient>
+    <linearGradient id="body" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="var(--iron-hi)"/><stop offset=".5" stop-color="var(--iron)"/><stop offset="1" stop-color="var(--iron-lo)"/>
+    </linearGradient>
+    <filter id="worn" x="-10%" y="-10%" width="120%" height="120%">
+      <feTurbulence type="fractalNoise" baseFrequency="1.4" numOctaves="2" seed="7" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="0.7"/>
+    </filter>
+  </defs>
+</svg>

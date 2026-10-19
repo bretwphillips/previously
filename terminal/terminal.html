@@ -1,0 +1,658 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Terminal</title>
+<link rel="stylesheet" href="vendor/xterm.css">
+<style>
+  :root { --panel: #1b1e23; --ink: #e2e4e8; --muted: #878e99; --line: #2a2e35; --sel: #272b32; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: var(--panel);
+               font: 11.5px -apple-system, BlinkMacSystemFont, system-ui, sans-serif; }
+  #tabs { position: absolute; top: 0; left: 0; right: 0; height: 28px; display: flex;
+          align-items: center; gap: 2px; padding: 0 8px; user-select: none; -webkit-user-select: none; }
+  .tab { display: flex; align-items: center; gap: 4px; height: 21px; padding: 0 4px 0 9px;
+         border-radius: 5px; color: var(--muted); cursor: pointer; max-width: 180px; }
+  /* Hover is a class the page sets, not :hover -- after a drag WebKit leaves
+     :hover stuck on the tab the drag began from until the mouse moves. */
+  .tab.hover { background: var(--sel); }
+  .tab[aria-selected="true"] { background: var(--sel); color: var(--ink); font-weight: 600; }
+  .tab .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tab .x, #new { border: 0; background: none; color: inherit; font: inherit; cursor: pointer;
+                  border-radius: 4px; line-height: 1; }
+  .tab .x { padding: 2px 4px; opacity: 0; }
+  .tab.hover .x, .tab[aria-selected="true"] .x { opacity: 0.6; }
+  .tab .x:hover { opacity: 1; background: var(--line); }
+  #new { color: var(--muted); font-size: 15px; padding: 1px 6px; }
+  #new:hover { color: var(--ink); background: var(--sel); }
+  #split { color: var(--muted); padding: 3px 6px; margin-left: auto; border: 0; display: flex;
+           background: none; cursor: pointer; border-radius: 4px; line-height: 0; }
+  #split:hover { color: var(--ink); background: var(--sel); }
+  .box { position: absolute; top: 30px; left: 0; right: 0; bottom: 0; display: flex; }
+  .box[hidden] { display: none; }
+  .pane { position: relative; flex: 1 1 0; min-width: 0; }
+  .pane .term { position: absolute; top: 0; left: 12px; right: 4px; bottom: 4px; }
+  .box.split .pane:not(.focused) .term { opacity: 0.72; }
+  /* A tab is a group of one or more shells. A group of several shows the
+     focused one's name and a count; held under the pointer a moment, or
+     dragged over, it opens into a small tab per pane, in column order. */
+  .tab.open { max-width: none; padding-left: 3px; background: var(--sel); }
+  .tab.drag-over { background: var(--sel); color: var(--ink); }
+  .tab .kids { display: none; align-items: center; gap: 4px; }
+  .tab.open .kids { display: flex; }
+  .tab.open > .name { display: none; }
+  .kid { display: flex; align-items: center; gap: 2px; height: 17px; padding: 0 2px 0 7px; border-radius: 4px;
+    font-size: 11px; color: var(--muted); font-weight: 400; cursor: pointer; white-space: nowrap;
+    background: var(--panel); box-shadow: 0 0 0 1px var(--line); }
+  .kid.hover { color: var(--ink); }
+  .kid.focused { color: var(--ink); font-weight: 600; }
+  .kid .x { opacity: 0.6; }
+  .kid.drop-before { box-shadow: inset 2px 0 0 var(--muted); }
+  .kid.drop-after { box-shadow: inset -2px 0 0 var(--muted); }
+  .pane.lit { box-shadow: inset 0 0 0 1px var(--muted); }
+  /* Mid-drag nothing can be clicked, so the close buttons stand aside. */
+  body.dragging .kid .x, body.dragging .tab.open > .x { display: none; }
+  body.dragging .kid { padding-right: 7px; }
+  /* The picture a drag carries is taken as it starts, so the lifted pill or
+     tab sheds its close button at once. */
+  .lifting .x { display: none; }
+  .kid.lifting { padding-right: 7px; }
+  .ghost { position: fixed; top: 0; left: 0; z-index: 50; display: flex; align-items: center; height: 21px;
+    padding: 0 9px; border-radius: 5px; background: var(--panel); color: var(--ink); font-size: 11.5px;
+    font-weight: 600; box-shadow: 0 0 0 1px var(--line); white-space: nowrap; pointer-events: none; }
+  .divider { flex: none; width: 5px; margin: 0 -2px; position: relative; z-index: 2; cursor: col-resize; }
+  .divider::after { content: ""; position: absolute; top: 0; bottom: 0; left: 2px; width: 1px; background: var(--line); }
+  .divider:hover::after, .divider.active::after { background: var(--muted); }
+  .pane + .pane { border-left: 0; }
+  .tab.drop-before { box-shadow: inset 2px 0 0 var(--muted); }
+  .tab.drop-after { box-shadow: inset -2px 0 0 var(--muted); }
+  /* A drag is ours, not the browser's, so the hand can stay closed throughout. */
+  body.dragging, body.dragging * { cursor: grabbing !important; }
+</style>
+</head>
+<body>
+<div id="tabs" role="tablist"><button id="new" title="New terminal" aria-label="New terminal">+</button><button id="split" title="Split side by side (⌘D)" aria-label="Split side by side"><svg viewBox="0 0 14 12" width="14" height="12" aria-hidden="true"><rect x="0.75" y="0.75" width="12.5" height="10.5" rx="1.8" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M7 1v10" stroke="currentColor" stroke-width="1.3"/></svg></button></div>
+<script src="vendor/xterm.js"></script>
+<script src="vendor/addon-fit.js"></script>
+<script src="vendor/addon-webgl.js"></script>
+<script>
+// The terminal's own page. It never sees the dashboard: the app hands it bytes
+// from each shell, names and colours, and it hands back keystrokes, sizes, and
+// which shell you closed or want split.
+//
+// A tab holds one shell, or several side by side. Every shell has its own id;
+// the app only ever talks in shell ids.
+var app = window.webkit.messageHandlers;
+var strip = document.getElementById('tabs');
+var newButton = document.getElementById('new');
+var splitButton = document.getElementById('split');
+var shells = {};
+var tabs = [];
+var current = null; // the tab on show
+var theme = null;
+
+// xterm's default ANSI colours are tuned for a dark ground; yellow and white
+// all but vanish on a light one, so the light set darkens them.
+var LIGHT_ANSI = {
+  black: '#22252b', red: '#b42318', green: '#2d7a3a', yellow: '#8a6100',
+  blue: '#1f5fc4', magenta: '#8e3fa8', cyan: '#127a87', white: '#6b7280',
+  brightBlack: '#555b66', brightRed: '#d0362a', brightGreen: '#3a9a4a', brightYellow: '#a35b06',
+  brightBlue: '#2f72e0', brightMagenta: '#a64fc4', brightCyan: '#1a95a3', brightWhite: '#22252b'
+};
+
+function isLight(hex) {
+  var h = hex.replace('#', '');
+  if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+  var n = parseInt(h.slice(0, 6), 16);
+  return ((n >> 16) * 299 + ((n >> 8) & 255) * 587 + (n & 255) * 114) / 1000 > 140;
+}
+
+function xtermTheme(c) {
+  var t = { background: c.panel, foreground: c.ink, cursor: c.ink, cursorAccent: c.panel,
+            selectionBackground: c.sel };
+  if (isLight(c.panel)) Object.assign(t, LIGHT_ANSI);
+  return t;
+}
+
+function resize(s) {
+  if (s.tab.box.hidden) return;
+  try { s.fit.fit(); } catch (e) { return; }
+  var next = s.term.cols + 'x' + s.term.rows;
+  if (next === s.size) return;
+  s.size = next;
+  app.termResize.postMessage({ id: s.id, cols: s.term.cols, rows: s.term.rows });
+}
+
+function nameTab(tab) {
+  var more = tab.shells.length - 1;
+  // Built for a single shell too: dragged over, a lone tab opens as a group of one.
+  unlight();
+  tab.kids.textContent = '';
+  tab.shells.forEach(function (id, i) { tab.kids.appendChild(kid(tab, id, i)); });
+  if (!more && !dragging) tab.el.classList.remove('open');
+  markFocus(tab);
+}
+
+// One pane's small tab inside an open group: click to focus it, hover to see
+// which column it is, × to close it, drag it out or along.
+function kid(tab, id, i) {
+  var s = shells[id];
+  var el = document.createElement('span');
+  el.className = 'kid' + (id === typing ? ' focused' : '');
+  el._tab = tab;
+  el._index = i;
+  var name = document.createElement('span');
+  name.textContent = s.label;
+  var x = document.createElement('button');
+  x.className = 'x';
+  x.textContent = '\u00d7';
+  x.title = 'Close this one';
+  el.appendChild(name);
+  el.appendChild(x);
+  // Not the tab's press, and not a focus-clearing one either.
+  el.addEventListener('mousedown', function (e) { e.stopPropagation(); e.preventDefault(); });
+  el.addEventListener('mouseenter', function () {
+    if (dragging) return;
+    el.classList.add('hover');
+    s.pane.classList.add('lit');
+  });
+  el.addEventListener('mouseleave', function () { el.classList.remove('hover'); s.pane.classList.remove('lit'); });
+  el.addEventListener('click', function (e) {
+    e.stopPropagation();
+    if (e.target === x) return app.termClose.postMessage({ id: id });
+    activate(id);
+  });
+  armDrag(el, function () { return { tab: tab, ids: [id] }; });
+  return el;
+}
+
+// The outline a hovered pill puts on its pane; a pill rebuilt under the pointer
+// never hears it leave, so this is cleared on every drop and rebuild too.
+function unlight() {
+  document.querySelectorAll('.pane.lit').forEach(function (p) { p.classList.remove('lit'); });
+}
+
+function clearDropMarks() {
+  document.querySelectorAll('.drop-before, .drop-after, .drop-into').forEach(function (n) {
+    n.classList.remove('drop-before', 'drop-after', 'drop-into');
+  });
+}
+
+// The shell keys actually go to -- its pill alone is bold. Not the group's
+// remembered pane: with the drawer or window unfocused, nothing is.
+var typing = null;
+function paintTyping() {
+  tabs.forEach(function (t) {
+    t.shells.forEach(function (id, i) {
+      var pill = t.kids.children[i];
+      if (pill) pill.classList.toggle('focused', id === typing);
+    });
+  });
+}
+
+// Marks which shell has focus without rebuilding the pills: a rebuild between
+// the press and the release of a click would swallow the click.
+function markFocus(tab) {
+  var focused = shells[tab.focused] || shells[tab.shells[0]];
+  var more = tab.shells.length - 1;
+  tab.name.textContent = (focused ? focused.label : '') + (more ? ' +' + more : '');
+  tab.shells.forEach(function (id, i) {
+    shells[id].pane.classList.toggle('focused', id === tab.focused);
+    var pill = tab.kids.children[i];
+    if (pill) pill.classList.toggle('focused', id === typing);
+  });
+}
+
+function focusShell(id) {
+  var s = shells[id];
+  if (!s) return;
+  s.tab.focused = id;
+  markFocus(s.tab);
+  // Told outright: focused while the window is not active, xterm hears no blur,
+  // and every terminal restored at launch would keep blinking as if focused.
+  for (var other in shells) {
+    if (Number(other) === id) continue;
+    var area = shells[other].term.textarea;
+    if (area && area !== document.activeElement) area.dispatchEvent(new FocusEvent('blur'));
+    else shells[other].term.blur();
+  }
+  s.term.focus();
+  reportLayout();
+}
+
+// The arrangement, so the app can put it back next launch: shell ids and
+// widths only -- the app looks up each shell's folder itself.
+var reporting = null;
+function reportLayout() {
+  clearTimeout(reporting);
+  reporting = setTimeout(function () {
+    app.termLayout.postMessage({
+      current: tabs.indexOf(current),
+      tabs: tabs.map(function (t) {
+        return {
+          shells: t.shells.slice(),
+          grow: t.shells.map(function (id) { return shells[id].grow; }),
+          focused: t.focused
+        };
+      })
+    });
+  }, 300);
+}
+
+function showTab(tab) {
+  current = tab;
+  tabs.forEach(function (t) {
+    t.el.setAttribute('aria-selected', String(t === tab));
+    t.box.hidden = t !== tab;
+  });
+  tab.shells.forEach(function (id) { resize(shells[id]); });
+  focusShell(tab.focused);
+}
+
+function activate(id) {
+  var s = shells[id];
+  if (!s) return;
+  s.tab.focused = id;
+  showTab(s.tab);
+}
+
+// Lays a tab's shells out as columns, in order, with a divider between each pair.
+function layout(tab) {
+  var box = tab.box;
+  box.textContent = '';
+  var shown = 0;
+  tab.shells.forEach(function (id, i) {
+    var s = shells[id];
+    s.tab = tab;
+    if (s.away) return; // lifted by a drag: the rest close up until it lands
+    if (shown++ > 0) box.appendChild(divider(tab, i));
+    s.pane.style.flex = s.grow + ' 1 0';
+    box.appendChild(s.pane);
+  });
+  box.classList.toggle('split', tab.shells.length > 1);
+  if (tab.shells.indexOf(tab.focused) < 0) tab.focused = tab.shells[0];
+  nameTab(tab);
+  tab.shells.forEach(function (id) { shells[id].pane.classList.toggle('focused', id === tab.focused); });
+  if (!box.hidden) tab.shells.forEach(function (id) { resize(shells[id]); });
+  reportLayout();
+}
+
+// Dragging a divider trades width between the two columns either side of it;
+// a double-click evens the whole row out again.
+function divider(tab, i) {
+  var bar = document.createElement('div');
+  bar.className = 'divider';
+  bar.addEventListener('pointerdown', function (e) {
+    var left = shells[tab.shells[i - 1]], right = shells[tab.shells[i]];
+    var lw = left.pane.getBoundingClientRect().width, rw = right.pane.getBoundingClientRect().width;
+    var grow = left.grow + right.grow, x0 = e.clientX;
+    bar.setPointerCapture(e.pointerId);
+    bar.classList.add('active');
+    function move(ev) {
+      var l = Math.max(120, Math.min(lw + rw - 120, lw + ev.clientX - x0));
+      left.grow = grow * l / (lw + rw);
+      right.grow = grow - left.grow;
+      left.pane.style.flex = left.grow + ' 1 0';
+      right.pane.style.flex = right.grow + ' 1 0';
+    }
+    function up() {
+      bar.classList.remove('active');
+      bar.removeEventListener('pointermove', move);
+      bar.removeEventListener('pointerup', up);
+      resize(left);
+      resize(right);
+      reportLayout();
+    }
+    bar.addEventListener('pointermove', move);
+    bar.addEventListener('pointerup', up);
+  });
+  bar.addEventListener('dblclick', function () {
+    tab.shells.forEach(function (id) { shells[id].grow = 1; });
+    layout(tab);
+  });
+  return bar;
+}
+
+function removeTab(tab) {
+  var at = tabs.indexOf(tab);
+  tabs.splice(at, 1);
+  tab.el.remove();
+  tab.box.remove();
+  if (tab === current) {
+    current = null;
+    var next = tabs[at] || tabs[at - 1];
+    if (next) showTab(next);
+  }
+}
+
+// Moves shells into a tab's row at a column; a tab left with none goes.
+function moveShells(ids, target, index) {
+  ids.forEach(function (id) {
+    var from = shells[id].tab;
+    var at = from.shells.indexOf(id);
+    if (from === target && at < index) index--;
+    from.shells.splice(at, 1);
+    if (from !== target) {
+      if (from.shells.length) layout(from);
+      else removeTab(from);
+    }
+  });
+  Array.prototype.splice.apply(target.shells, [index, 0].concat(ids));
+  ids.forEach(function (id) { shells[id].grow = 1; });
+  target.focused = ids[0];
+  layout(target);
+  showTab(target);
+}
+
+function newTab(position) {
+  var box = document.createElement('div');
+  box.className = 'box';
+  document.body.appendChild(box);
+
+  var el = document.createElement('div');
+  el.className = 'tab';
+  el.setAttribute('role', 'tab');
+  var name = document.createElement('span');
+  name.className = 'name';
+  var x = document.createElement('button');
+  x.className = 'x';
+  x.textContent = '×';
+  x.title = 'Close';
+  var kids = document.createElement('span');
+  kids.className = 'kids';
+  el.appendChild(name);
+  el.appendChild(kids);
+  el.appendChild(x);
+
+  var tab = { el: el, name: name, kids: kids, box: box, shells: [], focused: null };
+  var opening = null;
+  el.addEventListener('mouseenter', function () {
+    if (!dragging) el.classList.add('hover');
+    if (tab.shells.length > 1) opening = setTimeout(function () { el.classList.add('open'); }, 800);
+  });
+  el.addEventListener('mouseleave', function () {
+    el.classList.remove('hover');
+    clearTimeout(opening);
+    if (!dragging) el.classList.remove('open');
+  });
+  var at = position == null ? tabs.length : position;
+  strip.insertBefore(el, tabs[at] ? tabs[at].el : newButton);
+  tabs.splice(at, 0, tab);
+  // preventDefault: a press on something unfocusable clears focus after this
+  // runs, which undid the focus showTab just gave the terminal.
+  el.addEventListener('mousedown', function (e) { e.preventDefault(); if (e.target !== x) showTab(tab); });
+  x.addEventListener('click', function () {
+    tab.shells.slice().forEach(function (id) { app.termClose.postMessage({ id: id }); });
+  });
+  el._tab = tab;
+  armDrag(el, function () { return { tab: tab, ids: tab.shells.slice() }; });
+  return tab;
+}
+
+function addShell(tab, id, label, index) {
+  var pane = document.createElement('div');
+  pane.className = 'pane';
+  var holder = document.createElement('div');
+  holder.className = 'term';
+  pane.appendChild(holder);
+
+  var term = new Terminal({
+    fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace',
+    fontSize: 12,
+    cursorBlink: true,
+    scrollback: 5000,
+    macOptionClickForcesSelection: true,
+    theme: theme ? xtermTheme(theme) : undefined
+  });
+  var fit = new FitAddon.FitAddon();
+  term.loadAddon(fit);
+
+  var s = { id: id, term: term, fit: fit, pane: pane, tab: tab, label: label, size: '', grow: 1 };
+  shells[id] = s;
+  tab.shells.splice(index == null ? tab.shells.length : index, 0, id);
+  layout(tab);
+  term.open(holder);
+  // WebGL draws box and block characters itself, so they meet edge to edge --
+  // Claude Code's mascot, TUI borders. The DOM renderer takes them from the
+  // font and leaves gaps; it stays as the fallback.
+  try {
+    var webgl = new WebglAddon.WebglAddon();
+    webgl.onContextLoss(function () { webgl.dispose(); });
+    term.loadAddon(webgl);
+  } catch (e) {}
+
+  term.textarea.addEventListener('focus', function () { typing = id; paintTyping(); });
+  term.textarea.addEventListener('blur', function () { if (typing === id) { typing = null; paintTyping(); } });
+  term.onData(function (data) { app.termInput.postMessage({ id: id, data: data }); });
+  term.onBinary(function (data) { app.termInput.postMessage({ id: id, binary: data }); });
+  pane.addEventListener('mousedown', function () { focusShell(id); });
+  new ResizeObserver(function () { resize(s); }).observe(holder);
+}
+
+// Dragging: a tab (all its shells) or one pane by its small tab, always onto the
+// tab bar. On a tab's edge it becomes -- or moves to -- a tab of its own beside
+// it; on a tab's middle it joins the end of that row; on a pill, beside that pill.
+//
+// Done with pointer events rather than the browser's drag and drop: macOS
+// shows its own arrow for the whole of a native drag, and its snapshot, hover
+// and leave events kept coming out wrong.
+var dragging = null;
+
+// A press becomes a drag once it has moved a few pixels; short of that it is
+// a click, and the tab's or pill's own click handling runs as usual.
+function armDrag(el, what) {
+  el.addEventListener('pointerdown', function (e) {
+    if (e.button !== 0 || (e.target.closest && e.target.closest('.x'))) return;
+    e.stopPropagation(); // a pill's press is not also its tab's
+    var x0 = e.clientX, y0 = e.clientY, started = false;
+    function move(ev) {
+      if (!started) {
+        if (Math.abs(ev.clientX - x0) + Math.abs(ev.clientY - y0) < 5) return;
+        started = true;
+        beginDrag(what(), el);
+      }
+      dragMove(ev);
+    }
+    function stop(ev, dropped) {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      window.removeEventListener('pointercancel', cancel);
+      if (started) dropped ? finishDrag(ev) : endDrag();
+    }
+    function up(ev) { stop(ev, true); }
+    function cancel(ev) { stop(ev, false); }
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+    window.addEventListener('pointercancel', cancel);
+  });
+}
+
+document.addEventListener('keydown', function (e) {
+  if (dragging && e.key === 'Escape') { e.preventDefault(); endDrag(); }
+}, true);
+
+function beginDrag(what, source) {
+  dragging = what;
+  what.source = source;
+  source.classList.add('lifting');
+  source.classList.remove('hover');
+  unlight();
+  var ghost = document.createElement('div');
+  ghost.className = 'ghost';
+  var first = shells[what.ids[0]];
+  ghost.textContent = (first ? first.label : '') + (what.ids.length > 1 ? ' +' + (what.ids.length - 1) : '');
+  document.body.appendChild(ghost);
+  what.ghost = ghost;
+  document.body.classList.add('dragging');
+  // A pane carried out of its group leaves the view; the rest close up.
+  if (what.ids.length < what.tab.shells.length) {
+    what.ids.forEach(function (id) { shells[id].away = true; });
+    layout(what.tab);
+  }
+}
+
+// What is under the pointer, and how a drop there would land.
+function targetAt(x, y) {
+  var el = document.elementFromPoint(x, y);
+  if (!el || !el.closest) return null;
+  var pill = el.closest('.kid');
+  if (pill && pill.offsetWidth) {
+    var pr = pill.getBoundingClientRect();
+    return { tab: pill._tab, pill: pill, after: x > pr.left + pr.width / 2 };
+  }
+  var tabEl = el.closest('.tab');
+  if (tabEl) {
+    var tab = tabEl._tab, r = tabEl.getBoundingClientRect(), f = (x - r.left) / r.width;
+    var own = dragging.tab === tab && dragging.ids.length === tab.shells.length;
+    var zone = own ? (f < 0.5 ? 'before' : 'after') : f < 0.25 ? 'before' : f > 0.75 ? 'after' : 'into';
+    return { tab: tab, zone: zone };
+  }
+  if (el.closest('#tabs')) return { end: true };
+  return null;
+}
+
+// Over a tab it highlights at once and opens after a beat, so sweeping past
+// does not open every tab on the way; leaving it closes it again.
+var dragHover = null, dragOpen = null;
+function hoverTab(tab) {
+  if (tab === dragHover) return;
+  if (dragHover) dragHover.el.classList.remove('drag-over', 'open');
+  clearTimeout(dragOpen);
+  dragHover = tab;
+  if (!tab) return;
+  if (dragging.tab === tab && dragging.ids.length === tab.shells.length) return;
+  tab.el.classList.add('drag-over');
+  dragOpen = setTimeout(function () { if (dragging && dragHover === tab) tab.el.classList.add('open'); }, 600);
+}
+
+function dragMove(e) {
+  var ghost = dragging.ghost;
+  ghost.style.transform = 'translate(' + (e.clientX - 12) + 'px,' + (e.clientY - 10) + 'px)';
+  var at = targetAt(e.clientX, e.clientY);
+  hoverTab(at && at.tab ? at.tab : null);
+  clearDropMarks();
+  if (at && at.pill) at.pill.classList.add(at.after ? 'drop-after' : 'drop-before');
+  else if (at && at.zone && at.zone !== 'into') at.tab.el.classList.add('drop-' + at.zone);
+}
+
+function finishDrag(e) {
+  var what = dragging, at = targetAt(e.clientX, e.clientY);
+  endDrag();
+  if (!what || !at) return;
+  if (at.pill) return moveShells(what.ids, at.tab, at.pill._index + (at.after ? 1 : 0));
+  if (at.end) return dropOnStrip(what, tabs.length);
+  if (at.zone === 'into') return moveShells(what.ids, at.tab, at.tab.shells.length);
+  dropOnStrip(what, tabs.indexOf(at.tab) + (at.zone === 'after' ? 1 : 0));
+}
+
+function endDrag() {
+  if (!dragging) return;
+  dragging.source.classList.remove('lifting');
+  if (dragging.ghost) dragging.ghost.remove();
+  // Back where it was, unless the drop is about to place it.
+  var lifted = dragging.ids.filter(function (id) { return shells[id] && shells[id].away; });
+  lifted.forEach(function (id) { shells[id].away = false; });
+  if (lifted.length) layout(shells[lifted[0]].tab);
+  hoverTab(null);
+  dragging = null;
+  unlight();
+  document.querySelectorAll('.hover').forEach(function (n) { n.classList.remove('hover'); });
+  document.body.classList.remove('dragging');
+  clearDropMarks();
+  tabs.forEach(function (t) { t.el.classList.remove('open'); });
+}
+
+// A whole tab moves along the strip; a single pane leaves its row as a new tab.
+function dropOnStrip(what, at) {
+  if (what.ids.length === what.tab.shells.length) {
+    var from = tabs.indexOf(what.tab);
+    if (from < at) at--;
+    tabs.splice(from, 1);
+    tabs.splice(at, 0, what.tab);
+    strip.insertBefore(what.tab.el, tabs[at + 1] ? tabs[at + 1].el : newButton);
+    showTab(what.tab);
+    reportLayout();
+    return;
+  }
+  var tab = newTab(at);
+  moveShells(what.ids, tab, 0);
+}
+
+window.termOpen = function (id, label) {
+  var tab = newTab();
+  addShell(tab, id, label);
+  activate(id);
+};
+
+// A new shell beside another, in the same tab, in the column after it.
+window.termSplit = function (id, label, beside) {
+  var other = shells[beside];
+  if (!other) return window.termOpen(id, label);
+  addShell(other.tab, id, label, other.tab.shells.indexOf(beside) + 1);
+  activate(id);
+};
+
+window.termActivate = activate;
+
+// Restoring a layout: a column's width as it was.
+window.termGrow = function (id, grow) {
+  var s = shells[id];
+  if (!s || !(grow > 0)) return;
+  s.grow = grow;
+  s.pane.style.flex = grow + ' 1 0';
+  resize(s);
+};
+
+window.termLabel = function (id, label) {
+  var s = shells[id];
+  if (!s) return;
+  s.label = label;
+  nameTab(s.tab);
+};
+
+window.termWrite = function (id, base64) {
+  var s = shells[id];
+  if (!s) return;
+  var raw = atob(base64);
+  var bytes = new Uint8Array(raw.length);
+  for (var i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
+  s.term.write(bytes);
+};
+
+// A shell ended: its column goes, and its tab with it if it was the last.
+window.termClosed = function (id) {
+  var s = shells[id];
+  if (!s) return;
+  var tab = s.tab;
+  s.term.dispose();
+  s.pane.remove();
+  delete shells[id];
+  tab.shells = tab.shells.filter(function (other) { return other !== id; });
+  if (!tab.shells.length) { removeTab(tab); return reportLayout(); }
+  layout(tab);
+  if (tab === current) focusShell(tab.focused);
+};
+
+window.termTheme = function (c) {
+  theme = c;
+  var root = document.documentElement.style;
+  ['panel', 'ink', 'muted', 'line', 'sel'].forEach(function (k) { if (c[k]) root.setProperty('--' + k, c[k]); });
+  for (var id in shells) shells[id].term.options.theme = xtermTheme(c);
+};
+
+window.termFocus = function () {
+  if (current) focusShell(current.focused);
+};
+
+// Asks the app for a shell beside the focused one; the app picks its folder.
+window.termRequestSplit = function () {
+  if (current && current.focused !== null) app.termSplit.postMessage({ id: current.focused });
+  else app.termNew.postMessage('');
+};
+
+newButton.addEventListener('click', function () { app.termNew.postMessage(''); });
+splitButton.addEventListener('click', window.termRequestSplit);
+
+app.termReady.postMessage('');
+</script>
+</body>
+</html>

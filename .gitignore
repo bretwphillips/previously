@@ -1,0 +1,29 @@
+# Regenerated on every build.
+worklog.html
+summary.json
+resolved.json
+build.log
+tools/makeicon
+settings.json
+activity.json
+git-cache.json
+standup.json
+projects-cache.json
+sync-cache.json
+
+# Yours, not the app's: each person's narrative, tasks and notes.
+worklog.json
+tasks.json
+notes.md
+.journal/
+links.json
+checks.json
+ledger.json
+
+# Design sketches and drafts: kept locally, never shared.
+sketches/
+
+# Spaces: which folders each one tracks, and each one's own data.
+spaces.json
+spaces/
+feeds.json
