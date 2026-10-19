@@ -574,10 +574,13 @@ function sprite(v, px) {
   svg.appendChild(body); svg.appendChild(bar);
   (v.fx || []).forEach(function (f, i) {
     var d = (document.body.classList.contains('muertos') && MUERTOS_FX[f[0]]) || FX[f[0]], x0 = f[1] - Math.floor(d.px[0].length / 2), y0 = f[2] - Math.floor(d.px.length / 2);
-    var g = el('g', { class: d.cls, style: 'animation-delay:' + (i * 0.3) + 's', transform: 'translate(0 ' + (BAR + 1) + ')' });
+    var g = el('g', { class: d.cls, style: 'animation-delay:' + (i * 0.3) + 's' });
     d.px.forEach(function (row, y) { for (var x = 0; x < row.length; x++) { var c = row[x];
       if (c !== '.') g.appendChild(el('rect', { x: x0 + x, y: y0 + y, width: 1, height: 1, fill: FXPAL[c] })); } });
-    svg.appendChild(g);
+    // Moved down with the body by a group of its own: the twinkle's own
+    // transform would replace a shift set on g.
+    var at = el('g', { transform: 'translate(0 ' + (BAR + 1) + ')' });
+    at.appendChild(g); svg.appendChild(at);
   });
   return svg;
 }
