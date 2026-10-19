@@ -248,7 +248,7 @@ const repos = await Promise.all(
 // trail mark, fainter the older. The dashboard's own repo is left out -- working
 // on the dashboard is not where you were.
 {
-  const self = basename(here);
+  const self = repoList.find((r) => r.path === CODE)?.name;
   const steps = repos
     .filter((r) => r.name !== self)
     .flatMap((r) => (r.recentYours ?? (r.lastCommitAt ? [r.lastCommitAt] : [])).map((at) => ({ at, name: r.name })))

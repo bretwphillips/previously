@@ -2,8 +2,8 @@
 
 *Previously, on your work…*
 
-It answers one question — **where do I pick up?** — across every repo in
-`~/Projects`, offline, at no cost to look at.
+It answers one question — **where do I pick up?** — across every repo you
+work in, offline, at no cost to look at.
 
 Like the recap before an episode, it is not a history. It is the selective cut of
 what you need back in your head to resume: what is in flight, what to do next, what
@@ -16,11 +16,11 @@ laptop — on the branch you are on, or on one you left behind and never pushed.
 stash from five months ago. Neither is visible from GitLab, your editor, or any single repo — only from
 something looking at all of them at once.
 
-It is a Mac app with a window and a menu-bar item, and **nothing in it touches the
-network**.
+It is a Mac app with a window and a menu-bar item. Everything it shows comes from
+the clones on your disk; it only touches the network when you sync (see *Sync*).
 
 What it is not: a tracker — GitLab owns tickets. A metric — the companion is capped
-precisely so it cannot become a number to chase. A service — no daemon, no polling,
+precisely so it cannot become a number to chase. A service — no daemon, no server,
 nothing runs when you are not working.
 
 ---
@@ -46,36 +46,40 @@ Every narrative line carries a small source tag so you can tell what it rests on
 
 ## Setting it up
 
-Previously is a Mac app (macOS 13 or later). It shows every git repo in one
-folder -- keep your clones side by side, say in `~/Projects`. Unzip or clone
-it anywhere and run its installer:
+Previously is a Mac app (macOS 13 or later). It reads your git clones where
+they already are -- one folder of them, or several. Clone it (or unzip it)
+anywhere and run its installer:
 
 ```sh
 sh previously/install.sh
 ```
 
-It asks which folder holds your repos (`~/Projects` by default) and puts itself
-there as `previously`; checks for `git`, `node` and Xcode's command-line tools,
+It asks which folder holds your repos (`~/Projects` by default) -- that folder
+becomes your first space, *Work projects* -- and puts itself there as `previously`; checks for `git`, `node` and Xcode's command-line tools,
 and says how to get any that are missing; builds `Previously.app` into your own
 Applications folder (`~/Applications`) -- building it on your own Mac is what
 keeps macOS from blocking it -- and opens it. Each person on a shared Mac gets
 their own copy, built from their own folder. It also offers to add the Claude Code conventions to that folder's
 `CLAUDE.md` (see *Working with Claude*); the text is in `claude-section.md`.
+Repos in other folders, or a second set like personal projects, go in spaces of
+their own: Settings → Projects (see *Spaces* under *Using it*).
 
 **Updating:** run `install.sh` from the newer copy the same way. It replaces the
-code and keeps your own files (worklog, tasks, notes, settings). From a git
-clone, `git -C ~/Projects/previously pull && sh ~/Projects/previously/make.sh`
-does the same.
+code and keeps your own files (each space's worklog, tasks and notes, and your settings).
+From a git clone, `git pull` in the `previously` folder and then `sh make.sh`
+there does the same.
 
-Optional, for Sync: install `glab` and `glab auth login` to your GitLab. The
-host is worked out from your clones; nothing is configured.
+Optional, for Sync: install `glab` and `glab auth login` to your GitLab. Each
+space's host is worked out from its own clones; nothing is configured. Sync only
+talks to GitLab so far: repos on GitHub or elsewhere get `git fetch`, but not
+comments, reviews or merge-request state.
 
 Branches named `<ticket>-<title>` (GitLab's default) are what tie a branch to a
-ticket. `worklog.json`, `tasks.json` and `notes.md` are yours and not tracked;
-the app starts without them.
-Their history is kept anyway, privately: every rebuild snapshots them into
-`.journal/`, a git repository with no remote. `git --git-dir=.journal log -p`
-shows what changed when.
+ticket. Each space keeps its `worklog.json`, `tasks.json` and `notes.md` in
+`spaces/<space>/`; they are yours, not tracked, and the app starts without them.
+Their history is kept anyway, privately: every rebuild snapshots them into that
+space's `.journal/`, a git repository with no remote --
+`git --git-dir=spaces/work/.journal log -p` shows what changed when.
 
 ---
 
@@ -134,7 +138,10 @@ choices sit under the columns: whether the companion and its hoard are shared or
 one per space, and whether the menu bar lists what needs you in every space or
 only the one you're viewing. Each space keeps its data in `spaces/<id>/`; your
 projects are only read, never moved. The title card names the space's own word:
-*Previously, on Sam's side job…*
+*Previously, on Sam's side job…* A repo two spaces could both claim belongs to
+the one whose folder is nearer it: with all of `~/Projects` in Work, adding
+`~/Projects/side-thing` to Personal moves it to Personal, and its narrative and
+tasks go with it.
 
 - Sidebar groups repos into **Active** (ticket branch, touched within 14 days),
   **Parked** (ticket branch, gone quiet), **Clean** (on the default branch). Click a
@@ -192,9 +199,10 @@ projects are only read, never moved. The title card names the space's own word:
   never while you are typing, and an open standup is just handed its new draft.
 - Ticket numbers, branch names and `#18` / `!27` / `&12` references are links; they
   open in your real browser, never inside the app.
-- ⚙ or `⌘,` opens **Settings** as a pane of its own: theme, title card name, sync,
-  standup weight, terminal, companion, quote of the day, fantasy mode and key
-  bindings. Hover a setting's name for what it does; **Done** or `Esc` goes back to
+- ⚙ or `⌘,` opens **Settings** as a pane of its own, in tabs: *General* (theme,
+  title card name, terminal, standup weight), *Projects* (spaces, their folders
+  and sync), *Markers*, *Shortcuts* and *Extras* (quote of the day, the overlay,
+  the companion). Hover a setting's name for what it does; **Done** or `Esc` goes back to
   the pane you came from. `⌘R` refresh, `⌘0` Overview, `⌘E` open `notes.md` in
   your editor, `` ⌃` `` terminal, `⌘Q` quit.
 - The **edit** button beside Notes writes `notes.md` from inside the window. It only
@@ -204,22 +212,22 @@ projects are only read, never moved. The title card names the space's own word:
 In the terminal:
 
 ```sh
-sh ~/Projects/previously/show.sh              # what needs you, plus what is active
-sh ~/Projects/previously/show.sh api  # one project in full
+sh previously/show.sh       # what needs you in the current space, plus what is active
+sh previously/show.sh api   # one project in full, from whichever space has it
 ```
 
 ---
 
 ## Terminal (optional, off by default)
 
-Settings → General → Terminal → **Open in** turns it on. It adds a **Terminal** button
+Settings → General → **Terminal** turns it on: *In app*, or one of your terminal apps. It adds a **Terminal** button
 (`` ⌃` ``) and a small terminal icon beside the ticket line on every repo's pane.
 
 **In app** opens a drawer along the bottom of the window, to the right of the
 sidebar, which stays full height beside it. Each shell is a tab:
 
-- The button shows or hides the drawer, starting a shell in `~/Projects` if none
-  is open. **+** opens another.
+- The button shows or hides the drawer, starting a shell in the space's first
+  folder if none is open. **+** opens another.
 - A repo's icon goes to the tab already in that repo, or opens one there. A tab is
   named after the repo its shell is in and follows your `cd`, so a click always
   lands in the repo you clicked; while a program is running in it, it keeps the
@@ -242,7 +250,7 @@ sidebar, which stays full height beside it. Each shell is a tab:
 - Quitting ends the shells -- they belong to the app -- but not the layout. The
   next launch reopens the drawer if it was open, with the same tabs, groups,
   column order and widths, and a fresh shell in the folder each one was last in
-  (`~/Projects` if that folder has gone). What was running and the scrollback
+  (the space's first folder if that one has gone). What was running and the scrollback
   are not kept.
 - Drag the drawer's top edge to resize it; the height is remembered, and the page
   is padded by that much so nothing sits behind it.
@@ -259,7 +267,7 @@ git state -- a commit, checkout, stash, fetch or staging -- the page rebuilds.
   `terminal/terminal.html` and read only `terminal/`.
 - Only that view has handlers that reach a shell. The page you read can show or
   hide the drawer, ask for a terminal in a repo by name (checked against the
-  folders in `~/Projects`), say that its theme changed and say whether a sheet is
+  current space's repos), say that its theme changed and say whether a sheet is
   open. None of those carries input.
 - The app starts shells, ends them and reads which folder each is in from macOS.
   It never writes to one, and nothing a shell prints reaches the page.
@@ -271,7 +279,7 @@ clicking the dimmed drawer closes it.
 
 **A terminal app** -- Terminal, iTerm, Ghostty, Warp, kitty, WezTerm or
 Alacritty, whichever are installed -- opens a new window there instead, in
-`~/Projects` or the repo. The app cannot see into another app's tabs, so every
+the space's first folder or the repo. The app cannot see into another app's tabs, so every
 click opens a new window, and the page does not rebuild after commands; it
 catches up on its next rebuild as usual.
 
@@ -343,7 +351,7 @@ It is a draft. Only you know which of yesterday's commits deserves a line.
 
 ## What reaches the standup
 
-Standup is for team work. Whichever host most of your repos live on is taken as
+Standup is for team work. Whichever host most of a space's repos live on is taken as
 work, and anything else — no remote at all, or a side project on another host — is
 shown in the app but left out of the post. Its pane says so, next to the title.
 
@@ -353,7 +361,8 @@ shows, with whose branch it is on its pane and under *Good to know*. A branch wi
 no commits yet counts as yours: you checked it out to start something.
 
 Nothing is hardcoded: the host is counted from your own clones, so this works
-unchanged for someone whose team is on github.com.
+unchanged for someone whose team is on github.com (Sync's extras, though, are
+GitLab-only for now).
 
 Epic is recorded per thread, but for **grouping** rather than filtering — it says
 which body of work a line belongs to, while authorship answers whether it is yours
@@ -381,7 +390,8 @@ companion measures momentum rather than reportable output.
 
 ## Sync
 
-**Manual only** by default — nothing is fetched, ever.
+Each space sets its own schedule in Settings → Projects. **Manual** by default —
+nothing is fetched, ever.
 
 Set it to **Weekly**, **Daily**, **Hourly** or **Every 15 min** and the app syncs -- `git fetch --prune` across
 your repos and GitLab -- *the first time you're at the Mac each day* (weekly: the
@@ -392,7 +402,8 @@ window showing. The standup says when it last synced, in purple when that was
 before today. Never on a timer, never while the
 app is closed. That keeps ahead/behind and `[gone]` honest without a scheduler, and
 it staggers naturally: people open their laptops at different moments, so there is
-no 9am stampede at the server. **Sync now** forces one.
+no 9am stampede at the server. A space's **Sync now** forces one; **Sync all**
+does every space in turn.
 
 **Hourly** adds a GitLab-only sync once an hour on top of the daily one (git
 fetch stays daily), and **Every 15 min** adds, between those, just what someone
@@ -403,7 +414,8 @@ window showing. One that comes due while you're away waits for you, then a
 random 0-5 minutes more (up to one for the quick check) so people arriving
 together don't sync together; one that fails pushes the next back, doubling up
 to four times as long. Each kind keeps its own "since", so a quick check never
-makes the hourly one skip anything. No polling loops, nothing overnight.
+makes the hourly one skip anything. No polling loops, nothing overnight. Spaces
+take turns, never two at once.
 
 A sync does two things:
 
@@ -417,13 +429,13 @@ A sync does two things:
   for its weight, epic and description, and its links for what blocks it.
 
 A sync asks only for **what changed since the last one**, and keeps the rest in
-`sync-cache.json`: events and merge requests since then; tickets in one call per
+the space's `sync-cache.json`: events and merge requests since then; tickets in one call per
 project, returning only those updated (a closed ticket is taken as final); links
 only for open tickets that changed or are already blocked, since a blocker
 closing doesn't touch its ticket; each epic at most once a day; each of your clones'
 projects once ever (its id never changes), and whether a project with an open
 merge request of yours is archived once a month -- archived ones are skipped. A typical sync is about five calls. **Full refresh**, beside
-Sync now in Settings, fetches everything again (a few dozen calls) -- it also
+each space's Sync now, fetches everything again (a few dozen calls) -- it also
 happens on its own only when there is no cache yet. It catches what an
 incremental sync can't see, like a deleted comment or a link removed without
 touching its ticket, so it's only worth pressing if something looks stale.
@@ -451,7 +463,7 @@ The merge-request call is what links an MR to its ticket: each comes back with
 its source branch, and `31-login-form-…` is #31 — exact, no matching on titles. Its
 number and state (draft, ready, merged, closed) apply to that ticket's thread at
 build time, dated with the sync, so the standup links MRs, *Needs review* fills
-itself, and quest-mode locks open when a blocker merges. Nothing is written back
+itself, and fantasy mode's locks open when a blocker merges. Nothing is written back
 to `worklog.json`; the sync's answer lives in `activity.json` and wins over an
 older recorded state.
 
@@ -491,10 +503,9 @@ front of the MR row:
 "weight": { "value": 3, "seenAt": "2026-10-14" }
 ```
 
-**These are never fetched.** They are written down when a `glab` call made for real
-work happened to reveal them — a side effect, never a call made to check. Stale by
-design, dated so you know it, and the standup box is editable for whatever is
-missing.
+Written this way they are never fetched: a session notes them when a `glab` call
+made for real work happened to reveal them, dated so you know how old they are.
+When you sync, the sync's own answer wins (see *Sync*).
 
 ---
 
@@ -503,7 +514,8 @@ missing.
 On launch, *"Previously, on Sam's work…"* holds for a few seconds under the title
 bar and fades out. The name comes from `git config user.name`, falling back to your
 macOS account name, and Settings takes an override — leave it blank to go back to
-git's answer.
+git's answer. The last word is the space's own (Settings → Projects): *work*,
+*personal*, *side job*.
 
 It plays once per launch, not once per render: the page reloads whenever the window
 or the popover opens, and a card that replayed every time would be a tic.
@@ -551,14 +563,14 @@ and the ranger's feather take an accent chosen to go with the colour rather than
 repeat it, so a red cap wears a gold feather. Each race remembers its coat and
 each class its colour. Kept per window, like the theme.
 
-**Halloween** (Settings → Extras → Halloween) swaps the class and colour for a
+**Halloween** (Settings → Extras → Overlay → Halloween) swaps the class and colour for a
 costume: a ghost sheet, a pumpkin head, a hockey mask, skeleton face paint, a
 vampire cape or a witch's hat. Each is one drawing for every animal; masks have
 eye holes, so the animal's own eyes -- and its moods -- show through. Turning it
 off brings back the class you had. In fantasy mode it goes further -- see
 *Halloween in fantasy mode* below.
 
-**Día de los Muertos** (Settings → Extras → Día de los Muertos) dresses it in a look
+**Día de los Muertos** (Settings → Extras → Overlay → Día de los Muertos) dresses it in a look
 instead: La Catrina's plumed hat and ruffled dress, El Catrín's top hat and suit,
 a crown of roses and marigolds with a rebozo, or a flowered fedora and waistcoat.
 Its face is painted as a sugar skull -- bone white, its features black, petals
@@ -579,6 +591,15 @@ cloak hangs from -- so a new costume works on all of them at once.
 
 ## Files
 
+Your own files and the generated ones are each space's, in `spaces/<space>/`;
+the rest sit beside the code. None of them are tracked by git.
+
+| | |
+|---|---|
+| `spaces.json` | The spaces: each one's name, title-card word and folders, which one is showing, and the companion and menu-bar choices. Written by Settings → Projects. |
+| `settings.json` | The app's settings -- theme, markers, terminal, standup weight. Each space has its own too, holding only when it syncs. |
+| `ledger.json` | Every commit counted toward the hoard, by hash. One beside the code when the companion is shared, else one per space. |
+
 **Edit these.**
 
 | | |
@@ -597,9 +618,10 @@ cloak hangs from -- so a new costume works on all of them at once.
 | `summary.json` | Compact feed for the menu bar. |
 | `resolved.json` | The narrative with completion filled in. What `show.sh` reads. |
 | `build.log` | Stderr from the last build. Empty means clean. |
-| `projects-cache.json` | The GitLab project list, kept a week so most syncs skip that call. |
 | `standup.json` | The standup on its own, handed to an open standup window after a rebuild. |
 | `activity.json` | Comments, approvals and your MRs from the last sync. Rewritten whole; never edit. |
+| `sync-cache.json` | What the last sync kept, so the next asks only for what changed. |
+| `feeds.json` | What fed the companion in this space, for a shared companion to eat from every space. |
 | `git-cache.json` | The last git walk. Task and notes saves rebuild from it (`refresh.sh --cached`) in a tenth of a second instead of re-reading every repo. |
 
 **Source.**
@@ -635,8 +657,8 @@ cloak hangs from -- so a new costume works on all of them at once.
 
 | | |
 |---|---|
-| `refresh.sh` | Rebuild the page. Silent on success. Run by the app on every open. |
-| `journal.sh` | Snapshots your narrative, tasks, notes, links and commit ledger into the private `.journal/` history when they change. |
+| `refresh.sh` | Rebuild the current space's page (`PREVIOUSLY_SPACE` names another, `--all` does every space). Silent on success. Run by the app on every open. |
+| `journal.sh` | Snapshots your narrative, tasks, notes, links and commit ledger into the space's private `.journal/` history when they change. |
 | `edit.mjs`, `edit.sh` | Apply one edit made in the app to `worklog.json`. |
 | `env.sh` | Puts back the PATH the app lacks (Homebrew, nvm, fnm, Volta, asdf). Sourced by the others. |
 | `show.sh` | The terminal view. |
@@ -644,10 +666,10 @@ cloak hangs from -- so a new costume works on all of them at once.
 | `install.sh` | One-time setup: checks what's needed, builds the app, opens it. |
 | `claude-section.md` | The Claude Code conventions, ready to paste into your `CLAUDE.md`. |
 | `markers.mjs` | What lights a marker and in what colour: the triggers, defaults, and a saved layout. |
-| `make.sh` | Recompile the Swift app after editing `src/main.swift`. |
+| `make.sh` | Build the app into `~/Applications` after editing `src/main.swift`. |
 | `sync.sh` | Everything a sync does. Run by the app, never on its own. |
-| `fetch.sh` | `git fetch --prune` across the repos. |
-| `gitlab.sh` | Finds your GitLab host and a clone to call it from, then runs `gitlab-sync.mjs` -- the only file here that talks to the GitLab API. |
+| `fetch.sh` | `git fetch --prune` across a space's repos. |
+| `gitlab.sh` | Finds a space's GitLab host and a clone to call it from, then runs `gitlab-sync.mjs` -- the only file here that talks to the GitLab API. |
 | `tools/makeicon.swift` | Draws the app icon. |
 
 
@@ -657,17 +679,18 @@ cloak hangs from -- so a new costume works on all of them at once.
 
 Half this page is written by Claude. For that to keep happening it has to know the
 conventions, and memory is scoped to the directory a session starts in — a session
-opened inside a repo will not have read any of it. So the contract lives in
-**`~/Projects/CLAUDE.md`**, which loads from the working directory *and its
-parents*, and therefore reaches every session under `~/Projects`.
+opened inside a repo will not have read any of it. So the contract lives in a
+**`CLAUDE.md` in the folder that holds your repos** -- `~/Projects/CLAUDE.md`, say
+-- which loads from the working directory *and its parents*, and so reaches every
+session started under it. If your spaces' folders are in different places, give
+each its own copy, or put it in `~/.claude/CLAUDE.md`, which every session reads.
 
 `install.sh` offers to add it for you; the text is in `claude-section.md`.
 It says, in short:
 
 | | |
 |---|---|
-| `worklog.json` | Claude's. Updated at checkpoints — after a push, when a branch or ticket changes, when work is parked. |
-| `ledger.json` | Yours. Every commit counted toward the hoard, by hash, so the count never drops. Untracked; snapshotted by `journal.sh`. |
+| `worklog.json` | Claude's -- the one in the repo's own space (`node previously/spaces.mjs which <repo>` finds it). Updated at checkpoints — after a push, when a branch or ticket changes, when work is parked. |
 | `notes.md`, `tasks.json` | Yours. Claude reads `notes.md` at session start and never overwrites either. |
 | Scope lines | Ticked only by `done.sh`, which writes a git note. Never by editing the file. |
 | Source tags | Every narrative entry is `{ text, src }` — `ticket`, `git`, `mr`, or `read`. |
@@ -689,7 +712,7 @@ page, standup and companion all work with no model involved.
 
 ## Fantasy mode (optional, off by default)
 
-Settings → Extras → **Fantasy mode** turns the thread tabs into a small game.
+Settings → Extras → Overlay → **Fantasy** turns the thread tabs into a small game.
 
 - **Locks.** A ticket blocked by another is wrapped in chains with a padlock
   until the blocker's MRs are seen merged or closed. Blockers are gathered from
@@ -733,7 +756,8 @@ Settings → Extras → **Fantasy mode** turns the thread tabs into a small game
 - **The companion in costume.** With the companion on too, it is drawn as pixel
   art in the class you built, and its moods read as HP: a bar under it drains
   green to red, and a small effect floats beside it (sparkles when fed, a sweat
-  drop when hungry, a skull when it has not eaten in days). The bar replaces
+  drop when hungry, a skull when it has not eaten in days -- marigolds and a sugar
+  skull during Día de los Muertos). The bar replaces
   the *N feeds today* line.
 
 `quest.js`, `quest.css` and `quest-defs.svg` are plain files read at build time.
@@ -744,7 +768,7 @@ Settings → Extras → **Fantasy mode** turns the thread tabs into a small game
 **The hoard.** Beside the companion, a count of every commit you have made since
 you started using the app (merges and the dashboard's own repo left out). It never
 resets: each commit is remembered by hash in `ledger.json`, so a branch deleted
-after a squash merge takes nothing away. Normally it is a quiet number; in quest
+after a squash merge takes nothing away. Normally it is a quiet number; in fantasy
 mode it is treasure that grows -- a coin, then two at 25, a stack at 50, piles at
 75 and 100, gems from 150, a crown at 500, an overflowing chest at 700 and a
 dragon's hoard at 1000, where it stops. Hover it for the next step.
@@ -886,8 +910,11 @@ Scope lines in `worklog.json` carry a stable `id`:
 A line is checked only when a commit on the branch claims that id:
 
 ```sh
-sh ~/Projects/previously/done.sh web-app url-routing
+sh previously/done.sh web-app url-routing
 ```
+
+The repo is named as the sidebar shows it, in whichever space has it, or given as
+a path.
 
 That writes a note on `refs/notes/worklog` — **not** in the commit message, so
 GitLab history stays readable, and the ref is never pushed. The page reads the
@@ -907,22 +934,25 @@ Two consequences worth knowing:
 ## Rebuilding
 
 ```sh
-sh ~/Projects/previously/refresh.sh            # page only
-sh ~/Projects/previously/refresh.sh --cached   # page only, reusing the last git walk
-sh ~/Projects/previously/make.sh      # after editing src/main.swift
+sh previously/refresh.sh            # the current space's page
+sh previously/refresh.sh --all      # every space's
+sh previously/refresh.sh --cached   # reusing the last git walk
+PREVIOUSLY_SPACE=personal sh previously/refresh.sh   # one space by id
+sh previously/make.sh               # after editing src/main.swift
 ```
 
-`make.sh` writes into the running app bundle, so quit the app before relaunching —
-`open` on a running app just brings the old binary forward.
+`make.sh` builds into `~/Applications/Previously.app`, over the running app, so
+quit it before relaunching — `open` on a running app just brings the old binary
+forward.
 
 ---
 
 ## What it will never do
 
-- Contact GitLab on its own. Every number comes from clones on disk, and MR state
-  appears only when Claude ran `glab` for actual work and wrote what it saw. The one
-  exception is opt-in: **Settings → General**, below.
-- Run in the background. No daemon, no cron, no timer. Closed laptop, nothing happens.
+- Contact GitLab unless you ask it to. Everything else comes from clones on disk;
+  syncing is opt-in, per space, in **Settings → Projects** (see *Sync*).
+- Run in the background. No daemon, no cron; with the app closed, the laptop shut
+  or you away, nothing happens.
 - Cost tokens to display. The app is a Swift binary and a node script; no model is
   involved in showing you the page.
 

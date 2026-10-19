@@ -1,11 +1,13 @@
 #!/bin/sh
 # Sets Previously up on this Mac, or updates it: puts it in the folder that holds
-# your repos, checks what it needs, builds the app beside it, and opens it.
+# your repos (your first space), checks what it needs, builds the app into
+# ~/Applications, and opens it.
 #
 #   sh previously/install.sh      (from wherever you unzipped or cloned it)
 #
 # Updating from a newer copy replaces the code and keeps your own files --
-# worklog, tasks, notes, settings and the rest the .gitignore lists.
+# each space's worklog, tasks and notes, your settings and the rest the
+# .gitignore lists.
 set -e
 HERE=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 say() { printf '%s\n' "$*"; }
@@ -77,3 +79,4 @@ fi
 
 open "$HOME/Applications/Previously.app"
 say "Done. Previously is open; it's in your Applications folder (~/Applications)."
+say "Repos somewhere else, or a separate set like personal projects? Add them in Settings -> Projects."
