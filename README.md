@@ -595,14 +595,14 @@ and the ranger's feather take an accent chosen to go with the colour rather than
 repeat it, so a red cap wears a gold feather. Each race remembers its coat and
 each class its colour. Kept per window, like the theme.
 
-**Halloween** (Settings → Extras → Overlay → Halloween) swaps the class and colour for a
+**Halloween** (Settings → Extras → Quest mode on, Theme → Halloween) swaps the class and colour for a
 costume: a ghost sheet, a pumpkin head, a hockey mask, skeleton face paint, a
 vampire cape or a witch's hat. Each is one drawing for every animal; masks have
 eye holes, so the animal's own eyes -- and its moods -- show through. Turning it
 off brings back the class you had. In fantasy mode it goes further -- see
 *Halloween in fantasy mode* below.
 
-**Día de los Muertos** (Settings → Extras → Overlay → Día de los Muertos) dresses it in a look
+**Día de los Muertos** (Settings → Extras → Quest mode on, Theme → Día de los Muertos) dresses it in a look
 instead: La Catrina's plumed hat and ruffled dress, El Catrín's top hat and suit,
 a crown of roses and marigolds with a rebozo, or a flowered fedora and waistcoat.
 Its face is painted as a sugar skull -- bone white, its features black, petals
@@ -785,7 +785,7 @@ page, standup and companion all work with no model involved.
 
 ## Fantasy mode (optional, off by default)
 
-Settings → Extras → Overlay → **Fantasy** turns the thread tabs into a small game.
+Settings → Extras → **Quest mode** turns the thread tabs into a small game, dressed by its **Theme**: Fantasy, Halloween or Día de los Muertos.
 
 - **Locks.** A ticket blocked by another is wrapped in chains with a padlock
   until the blocker's MRs are seen merged or closed. Blockers are gathered from

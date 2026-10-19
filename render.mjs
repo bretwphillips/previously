@@ -1007,9 +1007,13 @@ function settingsPane(userName, weightLimit = 5, terminals = [], update = null, 
         <div class="builder">
           <div class="builder-rows">
             ${row(
-              "Overlay",
+              "Quest mode",
+              `<div class="themes" id="quest-mode"><button data-qmode="off">Off</button><button data-qmode="on">On</button></div>`,
+              "Your work as a quest: locks and keys on blocked tickets, monsters for their weight, a road through your commits.",
+            )}
+            ${row(
+              "Theme",
               `<div class="themes" id="overlay-choice">
-                <button data-overlay="none">None</button>
                 <button data-overlay="quest">Fantasy</button>
                 <button data-overlay="halloween">Halloween</button>
                 <button data-overlay="muertos">Día de los Muertos</button>
