@@ -150,7 +150,7 @@ tasks go with it.
 - Footprints 👣 mark where your last three commits went (any branch), fainter for
   each older one; all three in one repo is a single mark. With the companion on they
   are its prints -- paws for a cat or pug, webbed feet for a frog. In fantasy mode the newest is a tent and the earlier ones fading dots,
-  joined by a faint map road. The dashboard's own repo is never marked.
+  joined by a faint map road.
 - The Overview's and each repo's sections fold the same way: click **Good to
   know**, **Notes** (or any heading) to put it away. A folded section shows its
   count and stays folded until you open it again. Repo sections fold by kind,
@@ -766,7 +766,7 @@ Settings → Extras → Overlay → **Fantasy** turns the thread tabs into a sma
 
 
 **The hoard.** Beside the companion, a count of every commit you have made since
-you started using the app (merges and the dashboard's own repo left out). It never
+you started using the app (merges left out). It never
 resets: each commit is remembered by hash in `ledger.json`, so a branch deleted
 after a squash merge takes nothing away. Normally it is a quiet number; in fantasy
 mode it is treasure that grows -- a coin, then two at 25, a stack at 50, piles at

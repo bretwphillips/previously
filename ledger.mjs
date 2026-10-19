@@ -1,7 +1,7 @@
 // Every commit you have made since you started using the app, remembered by
 // hash so the count only ever grows: a branch deleted after a squash merge
 // takes its commits out of git, but not out of here. Merges are left out --
-// bringing master in is not work -- and so is the dashboard's own repo.
+// bringing master in is not work.
 import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -22,19 +22,15 @@ export function readLedger(file) {
   }
 }
 
-// paths: the repos to count; self: this app's own folder, which never counts.
-export function updateLedger(file, paths, self, author) {
-  const ledger = readLedger(file) ?? {
-    // The app's first day: its own first commit, or today on a fresh copy.
-    since: Number(quietly(self, ["log", "--reverse", "--format=%ct"]).split("\n")[0]) ||
-      Math.floor(Date.now() / 1000),
-    seen: [],
-  };
+// paths: the repos to count.
+export function updateLedger(file, paths, author) {
+  // Counting starts the day the hoard does, not with the repos' pasts.
+  const ledger = readLedger(file) ?? { since: Math.floor(Date.now() / 1000), seen: [] };
   if (!author) return ledger;
   const seen = new Set(ledger.seen);
   const before = seen.size;
   for (const path of paths) {
-    if (path === self || !existsSync(join(path, ".git"))) continue;
+    if (!existsSync(join(path, ".git"))) continue;
     const hashes = quietly(path, [
       "log", "--all", "--no-merges", `--author=${author}`, `--since=${ledger.since}`, "--format=%H",
     ]);

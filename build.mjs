@@ -245,12 +245,9 @@ const repos = await Promise.all(
 );
 
 // Your last three commits, wherever they landed: each project they touch gets a
-// trail mark, fainter the older. The dashboard's own repo is left out -- working
-// on the dashboard is not where you were.
+// trail mark, fainter the older.
 {
-  const self = repoList.find((r) => r.path === CODE)?.name;
   const steps = repos
-    .filter((r) => r.name !== self)
     .flatMap((r) => (r.recentYours ?? (r.lastCommitAt ? [r.lastCommitAt] : [])).map((at) => ({ at, name: r.name })))
     .sort((a, b) => b.at - a.at)
     .slice(0, 3);
@@ -407,7 +404,7 @@ const shared = space.config.companion === "shared";
 const ledgerFile = shared ? join(CODE, "ledger.json") : join(here, "ledger.json");
 const ledger = cached
   ? readLedger(ledgerFile)
-  : updateLedger(ledgerFile, repoList.map((r) => r.path), CODE, author);
+  : updateLedger(ledgerFile, repoList.map((r) => r.path), author);
 const tally = ledger ? { count: ledger.seen.length, since: ledger.since } : null;
 
 const now = new Date();
