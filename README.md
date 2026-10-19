@@ -64,10 +64,19 @@ their own copy, built from their own folder. It also offers to add the Claude Co
 Repos in other folders, or a second set like personal projects, go in spaces of
 their own: Settings → Projects (see *Spaces* under *Using it*).
 
-**Updating:** run `install.sh` from the newer copy the same way. It replaces the
-code and keeps your own files (each space's worklog, tasks and notes, and your settings).
-From a git clone, `git pull` in the `previously` folder and then `sh make.sh`
-there does the same.
+**Updating:** once a day, when the window opens, Previously asks GitHub whether
+there's a newer release. When there is, a dot appears on the gear and
+**Settings → General** shows what's new, with **Update** and **Skip this version**.
+Update moves the folder to the new release with git, rebuilds the app and opens
+it again; each space's worklog, tasks and notes and your settings are never
+touched. If you changed a file the release changes too, or your own commits clash
+with it, nothing is changed and Settings says which file. A copy installed from a
+zip becomes a git clone on its first update. A clone on a branch other than
+`main` is left for you to update with git. **Check daily / Off** is beside it,
+and `sh update.sh check` or `sh update.sh install` does the same from a terminal.
+
+Running `install.sh` from a newer copy still works too: it replaces the code and
+keeps your own files.
 
 Optional, for Sync: `glab` (`glab auth login`) for repos on GitLab, `gh`
 (`gh auth login`) for repos on GitHub -- whichever your repos use. Each repo is
@@ -621,6 +630,7 @@ the rest sit beside the code. None of them are tracked by git.
 |---|---|
 | `spaces.json` | The spaces: each one's name, title-card word and folders, which one is showing, and the companion and menu-bar choices. Written by Settings → Projects. |
 | `settings.json` | The app's settings -- theme, markers, terminal, standup weight. Each space has its own too, holding only when it syncs. |
+| `update.json` | The last update check: the latest release and its notes, and why the last update stopped, if it did. |
 | `ledger.json` | Every commit counted toward the hoard, by hash. One beside the code when the companion is shared, else one per space. |
 
 **Edit these.**
@@ -690,6 +700,8 @@ the rest sit beside the code. None of them are tracked by git.
 | `show.sh` | The terminal view. |
 | `done.sh` | Record that HEAD finished one or more scope lines. |
 | `install.sh` | One-time setup: checks what's needed, builds the app, opens it. |
+| `update.mjs`, `update.sh` | The update check (GitHub's latest release, into `update.json`) and installing it: a git fast-forward to its tag, then `make.sh`. |
+| `VERSION` | This copy's version, compared with the latest release. |
 | `claude-section.md` | The Claude Code conventions, ready to paste into your `CLAUDE.md`. |
 | `markers.mjs` | What lights a marker and in what colour: the triggers, defaults, and a saved layout. |
 | `make.sh` | Build the app into `~/Applications` after editing `src/main.swift`. |
@@ -976,10 +988,19 @@ forward.
 
 ---
 
+## Making a release
+
+Set `VERSION` to the new number and commit it on `main`, tag that commit with the
+same number and a `v` (`v1.2.0`), push both, and publish a GitHub release from the
+tag; its description is what Settings shows as what's new. The tag has to match
+`VERSION`: a copy from a zip finds the release it came from by that tag.
+
 ## What it will never do
 
-- Contact GitLab or GitHub unless you ask it to. Everything else comes from clones on disk;
-  syncing is opt-in, per space, in **Settings → Projects** (see *Sync*).
+- Contact GitLab or GitHub unless you ask it to, apart from asking GitHub once a
+  day for Previously's own latest release (off in **Settings → General**). Everything
+  else comes from clones on disk; syncing is opt-in, per space, in
+  **Settings → Projects** (see *Sync*).
 - Run in the background. No daemon, no cron; with the app closed, the laptop shut
   or you away, nothing happens.
 - Cost tokens to display. The app is a Swift binary and a node script; no model is

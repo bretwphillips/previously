@@ -82,7 +82,9 @@ export async function check() {
           publishedAt: release.published_at ?? null,
         }
       : null;
-    save({ checkedAt, latest, checkError: null });
+    // A failed update's note goes once there is nothing newer to install.
+    const stale = !latest || !isNewer(latest.version, currentVersion());
+    save({ checkedAt, latest, checkError: null, ...(stale ? { problem: null } : {}) });
     return latest;
   } catch (e) {
     save({ checkedAt, checkError: String(e.message ?? e) });
