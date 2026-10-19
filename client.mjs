@@ -1140,6 +1140,8 @@ document.addEventListener('DOMContentLoaded', function () {
     function prompt(now) {
       if (!ask) return;
       asking = now;
+      // Asked once: left unanswered, it counts as Not now.
+      store.set('worklog.holidayAnswered', now.key);
       document.getElementById('holiday-ask-text').textContent =
         now.h.name + ' is coming up. Switch quest mode to its theme until it\u2019s over?';
       ask.hidden = false;
