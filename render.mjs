@@ -15,6 +15,7 @@ import { HOARD, HOARD_PALETTE } from "./hoard.mjs";
 import { CANDY, pile, HOUSES, HOUSE_COLOURS, POTION_CSS } from "./halloween.mjs";
 import { issueUrl, mrUrl, branchUrl, isGitHub } from "./hosts.mjs";
 import { OFRENDA, ofrendaArt, DOTD_STOPS, PAPEL_PICADO, MUERTOS_CSS } from "./muertos.mjs";
+import { COBWEB, COBWEB_CSS } from "./cobweb.mjs";
 import { TRIGGERS, COLOURS, DEFAULT_MARKERS, readMarkers, triggerOf } from "./markers.mjs";
 import { textArts } from "./pet.mjs";
 import { HOLIDAYS } from "./holidays.mjs";
@@ -1106,11 +1107,12 @@ export function renderPage(data) {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Previously</title>
 <style>${CSS}</style>
-<style>${QUEST_CSS}${POTION_CSS}${MUERTOS_CSS}</style>
+<style>${QUEST_CSS}${POTION_CSS}${MUERTOS_CSS}${COBWEB_CSS}</style>
 </head>
 <body>
 <div class="top">
   ${PAPEL_PICADO}
+  ${COBWEB}
   <span class="lede" id="lede">
     <span class="stamp">${esc(data.generatedAt)}</span>
     <span class="recap" data-name="${esc(data.userName ?? "")}" data-word="${esc(
