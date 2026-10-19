@@ -1024,13 +1024,15 @@ function settingsPane(userName, weightLimit = 5, terminals = [], update = null, 
             ${row(
               "Holidays",
               `<div class="themes" id="holiday-choice"><button data-holidays="off">Off</button><button data-holidays="ask">Ask</button><button data-holidays="auto">Switch</button></div>
-              <div class="holiday-skip" id="holiday-skip">${HOLIDAYS.map(
-                (h) => `<label><input type="checkbox" data-skip="${esc(h.id)}"> Skip ${esc(h.name)}</label>`,
-              ).join("")}</div>
+              <details class="holiday-pick"><summary><span id="holiday-count"></span> \u00b7 <span class="choose">Choose</span></summary>
+                <div class="holiday-skip" id="holiday-skip">${HOLIDAYS.map(
+                  (h) => `<label><input type="checkbox" data-skip="${esc(h.id)}"> ${esc(h.name)}</label>`,
+                ).join("")}</div>
+              </details>
               ${about(
                 "Your theme follows the calendar near a holiday, then goes back to your own.",
                 `<p><b>When.</b> A big holiday takes its whole month (Halloween: October). A smaller one starts the Monday two weeks before, or when a bigger holiday it overlaps is over (D\u00eda de los Muertos: November 1\u20132, after Halloween) -- unless you turned that one down, when it gets its two weeks after all. When one ends, a holiday that follows straight on takes over; otherwise the theme goes back to the one you had.</p>
-                <p><b>Switch</b> changes the theme on its own; <b>Ask</b> asks first (<b>Don\u2019t ask again</b> there turns this Off). Choosing a theme yourself during a holiday keeps your choice. Skip the holidays you don\u2019t celebrate.</p>`,
+                <p><b>Switch</b> changes the theme on its own; <b>Ask</b> asks first (<b>Don\u2019t ask again</b> there turns this Off). Choosing a theme yourself during a holiday keeps your choice. Under <b>Choose</b>, untick the holidays you don\u2019t celebrate.</p>`,
               )}`,
             )}
             ${row(

@@ -1194,7 +1194,12 @@ document.addEventListener('DOMContentLoaded', function () {
         b.setAttribute('aria-pressed', String(b.dataset.holidays === mode()));
       });
       var skip = skipped();
-      sheet.querySelectorAll('#holiday-skip input').forEach(function (box) { box.checked = skip.indexOf(box.dataset.skip) >= 0; });
+      // Ticked: a holiday you celebrate. Kept as the list of the ones you don't.
+      var boxes = sheet.querySelectorAll('#holiday-skip input');
+      boxes.forEach(function (box) { box.checked = skip.indexOf(box.dataset.skip) < 0; });
+      var kept = LIST.length - skip.filter(function (id) { return byId(id); }).length;
+      var count = sheet.querySelector('#holiday-count');
+      if (count) count.textContent = (kept === LIST.length ? 'All ' + kept : kept + ' of ' + LIST.length) + ' celebrated';
     }
     sheet.querySelectorAll('#holiday-choice button').forEach(function (b) {
       b.addEventListener('click', function () {
@@ -1208,8 +1213,9 @@ document.addEventListener('DOMContentLoaded', function () {
     sheet.querySelectorAll('#holiday-skip input').forEach(function (box) {
       box.addEventListener('change', function () {
         var skip = skipped().filter(function (id) { return id !== box.dataset.skip; });
-        if (box.checked) skip.push(box.dataset.skip);
+        if (!box.checked) skip.push(box.dataset.skip);
         store.set('worklog.holidaySkip', skip.join(','));
+        paintHolidays();
         check(new Date());
       });
     });

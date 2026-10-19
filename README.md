@@ -795,8 +795,8 @@ whole month (Halloween: October); a smaller one starts the Monday two weeks befo
 or once a bigger one it overlaps is over (Día de los Muertos: November 1–2) --
 unless you turned that one down, when it gets its two weeks after all. One
 that follows straight on takes over; otherwise your own theme comes back. Picking
-a theme yourself always wins, and **Skip** leaves out the holidays you don't
-celebrate. The list is `holidays.mjs`: a new holiday is one line once its theme exists.
+a theme yourself always wins, and under **Choose** you untick the holidays you
+don't celebrate. The list is `holidays.mjs`: a new holiday is one line once its theme exists.
 
 - **Locks.** A ticket blocked by another is wrapped in chains with a padlock
   until the blocker's MRs are seen merged or closed. Blockers are gathered from

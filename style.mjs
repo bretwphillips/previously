@@ -439,7 +439,13 @@ body.quest .thread-tabs .mark { display: none; }
                box-shadow: 0 10px 30px rgba(0,0,0,0.18); font-size: 13px; }
 .holiday-ask p { margin: 0 0 10px; }
 .holiday-ask p:last-child { margin: 0; }
-.holiday-skip { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 8px 0 0; font-size: 13px; }
+.holiday-pick { margin: 8px 0 0; font-size: 13px; }
+.holiday-pick summary { cursor: pointer; list-style: none; color: var(--muted); }
+.holiday-pick summary::-webkit-details-marker { display: none; }
+.holiday-pick summary .choose { color: var(--waiting); }
+.holiday-pick[open] summary .choose { color: var(--muted); }
+.holiday-skip { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 4px 16px; margin: 8px 0 0;
+                padding: 8px 12px; border-left: 2px solid var(--line); max-width: 560px; }
 .holiday-skip label { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
 .ai-notes { display: block; width: 560px; max-width: 100%; box-sizing: border-box; padding: 8px 10px; resize: vertical;
             font: 13px/1.5 var(--sans); color: var(--ink); background: var(--panel);
