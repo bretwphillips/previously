@@ -1029,7 +1029,7 @@ function settingsPane(userName, weightLimit = 5, terminals = [], update = null, 
               ).join("")}</div>
               ${about(
                 "Your theme follows the calendar near a holiday, then goes back to your own.",
-                `<p><b>When.</b> A big holiday takes its whole month (Halloween: October). A smaller one starts the Monday two weeks before, or when a bigger holiday it overlaps is over (D\u00eda de los Muertos: November 1\u20132, after Halloween). When one ends, a holiday that follows straight on takes over; otherwise the theme goes back to the one you had.</p>
+                `<p><b>When.</b> A big holiday takes its whole month (Halloween: October). A smaller one starts the Monday two weeks before, or when a bigger holiday it overlaps is over (D\u00eda de los Muertos: November 1\u20132, after Halloween) -- unless you turned that one down, when it gets its two weeks after all. When one ends, a holiday that follows straight on takes over; otherwise the theme goes back to the one you had.</p>
                 <p><b>Switch</b> changes the theme on its own; <b>Ask</b> asks first (<b>Don\u2019t ask again</b> there turns this Off). Choosing a theme yourself during a holiday keeps your choice. Skip the holidays you don\u2019t celebrate.</p>`,
               )}`,
             )}

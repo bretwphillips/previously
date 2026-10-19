@@ -1085,13 +1085,20 @@ document.addEventListener('DOMContentLoaded', function () {
        worklog.holidaySkip     ids you don't celebrate, comma-separated
        worklog.holidayOn       the holiday (id:year) the theme was switched for
        worklog.holidayBefore   the theme before it
-       worklog.holidayAnswered the holiday (id:year) last answered, so it isn't asked twice */
+       worklog.holidayAnswered the holiday (id:year) last asked about, so it isn't asked twice
+       worklog.holidayDeclined holidays (id:year) turned down -- skipped for that year */
   var holidays = (function () {
     var LIST = JSON.parse(document.getElementById('holidays-data').textContent);
     var DAY = 86400000;
     var byId = function (id) { return LIST.filter(function (h) { return h.id === id; })[0]; };
     var skipped = function () { return store.get('worklog.holidaySkip', '').split(',').filter(Boolean); };
     var mode = function () { return store.get('worklog.holidays', 'ask'); };
+    var declined = function () { return store.get('worklog.holidayDeclined', '').split(',').filter(Boolean); };
+    function decline(key, yes) {
+      var keep = declined().filter(function (k) { return k !== key && k.split(':')[1] >= String(new Date().getFullYear() - 1); });
+      if (!yes) keep.push(key);
+      store.set('worklog.holidayDeclined', keep.join(','));
+    }
 
     // [start, end] of a holiday in a year, as midnight dates; end is inclusive.
     function windowOf(h, year) {
@@ -1100,8 +1107,8 @@ document.addEventListener('DOMContentLoaded', function () {
       var start = new Date(day.getTime() - 14 * DAY);
       start = new Date(start.getFullYear(), start.getMonth(), start.getDate() - ((start.getDay() + 6) % 7));
       var end = h.end ? new Date(year, h.end[0] - 1, h.end[1]) : day;
-      // Only a bigger holiday you keep pushes this one back.
-      var bigger = h.after && skipped().indexOf(h.after) < 0 && byId(h.after);
+      // Only a bigger holiday you keep -- not skipped, not turned down that year -- pushes this one back.
+      var bigger = h.after && skipped().indexOf(h.after) < 0 && declined().indexOf(h.after + ':' + year) < 0 && byId(h.after);
       if (bigger) {
         var over = windowOf(bigger, year)[1];
         if (start <= over) start = new Date(over.getFullYear(), over.getMonth(), over.getDate() + 1);
@@ -1115,6 +1122,7 @@ document.addEventListener('DOMContentLoaded', function () {
       for (var i = 0; i < LIST.length; i++) {
         if (skip.indexOf(LIST[i].id) >= 0) continue;
         for (var y = day.getFullYear() - 1; y <= day.getFullYear() + 1; y++) {
+          if (declined().indexOf(LIST[i].id + ':' + y) >= 0) continue;
           var w = windowOf(LIST[i], y);
           if (day >= w[0] && day <= w[1]) return { h: LIST[i], key: LIST[i].id + ':' + y };
         }
@@ -1142,6 +1150,7 @@ document.addEventListener('DOMContentLoaded', function () {
       asking = now;
       // Asked once: left unanswered, it counts as Not now.
       store.set('worklog.holidayAnswered', now.key);
+      decline(now.key);
       document.getElementById('holiday-ask-text').textContent =
         now.h.name + ' is coming up. Switch quest mode to its theme until it\u2019s over?';
       ask.hidden = false;
@@ -1150,10 +1159,12 @@ document.addEventListener('DOMContentLoaded', function () {
       var b = e.target.closest('[data-answer]');
       if (!b || !asking) return;
       store.set('worklog.holidayAnswered', asking.key);
-      if (b.dataset.answer === 'yes') wear(asking);
+      if (b.dataset.answer === 'yes') { decline(asking.key, true); wear(asking); }
       if (b.dataset.answer === 'never') { store.set('worklog.holidays', 'off'); paintHolidays(); }
       ask.hidden = true;
       asking = null;
+      // Not now: a smaller holiday it was holding back may be due already.
+      if (b.dataset.answer === 'no') check(new Date());
     });
 
     function check(today) {

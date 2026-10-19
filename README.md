@@ -792,7 +792,8 @@ Settings → Extras → **Quest mode** turns the thread tabs into a small game, 
 it when a holiday is near and back afterwards; **Ask** asks first, with **Switch**,
 **Not now** and **Don't ask again** (which turns this Off). A big holiday takes its
 whole month (Halloween: October); a smaller one starts the Monday two weeks before,
-or once a bigger one it overlaps is over (Día de los Muertos: November 1–2). One
+or once a bigger one it overlaps is over (Día de los Muertos: November 1–2) --
+unless you turned that one down, when it gets its two weeks after all. One
 that follows straight on takes over; otherwise your own theme comes back. Picking
 a theme yourself always wins, and **Skip** leaves out the holidays you don't
 celebrate. The list is `holidays.mjs`: a new holiday is one line once its theme exists.
