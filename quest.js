@@ -573,6 +573,9 @@ function sprite(v, px) {
     // A letter with no colour is empty, as the Settings preview draws it -- not black.
     if (c === '.' || !v.pal[c]) continue;
     var inBar = y >= h - BAR, cell = el('rect', { x: x, y: inBar ? y - (h - BAR) : y + BAR + 1, width: 1, height: 1, fill: v.pal[c] });
+    // the health spilling past the bar's end swells outward from the end, staying joined to it, and brightens
+    if (inBar && (c === 'J' || c === 'I')) cell.setAttribute('class', 'swell surge');
+    if (inBar && c === 'z') { cell.setAttribute('class', 'spark'); cell.style.animationDelay = ((x * 0.37 + y * 0.21) % 1.2).toFixed(2) + 's'; }
     (inBar ? bar : body).appendChild(cell); } });
   svg.appendChild(body); svg.appendChild(bar);
   (v.fx || []).forEach(function (f, i) {

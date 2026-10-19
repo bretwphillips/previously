@@ -522,13 +522,13 @@ const FX = {
   hungry: [["bigdrop", 17, 4]],
   sad: [["skull", 18, 4]],
 };
-// Full at "full health"; past it, on a roll, the bar overflows gold with a glint.
+// Full at "full health"; past it, on a roll, the health breaks the bar (drawn in companion()).
 // It drains from the right, as game health bars do.
 const BAR = {
   dancing: "..oluuuluuuuluo..", happy: "..ogggggggggggo..", content: "..oggggggggvvvo..",
   peckish: "..oyyyyyvvvvvvo..", hungry: "..orrrvvvvvvvvo..", sad: "..orvvvvvvvvvvo..",
 };
-const BAR_PAL = { g: "#4caf50", y: "#f2c94c", r: "#e5383b", v: "#efe9df", o: "#3a2a1a", u: "#e8b021", l: "#fff3b0" };
+const BAR_PAL = { g: "#4caf50", y: "#f2c94c", r: "#e5383b", v: "#efe9df", o: "#3a2a1a", u: "#e8b021", l: "#fff3b0", f: "#9a6a1c", J: "var(--hp-spill, #ecaa1e)", I: "var(--hp-tip, #e8941c)", z: "var(--hp-spark, #e8901a)" };
 
 // { rows, pal, fx } for the sidebar: the picked animal, coat, class and colour.
 function companion(pick, mood) {
@@ -540,7 +540,12 @@ function companion(pick, mood) {
   const pal = spooky ? { ...dressed, ...dressUp(grid, pick.race, mood, spooky) } : dressed;
   const rows = grid.slice(CROP).map((r) => r.join(""));
   const pad = ".".repeat((W - 17) / 2);
-  rows.push(".".repeat(W), pad + "..ooooooooooooo.." + pad, pad + (BAR[mood] || BAR.content) + pad, pad + "..ooooooooooooo.." + pad);
+  // On a roll the health overruns the bar: the frame whole, the gold running over its
+  // end (f, gold over the frame's darker end) and out past it (J and I surge), sparks
+  // spitting from the end (z). Letters no animal or costume uses: BAR_PAL is laid over them all.
+  if (mood === "dancing") rows.push(...(W === 21 ? [".................z.z.", "....ooooooooooooo....", "....ouuuuuuuuuuufJI.z", "....ooooooooooooo..z."]
+    : [".".repeat(W), pad + "..ooooooooooooo.." + pad, pad + BAR.dancing + pad, pad + "..ooooooooooooo.." + pad]));
+  else rows.push(".".repeat(W), pad + "..ooooooooooooo.." + pad, pad + (BAR[mood] || BAR.content) + pad, pad + "..ooooooooooooo.." + pad);
   // The effects were placed around the old wizard cat (17 wide, rows 0-19); they
   // are mapped onto this animal's own outline, so a small frog's sparkles hug the
   // frog and a big costume's spread to its edges.
