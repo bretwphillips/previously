@@ -254,7 +254,7 @@ ul.scope li.task .box::before { content: ""; display: inline-block; width: 8px; 
 ul.scope li.task.done .box::before { display: none; }
 h3 .note { font-weight: 400; letter-spacing: 0; text-transform: none; opacity: 0.5;
            margin-left: 8px; font-style: italic; }
-h3 .tally { font-weight: 500; letter-spacing: 0; text-transform: none;
+h3 .tally { position: static; font-weight: 500; letter-spacing: 0; text-transform: none;
             opacity: 0.6; margin-left: 6px; font-family: var(--mono); font-size: 10px; }
 .when { font-family: var(--mono); font-size: 10px; margin-left: 8px;
         color: var(--muted); opacity: 0.7; }
