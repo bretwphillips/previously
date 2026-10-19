@@ -433,6 +433,12 @@ body.quest .thread-tabs .mark { display: none; }
 .stab > .hint:first-child { margin: 0 0 12px; max-width: 640px; }
 /* A setting's short description, and its details behind Learn more. */
 #update-choice + .hint, #update-choice + .update-card { margin: 8px 0 0; }
+.ai-notes { display: block; width: 560px; max-width: 100%; box-sizing: border-box; padding: 8px 10px; resize: vertical;
+            font: 13px/1.5 var(--sans); color: var(--ink); background: var(--panel);
+            border: 1px solid var(--line); border-radius: 6px; }
+.ai-notes:focus { outline: none; border-color: var(--waiting); }
+.ai-notes-status { margin: 6px 0 0; min-height: 1em; font-size: 12px; color: var(--muted); max-width: 560px; }
+.ai-notes-status.warn { color: var(--action); }
 .update-card { margin: 8px 0 0; padding: 10px 14px; border: 1px solid var(--line); border-radius: 8px;
                background: var(--panel); max-width: 560px; }
 .update-card p { margin: 0 0 6px; }

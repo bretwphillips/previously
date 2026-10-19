@@ -479,8 +479,19 @@ const update = (() => {
   };
 })();
 
+// Settings -> A.I.: your standing notes for AI sessions, for every space and for this one.
+const readText = (file) => {
+  try {
+    return readFileSync(file, "utf8");
+  } catch {
+    return "";
+  }
+};
+const aiNotes = { all: readText(join(CODE, "ai-notes.md")), space: readText(join(here, "ai-notes.md")), spaceName: space.name };
+
 const html = renderPage({
   update,
+  aiNotes,
   // Every space, for the switcher and Settings; each one's sync from its own settings.
   spaces: {
     current: space.id, companion: space.config.companion, menubar: space.config.menubar,
