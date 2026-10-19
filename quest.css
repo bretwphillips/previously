@@ -4,6 +4,8 @@
 canvas.pix { position: absolute; left: 0; top: 0; image-rendering: pixelated; pointer-events: none; }
 /* The wizard's HP bar says what the feed count did. */
 body.quest .pet-status { display: none; }
+.pet-line .questy, body.quest .pet-line .plain { display: none; }
+body.quest .pet-line .questy { display: inline; }
 .wizard { display: flex; justify-content: center; margin-bottom: 4px; }
 .wizard svg { display: block; shape-rendering: crispEdges; overflow: visible; }
 .spk { transform-box: fill-box; transform-origin: center; animation: twinkle 1.8s steps(3, end) infinite; opacity: 0; }

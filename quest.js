@@ -563,19 +563,24 @@ var FXPAL = { g: '#f2c94c', W: '#fff6c8', D: '#2f7fb5', l: '#d8f2ff', d: '#7fd3f
 
 function sprite(v, px) {
   var r = v.rows, w = r[0].length, h = r.length;
-  var svg = el('svg', { width: w * px, height: h * px, viewBox: '0 0 ' + w + ' ' + h });
+  // One row more than the art: a gap between the bar and the head.
+  var svg = el('svg', { width: w * px, height: (h + 1) * px, viewBox: '0 0 ' + w + ' ' + (h + 1) });
   // The companion in its own group, so it can bounce with its mood while the
-  // HP bar -- the last four rows -- stays where it is.
-  var body = el('g', { class: 'body' }), bar = el('g', {});
+  // HP bar -- the last four rows -- stays where it is: drawn above it, like a
+  // health bar over a character's head.
+  var body = el('g', { class: 'body' }), bar = el('g', {}), BAR = 4;
   r.forEach(function (row, y) { for (var x = 0; x < w; x++) { var c = row[x];
-    if (c !== '.') (y >= h - 4 ? bar : body).appendChild(el('rect', { x: x, y: y, width: 1, height: 1, fill: v.pal[c] })); } });
+    if (c !== '.') (y >= h - BAR ? bar : body).appendChild(el('rect', { x: x, y: y >= h - BAR ? y - (h - BAR) : y + BAR + 1, width: 1, height: 1, fill: v.pal[c] })); } });
   svg.appendChild(body); svg.appendChild(bar);
   (v.fx || []).forEach(function (f, i) {
     var d = (document.body.classList.contains('muertos') && MUERTOS_FX[f[0]]) || FX[f[0]], x0 = f[1] - Math.floor(d.px[0].length / 2), y0 = f[2] - Math.floor(d.px.length / 2);
     var g = el('g', { class: d.cls, style: 'animation-delay:' + (i * 0.3) + 's' });
     d.px.forEach(function (row, y) { for (var x = 0; x < row.length; x++) { var c = row[x];
       if (c !== '.') g.appendChild(el('rect', { x: x0 + x, y: y0 + y, width: 1, height: 1, fill: FXPAL[c] })); } });
-    svg.appendChild(g);
+    // Moved down with the body by a group of its own: the twinkle's own
+    // transform would replace a shift set on g.
+    var at = el('g', { transform: 'translate(0 ' + (BAR + 1) + ')' });
+    at.appendChild(g); svg.appendChild(at);
   });
   return svg;
 }

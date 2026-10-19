@@ -595,14 +595,14 @@ and the ranger's feather take an accent chosen to go with the colour rather than
 repeat it, so a red cap wears a gold feather. Each race remembers its coat and
 each class its colour. Kept per window, like the theme.
 
-**Halloween** (Settings → Extras → Overlay → Halloween) swaps the class and colour for a
+**Halloween** (Settings → Extras → Quest mode on, Theme → Halloween) swaps the class and colour for a
 costume: a ghost sheet, a pumpkin head, a hockey mask, skeleton face paint, a
 vampire cape or a witch's hat. Each is one drawing for every animal; masks have
 eye holes, so the animal's own eyes -- and its moods -- show through. Turning it
 off brings back the class you had. In fantasy mode it goes further -- see
 *Halloween in fantasy mode* below.
 
-**Día de los Muertos** (Settings → Extras → Overlay → Día de los Muertos) dresses it in a look
+**Día de los Muertos** (Settings → Extras → Quest mode on, Theme → Día de los Muertos) dresses it in a look
 instead: La Catrina's plumed hat and ruffled dress, El Catrín's top hat and suit,
 a crown of roses and marigolds with a rebozo, or a flowered fedora and waistcoat.
 Its face is painted as a sugar skull -- bone white, its features black, petals
@@ -701,6 +701,7 @@ the rest sit beside the code. None of them are tracked by git.
 | `show.sh` | The terminal view. |
 | `done.sh` | Record that HEAD finished one or more scope lines. |
 | `install.sh` | One-time setup: checks what's needed, builds the app, opens it. |
+| `session-hook.sh`, `claude-hook.mjs` | Auto-resume: the Claude Code hook that notes which session runs in which terminal tab, and adding or removing it from `~/.claude/settings.json`. |
 | `ai-notes.sh` | Prints your AI notes for a session to read: every space's, then those of the space the repo is in. |
 | `update.mjs`, `update.sh` | The update check (GitHub's latest release, into `update.json`) and installing it: a git fast-forward to its tag, then `make.sh`. |
 | `VERSION` | This copy's version, compared with the latest release. |
@@ -764,6 +765,19 @@ every space; other spaces' notes are never read. Two cautions: a session reads
 them before anything else, so keep the list short (the tab warns past 40 lines),
 and they are sent to the AI with each session, so no passwords or tokens.
 
+### Auto-resume (off by default)
+
+With **Settings → A.I. → Auto-resume** on, a Claude session running in the in-app
+terminal when the app quits or crashes comes back in its tab next time: the tab
+starts `claude --resume <id>` and is an ordinary shell once you leave Claude.
+Several sessions, even in one repo, each come back to their own tab.
+
+It knows which session is which because turning it on adds a small hook to
+`~/.claude/settings.json` (`session-hook.sh`): each session started in a drawer
+tab tells Previously its ID. Turning it off takes the hook out again and leaves
+the rest of that file alone. Only IDs are kept (`terminal-sessions/`), never the
+conversation. A session since deleted opens a plain shell with a note instead.
+
 Nothing here needs a running Claude. The git half regenerates on its own, and the
 page, standup and companion all work with no model involved.
 
@@ -771,7 +785,7 @@ page, standup and companion all work with no model involved.
 
 ## Fantasy mode (optional, off by default)
 
-Settings → Extras → Overlay → **Fantasy** turns the thread tabs into a small game.
+Settings → Extras → **Quest mode** turns the thread tabs into a small game, dressed by its **Theme**: Fantasy, Halloween or Día de los Muertos.
 
 - **Locks.** A ticket blocked by another is wrapped in chains with a padlock
   until the blocker's MRs are seen merged or closed. Blockers are gathered from

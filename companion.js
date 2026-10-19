@@ -505,11 +505,13 @@ const FX = {
   hungry: [["bigdrop", 17, 4]],
   sad: [["skull", 18, 4]],
 };
+// Full at "full health"; past it, on a roll, the bar overflows gold with a glint.
+// It drains from the right, as game health bars do.
 const BAR = {
-  dancing: "..ogggggggggggo..", happy: "..ogggggggggvvo..", content: "..ogggggggvvvvo..",
-  peckish: "..oyyyyvvvvvvvo..", hungry: "..orrvvvvvvvvvo..", sad: "..orvvvvvvvvvvo..",
+  dancing: "..oluuuluuuuluo..", happy: "..ogggggggggggo..", content: "..oggggggggvvvo..",
+  peckish: "..oyyyyyvvvvvvo..", hungry: "..orrrvvvvvvvvo..", sad: "..orvvvvvvvvvvo..",
 };
-const BAR_PAL = { g: "#4caf50", y: "#f2c94c", r: "#e5383b", v: "#efe9df", o: "#3a2a1a" };
+const BAR_PAL = { g: "#4caf50", y: "#f2c94c", r: "#e5383b", v: "#efe9df", o: "#3a2a1a", u: "#e8b021", l: "#fff3b0" };
 
 // { rows, pal, fx } for the sidebar: the picked animal, coat, class and colour.
 function companion(pick, mood) {

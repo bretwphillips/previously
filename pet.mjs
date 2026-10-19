@@ -21,12 +21,13 @@ const MOODS = {
     face: "^o^",
     arms: ["\\", "/"],
     line: "on a roll",
+    quest: "unstoppable",
   },
-  happy: { face: "^.^", arms: ["(", ")"], line: "well fed" },
-  content: { face: "o.o", arms: ["(", ")"], line: "doing fine" },
-  peckish: { face: "-.-", arms: ["(", ")"], line: "getting peckish" },
-  hungry: { face: ";_;", arms: ["(", ")"], line: "hungry" },
-  sad: { face: "T_T", arms: ["(", ")"], line: "has not eaten in a while" },
+  happy: { face: "^.^", arms: ["(", ")"], line: "well fed", quest: "full health" },
+  content: { face: "o.o", arms: ["(", ")"], line: "doing fine", quest: "ready for adventure" },
+  peckish: { face: "-.-", arms: ["(", ")"], line: "getting peckish", quest: "a little worn" },
+  hungry: { face: ";_;", arms: ["(", ")"], line: "hungry", quest: "low HP" },
+  sad: { face: "T_T", arms: ["(", ")"], line: "has not eaten in a while", quest: "needs a healer" },
 };
 
 // Each feed adds one to fullness, which halves every hour. A count over a fixed
@@ -134,11 +135,13 @@ export function petState(commitTimes, scopeTimes, taskTimes, nowSeconds, lastCom
   const hoursSince = workingHoursBetween(lastFed ?? Infinity, nowSeconds);
 
   const mood = moodFor(fullnessAt(feeds, nowSeconds), hoursSince);
-  const { line } = MOODS[mood];
+  const { line, quest } = MOODS[mood];
   const arts = textArts(mood);
   return {
     mood,
     line,
+    // Fantasy mode says it in HP, beside the bar.
+    questLine: quest,
     art: arts.cat,
     arts,
     today,

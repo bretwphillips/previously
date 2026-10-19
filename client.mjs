@@ -844,6 +844,23 @@ document.addEventListener('DOMContentLoaded', function () {
   }
   paintAiStatus(false);
 
+  /* Settings -> A.I. -> Auto-resume: off unless chosen; the app adds or removes Claude's hook. */
+  function paintResume() {
+    var buttons = document.querySelectorAll('#resume-choice button');
+    for (var i = 0; i < buttons.length; i++) {
+      buttons[i].setAttribute('aria-pressed', String(buttons[i].dataset.resume === (syncState.autoResume || 'off')));
+    }
+  }
+  paintResume();
+  var resumeButtons = document.querySelectorAll('#resume-choice button');
+  for (var rb = 0; rb < resumeButtons.length; rb++) {
+    resumeButtons[rb].addEventListener('click', function () {
+      syncState.autoResume = this.dataset.resume;
+      paintResume();
+      if (settingsBridge) settingsBridge.postMessage(JSON.stringify(syncState));
+    });
+  }
+
   var syncButtons = document.querySelectorAll('#sync-choice button');
   for (var sb = 0; sb < syncButtons.length; sb++) {
     syncButtons[sb].addEventListener('click', function () {
@@ -1018,24 +1035,41 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 
-  /* Extras: one choice for the game layer -- none, fantasy mode, or fantasy mode at
-     Halloween or during Día de los Muertos -- worked through their switches. */
+  /* Extras: quest mode on or off, and its theme -- fantasy, or dressed for
+     Halloween or Día de los Muertos -- worked through their switches. The theme
+     is remembered while quest mode is off. */
   var overlayButtons = sheet.querySelectorAll('#overlay-choice button');
+  var modeButtons = sheet.querySelectorAll('#quest-mode button');
   function paintOverlay() {
-    var q = store.get('worklog.quest', 'off') === 'on', h = store.get('worklog.pet.halloween', 'off') === 'on';
-    var d = store.get('worklog.muertos', 'off') === 'on';
-    var now = !q ? 'none' : h ? 'halloween' : d ? 'muertos' : 'quest';
-    overlayButtons.forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.overlay === now)); });
+    var q = store.get('worklog.quest', 'off') === 'on';
+    var theme = store.get('worklog.questTheme', 'quest');
+    modeButtons.forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.qmode === (q ? 'on' : 'off'))); });
+    overlayButtons.forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.overlay === theme)); });
+    var row = sheet.querySelector('#overlay-choice');
+    if (row) row.closest('.srow').hidden = !q;
   }
+  function applyOverlay(on, theme) {
+    var press = function (sel) { var el = sheet.querySelector(sel); if (el) el.click(); };
+    press('#halloween-toggle [data-halloween="' + (on && theme === 'halloween' ? 'on' : 'off') + '"]');
+    press('#muertos-toggle [data-muertos="' + (on && theme === 'muertos' ? 'on' : 'off') + '"]');
+    press('#quest-toggle [data-quest="' + (on ? 'on' : 'off') + '"]');
+    paintOverlay();
+    paintBuilder();
+  }
+  // Before the theme was its own choice, it was read from the switches.
+  if (store.get('worklog.questTheme', null) === null) {
+    store.set('worklog.questTheme', store.get('worklog.pet.halloween', 'off') === 'on' ? 'halloween'
+      : store.get('worklog.muertos', 'off') === 'on' ? 'muertos' : 'quest');
+  }
+  modeButtons.forEach(function (b) {
+    b.addEventListener('click', function () {
+      applyOverlay(this.dataset.qmode === 'on', store.get('worklog.questTheme', 'quest'));
+    });
+  });
   overlayButtons.forEach(function (b) {
     b.addEventListener('click', function () {
-      var want = this.dataset.overlay;
-      var press = function (sel) { var el = sheet.querySelector(sel); if (el) el.click(); };
-      press('#halloween-toggle [data-halloween="' + (want === 'halloween' ? 'on' : 'off') + '"]');
-      press('#muertos-toggle [data-muertos="' + (want === 'muertos' ? 'on' : 'off') + '"]');
-      press('#quest-toggle [data-quest="' + (want === 'none' ? 'off' : 'on') + '"]');
-      paintOverlay();
-      paintBuilder();
+      store.set('worklog.questTheme', this.dataset.overlay);
+      applyOverlay(true, this.dataset.overlay);
     });
   });
   paintOverlay();
