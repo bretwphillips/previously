@@ -82,11 +82,10 @@ const quietly = (cmd, args) => {
 // Whose work this is. Git knows first; the account name is the fallback.
 const userName = quietly("git", ["config", "--get", "user.name"]) || quietly("id", ["-F"]);
 
-const author = (await import("node:child_process")).execFileSync(
-  "git",
-  ["config", "--get", "user.email"],
-  { encoding: "utf8" },
-).trim();
+// You, as each repo commits: a repo can set its own email (a personal project
+// committing as your GitHub address while the global one is work's).
+const author = quietly("git", ["config", "--get", "user.email"]);
+const authorOf = (path) => quietly("git", ["-C", path, "config", "--get", "user.email"]) || author;
 
 // A task or notes save changes nothing git knows about, so `--cached` reuses
 // the last walk instead of spending seconds re-reading every repo. Any other
@@ -97,7 +96,7 @@ const gitState = cached ?? Object.fromEntries(
   await Promise.all(
     repoList.map(async ({ name, path }) => {
       const [repo, progress] = await Promise.all([
-        readRepo(dirname(path), basename(path), author),
+        readRepo(dirname(path), basename(path), authorOf(path)),
         readProgress(dirname(path), basename(path)),
       ]);
       return [name, { repo: { ...repo, name }, progress }];
@@ -398,25 +397,36 @@ for (const repo of repos) {
 // one line per epic, tagged as GitLab's, unless a written goal already names it.
 const writtenGoals = state.goals ?? [];
 const goalText = (g) => (typeof g === "string" ? g : g?.text ?? "");
+// Epics are told apart by where they live: two groups can each have an &47,
+// two repos each a #1. A number two of them share is written with its repo.
+// One with no address yet (typed into the narrative) is taken to be the one that has it.
+const refsSeen = new Map(); // ref -> the addresses behind it
+for (const r of repos) for (const t of r.threads) {
+  if (t.epic?.ref) (refsSeen.get(t.epic.ref) ?? refsSeen.set(t.epic.ref, new Set()).get(t.epic.ref)).add(t.epic.url ?? null);
+}
+const labelOf = (r, t) =>
+  [...refsSeen.get(t.epic.ref)].filter(Boolean).length > 1 ? `${r.name}${t.epic.ref}` : t.epic.ref;
+
 const epicGoals = [];
 for (const r of repos) {
   for (const t of r.threads) {
     if (!t.epic?.ref || t.quest?.merged || t.epic.open === false) continue;
+    const label = labelOf(r, t);
     const named = [...writtenGoals.map(goalText), ...epicGoals.map(goalText)].some((g) =>
-      new RegExp(`${t.epic.ref.replace("&", "&")}\\b`).test(g),
+      new RegExp(`(^|[^\\w-])${label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`).test(g),
     );
     if (!named) {
       epicGoals.push({
-        text: `${t.epic.title || "Epic"} \u2014 ${t.epic.parent ? "parent issue" : "epic"} ${t.epic.ref}`,
+        text: `${t.epic.title || "Epic"} \u2014 ${t.epic.parent ? "parent issue" : "epic"} ${label}`,
         src: t.epic.source ?? "GitLab",
       });
     }
   }
 }
 
-// Where each epic lives, for linking "&12" wherever it is written in Goals.
+// Where each epic lives, for linking "&12" (or "repo#1") wherever it is written in Goals.
 const epicLinks = {};
-for (const r of repos) for (const t of r.threads) if (t.epic?.url) epicLinks[t.epic.ref] ??= t.epic.url;
+for (const r of repos) for (const t of r.threads) if (t.epic?.url) epicLinks[labelOf(r, t)] ??= t.epic.url;
 
 const order = { active: 0, parked: 1, clean: 2 };
 repos.sort(
@@ -428,7 +438,7 @@ const shared = space.config.companion === "shared";
 const ledgerFile = shared ? join(CODE, "ledger.json") : join(here, "ledger.json");
 const ledger = cached
   ? readLedger(ledgerFile)
-  : updateLedger(ledgerFile, repoList.map((r) => r.path), author);
+  : updateLedger(ledgerFile, repoList.map((r) => r.path), authorOf);
 const tally = ledger ? { count: ledger.seen.length, since: ledger.since } : null;
 
 const now = new Date();

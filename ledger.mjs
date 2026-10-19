@@ -22,15 +22,15 @@ export function readLedger(file) {
   }
 }
 
-// paths: the repos to count.
-export function updateLedger(file, paths, author) {
+// paths: the repos to count; authorOf(path): your email in that repo.
+export function updateLedger(file, paths, authorOf) {
   // Counting starts the day the hoard does, not with the repos' pasts.
   const ledger = readLedger(file) ?? { since: Math.floor(Date.now() / 1000), seen: [] };
-  if (!author) return ledger;
   const seen = new Set(ledger.seen);
   const before = seen.size;
   for (const path of paths) {
-    if (!existsSync(join(path, ".git"))) continue;
+    const author = authorOf(path);
+    if (!author || !existsSync(join(path, ".git"))) continue;
     const hashes = quietly(path, [
       "log", "--all", "--no-merges", `--author=${author}`, `--since=${ledger.since}`, "--format=%H",
     ]);
