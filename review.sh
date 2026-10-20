@@ -1,15 +1,15 @@
 #!/bin/sh
-# One copy per repo for reviewing merge requests locally, beside your own work:
-#   sh review.sh add <repo dir> <number> [github]   put that MR in the repo's review copy; prints its folder
-#   sh review.sh remove <repo dir>                  take the review copy away, unless it has changes
-# The copy is a worktree checked out detached at the MR's head, so it never touches a
+# One review tree per repo for reviewing merge requests locally, beside your own work:
+#   sh review.sh add <repo dir> <number> [github]   put that MR in the repo's review tree; prints its folder
+#   sh review.sh remove <repo dir>                  take the review tree away, unless it has changes
+# The tree is a worktree checked out detached at the MR's head, so it never touches a
 # branch of yours; your own checkout, uncommitted files and stashes stay as they are.
 # It is reused from review to review, so dependencies installed there carry over.
 HERE=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 action=$1 repo=$2 n=$3
 [ -d "$repo/.git" ] || { echo "not a repo: $repo" >&2; exit 1; }
 dir="$HERE/reviews/$(basename "$repo")"
-mark="$dir.mr" # which MR the copy is on
+mark="$dir.mr" # which MR the tree is on
 ref="refs/previously/review"
 
 case "$action" in
@@ -24,10 +24,10 @@ case "$action" in
       mkdir -p "$HERE/reviews"
       git -C "$repo" worktree add -q --detach "$dir" "$ref" || exit 1
     elif [ -n "$(git -C "$dir" status --porcelain)" ]; then
-      # Changes of yours in the copy: left alone. On this same MR it just opens.
+      # Changes of yours in the tree: left alone. On this same MR it just opens.
       was=$(cat "$mark" 2>/dev/null)
       if [ "$was" != "$n" ]; then
-        echo "The review copy has changes from reviewing !$was. Commit, stash or discard them there, then try again: $dir" >&2
+        echo "The review tree has changes from reviewing !$was. Commit, stash or discard them there, then try again: $dir" >&2
         exit 2
       fi
       echo "$dir"

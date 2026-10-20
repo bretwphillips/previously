@@ -232,12 +232,12 @@ const repos = await Promise.all(
     // from the sync, and their commits on your branches from git.
     // Review requests are listed apart: they stay until you approve.
     const reviews = (activity.reviews ?? []).filter((r) => r.repo === name);
-    // This repo's review copy (review.sh) and the MR it's on; once that review is
+    // This repo's review tree (review.sh) and the MR it's on; once that review is
     // over -- approved, merged or closed -- it's offered for removal.
     const folder = basename(repoList.find((r) => r.name === name)?.path ?? name);
     const mark = join(CODE, "reviews", `${folder}.mr`);
     const onMr = reviewCopies.includes(folder) && existsSync(mark) ? Number(readFileSync(mark, "utf8").trim()) || null : null;
-    for (const r of reviews) r.copy = r.number === onMr;
+    for (const r of reviews) Object.assign(r, { copy: r.number === onMr, tree: onMr != null });
     // still open somewhere the page shows it: a review request, or one of the threads' MRs
     const stillOpen = (n) =>
       reviews.some((r) => r.number === n) ||

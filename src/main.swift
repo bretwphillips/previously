@@ -637,7 +637,7 @@ final class TerminalDrawer: NSObject, WKScriptMessageHandler, WKNavigationDelega
         open(in: dir, repo: name)
     }
 
-    /// A shell in a folder that isn't one of the repos -- a review copy -- reusing
+    /// A shell in a folder that isn't one of the repos -- a review tree -- reusing
     /// one already open there.
     func open(dir: URL, label: String) {
         if let found = shells.values.sorted(by: { $0.id < $1.id }).first(where: { $0.repo == label }) {
@@ -1507,7 +1507,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, WKN
                     guard let self else { return }
                     if done.terminationStatus != 0 {
                         let alert = NSAlert()
-                        alert.messageText = adding ? "Couldn't check out !\(number)" : "Kept the review copy"
+                        alert.messageText = adding ? "Couldn't check out !\(number)" : "Kept the review tree"
                         alert.informativeText = why
                         alert.runModal()
                     } else if adding, !dir.isEmpty {

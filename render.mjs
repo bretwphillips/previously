@@ -242,9 +242,9 @@ function mrLine(r, thread) {
     .map((m) => {
       const label = `!${m.number}`;
       const href = mrUrl(r.web, m.number);
-      // any open MR can go in the review copy, bar the one already checked out here
+      // any open MR can go in the review tree, bar the one already checked out here
       const review = !finished(m) && thread.ticket !== r.ticket
-        ? reviewButton({ repo: r.name, number: m.number, copy: r.reviewCopyOn === m.number })
+        ? reviewButton({ repo: r.name, number: m.number, copy: r.reviewCopyOn === m.number, tree: r.reviewCopyOn != null })
         : "";
       return `<span${finished(m) ? ' class="done"' : ""}>${link(href, label)} ${esc(
         MR_STATE[m.state] ?? m.state,
@@ -334,23 +334,25 @@ function reviewLine(r, withRepo) {
     withRepo ? `<span class="who">${esc(r.repo)}</span>` : ""
   }<span class="what">${r.url && !withRepo ? link(r.url, esc(what)) : esc(what)}</span>${reviewButton(r)}</li>`;
 }
-// Checks the merge request out beside your work (review.sh) and opens a terminal
-// there. Shown only in the app with a terminal chosen, like the terminal icons.
+// Checks the merge request out into the repo's review tree (review.sh) and opens a
+// terminal there. Shown only in the app with a terminal chosen, like the terminal icons.
 const REVIEW_TIP =
-  "Checks this merge request out into the repo's review copy, a separate worktree, and opens a terminal there. " +
-  "Your branch, uncommitted files and stashes stay as they are. The copy is reused for each review, " +
-  "so it switches to this MR unless it has changes of its own.\n\n" +
+  "Checks this merge request out into the repo's review tree, a separate git worktree, and opens a terminal there. " +
+  "Your branch, uncommitted files and stashes stay as they are. There's one review tree per repo, reused for each review, " +
+  "so it moves to this MR unless it has changes of its own.\n\n" +
   "The first time, it has no dependencies installed: run your install there (again if the lockfile changed). " +
   "A dev server started there may clash on its port with one already running.";
+// r.tree: whether the repo has a review tree at all; r.copy: whether it's on this MR.
 function reviewButton(r) {
   const host = isGitHub(REPO_WEB.get(r.repo)) ? "github" : "gitlab";
+  const label = r.copy ? "Open review tree" : r.tree ? "Switch review tree here" : "Create review tree";
   return `<button class="review-local" data-review-repo="${esc(r.repo)}" data-review-number="${r.number}" data-review-host="${host}" title="${esc(
-    r.copy ? `Open the review copy of !${r.number}.\n\n${REVIEW_TIP}` : REVIEW_TIP,
-  )}" hidden>${r.copy ? "Open review copy" : "Review locally"}</button>`;
+    REVIEW_TIP,
+  )}" hidden>${label}</button>`;
 }
-// A review copy whose review is over: offered for removal, never removed unasked.
+// A review tree whose MR is over: offered for removal, never removed unasked.
 function doneCopyLine(repo, number) {
-  return `<li data-key="${esc(`c:!${number}`)}" data-sev="info"><span class="dot"></span><span class="what">The review copy is on !${number}, whose review is over</span><button class="review-remove" data-review-repo="${esc(repo)}" data-review-number="${number}" title="Removes the review copy; the next Review locally makes it again. One with changes of its own is kept." hidden>Remove</button></li>`;
+  return `<li data-key="${esc(`c:!${number}`)}" data-sev="info"><span class="dot"></span><span class="what">The review tree is on !${number}, which is done</span><button class="review-remove" data-review-repo="${esc(repo)}" data-review-number="${number}" title="Removes the review tree; the next review creates it again. One with changes of its own is kept." hidden>Remove</button></li>`;
 }
 // Something wrong with a merge request of yours, until it's fixed. Threads are
 // other people's (red); a conflict or a failed pipeline is yours to finish
