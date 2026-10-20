@@ -128,7 +128,7 @@ const repos = await Promise.all(
     const withSynced = (ticket, recorded = []) => {
       const mine = synced.filter((m) => m.ticket === ticket);
       if (!mine.length) return recorded;
-      const fresh = mine.map((m) => ({ number: m.number, state: m.state, seenAt: syncedOn }));
+      const fresh = mine.map((m) => ({ number: m.number, state: m.state, seenAt: syncedOn, doneAt: m.doneAt ?? null }));
       const kept = recorded.filter((r) => !mine.some((m) => m.number === r.number));
       return [...kept, ...fresh];
     };
@@ -195,7 +195,9 @@ const repos = await Promise.all(
       if (!mrs.length || !mrs.every((m) => m.state === "merged" || m.state === "closed")) {
         return null;
       }
-      const seen = mrs.map((m) => Date.parse(m.seenAt ?? "") / 1000).filter(Number.isFinite);
+      // When they landed, from the sync; else when they were seen landed. A sync
+      // marks every MR seen today, so its date alone would never let a thread go.
+      const seen = mrs.map((m) => m.doneAt ?? Date.parse(m.seenAt ?? "") / 1000).filter(Number.isFinite);
       return seen.length ? Math.max(...seen) : null;
     };
 

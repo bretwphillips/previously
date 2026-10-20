@@ -188,6 +188,8 @@ for (const m of newMrs ?? []) {
     draft: m.draft,
     title: m.title,
     updated_at: m.updated_at,
+    merged_at: m.merged_at,
+    closed_at: m.closed_at,
     user_notes_count: m.user_notes_count,
   };
 }
