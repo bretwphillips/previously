@@ -159,10 +159,35 @@ const STOPS = [
 export const DOTD_STOPS = STOPS.map(([rows, pal, scale]) => svgOf(rows, { ...STOP_PAL, ...pal }, scale, "dotd-stop"));
 
 // ---------- papel picado across the top of the page, each flag swaying on its own beat.
-const FLAG = ["XXXXXXXXX", "XX.XXX.XX", "X.X.X.X.X", "XX.XXX.XX", "XXXX.XXXX", "XXX...XXX", "XXXX.XXXX", "XX.XXX.XX", "XXXXXXXXX", "X.X.X.X.X"];
+// Cut paper in traditional patterns -- a cempasúchil, a calavera with a flower on
+// its brow, a heart, a sun, a diamond lace -- each framed by a lace border and a
+// fringed hem. "." is cut away.
+const MOTIFS = {
+  marigold: ["XXX.X.X.XXX", "XX.......XX", "X..X.X.X..X", "..X.....X..", "X...XXX...X", "..X.X.X.X..", "X...XXX...X", "..X.....X..", "X..X.X.X..X", "XX.......XX", "XXX.X.X.XXX"],
+  calavera: ["XXX.....XXX", "XX...X...XX", "X...X.X...X", "X....X....X", "X.XX...XX.X", "X.XX...XX.X", "X....X....X", "XX.......XX", "XXX.X.X.XXX", "XXXX.X.XXXX", "XXXX...XXXX"],
+  heart: ["XXXXXXXXXXX", "XX..XXX..XX", "X....X....X", "X.........X", "X...X.X...X", "X....X....X", "XX.......XX", "XXX.....XXX", "XXXX...XXXX", "XXXXX.XXXXX", "XXXXXXXXXXX"],
+  sun: ["X.XXX.XXX.X", "XX.XX.XX.XX", "XXX.....XXX", "XX..XXX..XX", "...X.X.X...", "X..XXXXX..X", "...X...X...", "XX..XXX..XX", "XXX.....XXX", "XX.XX.XX.XX", "X.XXX.XXX.X"],
+  lattice: ["XXXXX.XXXXX", ".XXX.X.XXX.", "X.X.XXX.X.X", "XX.XXXXX.XX", "X.X.XXX.X.X", ".XXX.X.XXX.", "XXXXX.XXXXX", ".XXX.X.XXX.", "X.X.XXX.X.X", "XX.XXXXX.XX", "X.X.XXX.X.X"],
+};
+const flagOf = (m) => ["XXXXXXXXXXXXXXX", "X.XX.XX.XX.XX.X",
+  ...m.map((row, y) => { const lace = y % 2 ? "X" : "."; return `X${lace}${row}${lace}X`; }),
+  "X.XX.XX.XX.XX.X", "XXXXXXXXXXXXXXX", "X.X.X.X.X.X.X.X"];
+const FLAGS = Object.values(MOTIFS).map(flagOf);
 const FLAG_COLOURS = ["#e8508a", "#f08a1c", "#8a55c9", "#2fb3c4", "#f2c94c", "#3f8a3a"];
-export const PAPEL_PICADO = `<div class="picado" aria-hidden="true">${Array.from({ length: 140 }, (_, i) =>
-  `<i style="animation-delay:-${((i * 0.37) % 2.4).toFixed(2)}s">${svgOf(FLAG, { X: FLAG_COLOURS[i % 6] }, 1.6, "flag")}</i>`).join("")}</div>`;
+// Along the string no flag shares its cut or its colour with the two before it.
+const STRING = (() => {
+  let seed = 9;
+  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const pick = (n, avoid) => { let k; do k = Math.floor(rnd() * n); while (avoid.includes(k)); return k; };
+  const out = [];
+  for (let i = 0; i < 100; i++) {
+    const back = out.slice(-2);
+    out.push([pick(FLAGS.length, back.map((f) => f[0])), pick(FLAG_COLOURS.length, back.map((f) => f[1]))]);
+  }
+  return out;
+})();
+export const PAPEL_PICADO = `<div class="picado" aria-hidden="true">${STRING.map(([cut, colour], i) =>
+  `<i style="animation-delay:-${((i * 0.37) % 2.4).toFixed(2)}s">${svgOf(FLAGS[cut], { X: FLAG_COLOURS[colour] }, 1.6, "flag")}</i>`).join("")}</div>`;
 
 export const MUERTOS_CSS = `
 body.quest.muertos .dot { width: 9px; height: 12px; background-color: transparent; background-size: 9px 12px; background-repeat: no-repeat; box-shadow: none; border-radius: 0; }
@@ -175,9 +200,9 @@ ${candleRules(':root[data-theme="dark"]', GLASS.dark, "dark")}
 
 /* the banner: hung from the bottom edge of the bar, over the page as it scrolls */
 .top .picado { display: none; }
-body.quest.muertos .top .picado { display: block; position: absolute; top: 100%; left: 0; right: 0; height: 20px; overflow: hidden;
+body.quest.muertos .top .picado { display: block; position: absolute; top: 100%; left: 0; right: 0; height: 30px; overflow: hidden;
   white-space: nowrap; pointer-events: none; background: linear-gradient(#2a2420, #2a2420) 0 0 / 100% 1px no-repeat; }
-body.quest.muertos .picado i { display: inline-block; margin: 0 2px; transform-origin: top center; animation: sway 2.4s ease-in-out infinite; }
+body.quest.muertos .picado i { display: inline-block; margin: 0 3px; transform-origin: top center; animation: sway 2.4s ease-in-out infinite; }
 body.quest.muertos .picado svg { display: block; }
 @keyframes sway { 0%, 100% { transform: rotate(-5deg); } 50% { transform: rotate(5deg); } }
 @media (prefers-reduced-motion: reduce) { body.quest.muertos .picado i { animation: none; } }

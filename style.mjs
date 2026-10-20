@@ -27,6 +27,13 @@ const DARK = `
   /* ...and the companion's black hats and suits, and the ofrenda's outlines */
   --dotd-hat: #3a3642; --dotd-hat-band: #4f4a59; --dotd-trim: #48434f;
   --dotd-altar-o: #5a5048; --dotd-altar-k: #6e6576;
+  /* Halloween's cobwebs: soft greys, dimmer spiders */
+  --web-W: #77717f; --web-w: #55505e; --web-s: #45414d; --web-b: #c9c4d3; --web-B: #8a8496;
+  --web-dew-g: #3d5f73; --web-dew: #8fd0f0; --web-dew-D: #e8f7ff;
+  --web-spider: #5e5869; --web-eye: #c4383b; --web-thread: #4a4654;
+  /* Fantasy's ivy: deeper greens, brighter fireflies */
+  --ivy-V: #3f6a2c; --ivy-v: #4a7534; --ivy-L: #4f8635; --ivy-l: #6fa64a;
+  --ivy-P: #c97a98; --ivy-Y: #e0b84a; --ivy-o: #f0e3b0; --ivy-fly: #e4f57a;
   /* the broken HP bar's tip and sparks: pale on dark, deeper gold on light */
   --hp-tip: #fff3b0; --hp-spark: #fff6c8; --hp-spill: #ffd34a; --hp-pulse: brightness(1.35);
 `;
