@@ -966,7 +966,7 @@ function settingsPane(userName, weightLimit = 5, terminals = [], update = null, 
   const toggle = (id, key) =>
     `<div class="themes" id="${id}"><button data-${key}="off">Off</button><button data-${key}="on">On</button></div>`;
 
-  const tabs = [["general", "General"], ["projects", "Projects"], ["markers", "Markers"], ["keys", "Shortcuts"], ["extras", "Extras"], ["ai", "A.I."]];
+  const tabs = [["general", "General"], ["projects", "Spaces"], ["markers", "Markers"], ["keys", "Shortcuts"], ["extras", "Extras"], ["ai", "A.I."]];
   return `<section id="pane-settings" hidden>
       <div class="settings-head">
         <h2 class="pane">Settings</h2>
@@ -990,7 +990,7 @@ function settingsPane(userName, weightLimit = 5, terminals = [], update = null, 
           `<input type="text" id="name-override" placeholder="${esc(
             userName || "your",
           )}" spellcheck="false">
-          ${about("The name on the card when the app opens -- \u201cPreviously, on your work\u2026\u201d, with the space\u2019s own word (Settings \u2192 Projects). Blank uses your git name.")}`,
+          ${about("The name on the card when the app opens -- \u201cPreviously, on your work\u2026\u201d, with the space\u2019s own word (Settings \u2192 Spaces). Blank uses your git name.")}`,
         )}
         ${row(
           "Terminal",
@@ -1081,7 +1081,7 @@ function settingsPane(userName, weightLimit = 5, terminals = [], update = null, 
             "A normal sync of every space, one after another.",
             `<p><b>What a sync does.</b> It runs <code>git fetch</code> across a space's repos (ahead/behind, merged branches, others' pushes) and asks the repos' host -- GitLab through <code>glab</code>, GitHub through <code>gh</code> -- for what a clone can't see: your comments and approvals, review requests, your merge and pull requests' state, conflicts, pipelines or checks and threads, and your tickets' weight, epic and blockers (GitHub has no weights or epics).</p>
             <p><b>How much.</b> Only what changed since the last sync is asked for, and the rest is kept on disk -- a typical sync is a handful of small calls.</p>
-            <p><b>Each space's Sync.</b> Weekly or Daily sync the first time you're at the Mac after that long. Hourly also asks GitLab once an hour. Every 15 min adds a two-call check for comments, approvals and review requests between those. Nothing runs while the screen is locked or asleep, after 15 minutes idle, or with the window hidden; a sync that comes due then waits for you. Spaces take turns, never two at once.</p>
+            <p><b>Each space's Sync.</b> Weekly or Daily sync the first time you're at the Mac after that long. Hourly also asks GitLab and GitHub once an hour. Every 15 min adds a two-call check for comments, approvals and review requests between those. Nothing runs while the screen is locked or asleep, after 15 minutes idle, or with the window hidden; a sync that comes due then waits for you. Spaces take turns, never two at once.</p>
             <p><b>Sync now</b> runs a normal sync of that space straight away. <b>Full refresh</b> forgets what was kept and asks GitLab for everything again -- a few dozen calls rather than a handful. Use it only if something looks out of date that an ordinary sync can't see, like a comment you deleted or a blocking link removed in GitLab.</p>`,
           )}`,
         )}

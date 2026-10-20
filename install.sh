@@ -89,4 +89,4 @@ fi
 
 open "$HOME/Applications/Previously.app"
 say "Done. Previously is open; it's in your Applications folder (~/Applications)."
-say "Repos somewhere else, or a separate set like personal projects? Add them in Settings -> Projects."
+say "Repos somewhere else, or a separate set like personal projects? Add them in Settings -> Spaces."

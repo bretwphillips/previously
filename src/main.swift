@@ -1627,7 +1627,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, WKN
             return
         }
 
-        // Settings -> Projects: the spaces, their folders and when each syncs.
+        // Settings -> Spaces: the spaces, their folders and when each syncs.
         // A space's sync goes to its own settings; the rest to spaces.json.
         if message.name == "saveSpaces" {
             guard var config = try? JSONSerialization.jsonObject(with: Data(text.utf8)) as? [String: Any],
@@ -1695,7 +1695,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, WKN
         // Sync now, from Settings or the standup window. Registered from the
         // start but never handled, so the button did nothing.
         // "full" asks GitLab for everything again rather than what changed.
-        // "all" from Settings -> Projects: every space, one after another;
+        // "all" from Settings -> Spaces: every space, one after another;
         // {"space", "full"} from a space's own column.
         if message.name == "syncNow" {
             let body = message.body as? String ?? ""

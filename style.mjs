@@ -805,7 +805,7 @@ body.quest:not(.quest-none):not(.halloween):not(.muertos) .dot.amber { --gem-lig
 /* Settings -> Markers -> Customize: columns from least to most urgent, the
    triggers as pills to drag between them. */
 .marker-board { margin: 6px 0 22px; max-width: 980px; overflow-x: auto; }
-/* Settings -> Projects: each space a column. */
+/* Settings -> Spaces: each space a column. */
 .space-board { margin: 6px 0 22px; max-width: 980px; overflow-x: auto; }
 .sb-cols { display: flex; gap: 10px; align-items: flex-start; }
 .sb-col { flex: 0 0 220px; border: 1px solid var(--line); border-radius: 8px; padding: 8px; background: var(--panel);
