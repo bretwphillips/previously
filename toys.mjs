@@ -6,12 +6,28 @@ import { CANDY, FLAVOURS } from "./halloween.mjs";
 
 // o outline, X/h/d the toy (body, light, shade), W a stripe; the basket and box fixed.
 const FIXED = { o: "#3a2418", W: "#ffffff", B: "#e0b468", N: "#b07a3a", b: "#8a5a2b", n: "#8a5a2b",
-  K: "#2a1d14", R: "#c0392b", T: "#3a6fc4", t: "#2c559a", Y: "#ffd23f" };
+  K: "#2a1d14", R: "#c0392b", T: "#3a6fc4", t: "#2c559a", Y: "#ffd23f", G: "#4caf50", O: "#f08a1c" };
+const COLOURS = { ...FLAVOURS, blue: { X: "#3a86e8", h: "#9cc8ff", d: "#1f5cb8" } };
+// toys that only come in one colour
+const OWN = { duck: { X: "#ffd23f", h: "#fff0a0", d: "#e0a020" }, carrot: { X: "#f08a1c", h: "#ffc07a", d: "#c4641a" },
+  tennis: { X: "#c8e04a", h: "#e6f59a", d: "#9ab82a" } };
 const SPRITES = {
+  // long ones, where a wrapped sweet would be
   bone: [".oo...oo.", "oXhoooXXo", ".oXhXXXo.", "oXXoooXdo", ".oo...oo."],
+  mouse: ["..oo.....", ".oXho....", "oKXXXo..o", "oXXXXdo.o", ".ooooooo."],
+  fish: ["..oooo..o", ".oKXhXooo", "oXXXXXXXo", ".oXXXdooo", "..oooo..o"],
+  carrot: [".G.oooo..", "GGoXhXXo.", ".GoXXXXXo", "GGoXXdXo.", ".G.oooo.."],
+  // small and upright, where candy corn would be
   yarn: [".ooo.", "ohXXo", "oXhXo", "oXXho", ".ooo.", "..ho."],
+  duck: [".oo..", "oXKOO", ".oXo.", "oXhXo", "oXXdo", ".ooo."],
+  star: ["..o..", ".oXo.", "oXhXo", ".oXo.", "oXoXo", ".o.o."],
+  // round ones, where a drop would be
   ball: [".ooo.", "ohXXo", "oWWWo", "oXXdo", ".ooo."],
+  tennis: [".ooo.", "oWXXo", "oXWXo", "oXXWo", ".ooo."],
+  ring: [".ooo.", "oXhXo", "oXoXo", "oXXdo", ".ooo."],
+  // tall ones, where a lollipop would be
   rope: [".ooo.", "oXhXo", ".oXo.", ".oWo.", ".oXo.", ".oWo.", "oXhXo", ".ooo."],
+  wand: [".oXo.", "oXhXo", "oXXXo", ".oXo.", "..b..", "..b..", "..b..", "..b.."],
   handle: ["....nnnnnnn....", "..nn.......nn..", ".n...........n.", ".n...........n."],
   basket: ["ooooooooooooooo", "oBBBBBBBBBBBBBo", "oNbNbNbNbNbNbNo", "obNbNbNbNbNbNbo", "oNbNbNbNbNbNbNo",
     "obNbNbNbNbNbNbo", "oNbNbNbNbNbNbNo", ".obNbNbNbNbNbo.", "..ooooooooooo.."],
@@ -21,18 +37,25 @@ const SPRITES = {
     "oTTYTTTTTTTTTYTto", "oTTTTTTTTTTTTTTto", "oTTTTTTTYTTTTTTto", "oTTTTTTYYYTTTTTto", "oTTTTTTTYTTTTTTto",
     "oTTTTTTTTTTTTTTto", "oRRRRRRRRRRRRRRRo", "ooooooooooooooooo"],
 };
-const AS = { wrapped: "bone", corn: "yarn", drop: "ball", pop: "rope", handle: "handle", pail: "basket", sackBack: "boxBack", sackFront: "boxFront" };
-const NAMES = ["a bone", "two bones", "a handful of toys", "a small pile", "a basket", "a few in the basket", "a full basket",
+// each sweet's place takes a toy of its shape, taken in turn so a pile is a mix
+const AS = { wrapped: ["bone", "mouse", "fish", "carrot"], corn: ["yarn", "duck", "star"], drop: ["ball", "tennis", "ring"],
+  pop: ["rope", "wand"], handle: ["handle"], pail: ["basket"], sackBack: ["boxBack"], sackFront: ["boxFront"] };
+const NAMES = ["a toy", "two toys", "a handful of toys", "a small pile", "a basket", "a few in the basket", "a full basket",
   "a brimming basket", "an overflowing basket", "a toy box", "a toy box overflowing"];
-// yarn and rope come in a colour too; candy corn had none
-const TINT = ["orange", "purple", "green", "pink", "red"];
-export const TOYS = CANDY.map(([from, , w, h, items], i) =>
-  [from, NAMES[i], w, h, items.map(([name, x, y, flavour], k) => [AS[name], x, y, flavour || TINT[(i + k) % TINT.length]])]);
+// the toys' colours in turn, not the candy's, which leaned orange
+const TINT = ["red", "purple", "green", "pink", "orange", "blue"];
+export const TOYS = CANDY.map(([from, , w, h, items], i) => {
+  const turn = {};
+  return [from, NAMES[i], w, h, items.map(([name, x, y], k) => {
+    const kinds = AS[name], n = (turn[name] = (turn[name] ?? i - 1) + 1);
+    return [kinds[n % kinds.length], x, y, TINT[(i * 2 + k) % TINT.length]];
+  })];
+});
 
 function pile(w, h, items) {
   const grid = Array.from({ length: h }, () => Array(w).fill(null));
   for (const [name, x0, y0, flavour] of items) {
-    const pal = { ...FIXED, ...(FLAVOURS[flavour] || {}), W: FIXED.W };
+    const pal = { ...FIXED, ...(COLOURS[flavour] || {}), ...(OWN[name] || {}), W: FIXED.W };
     SPRITES[name].forEach((row, y) => [...row].forEach((c, x) => {
       const gy = y0 + y, gx = x0 + x;
       if (c !== "." && gy >= 0 && gy < h && gx >= 0 && gx < w) grid[gy][gx] = pal[c];
