@@ -673,17 +673,16 @@ function decorate() {
 
 function undecorate() {
   pending = [];
-  document.querySelectorAll('.bound, .keyed, .monster, .wizard').forEach(function (n) { n.remove(); });
+  document.querySelectorAll('.bound, .keyed, .monster, .wizard, .deco, .deco-n').forEach(function (n) { n.remove(); });
   document.querySelectorAll('[data-quest-done]').forEach(function (t) { delete t.dataset.questDone; t.removeAttribute('title'); });
   var pet = document.getElementById('pet'); if (pet) pet.classList.remove('pixel');
 }
 
-/* A decoration stands on the companion's floor, just left of it -- out of the flow,
-   so the companion stays centred, and still while it hops. */
+/* A decoration, drawn finer than the companion, as the hoard is. */
 function decoration(d, px) {
   if (!d) return null;
   var w = d.rows[0].length, h = d.rows.length;
-  var svg = el('svg', { class: 'decoration', width: w * px, height: h * px, viewBox: '0 0 ' + w + ' ' + h });
+  var svg = el('svg', { class: 'decoration deco', width: w * px, height: h * px, viewBox: '0 0 ' + w + ' ' + h });
   var paint = function (into, rows, y0) {
     rows.forEach(function (row, y) { for (var x = 0; x < w; x++) { var c = row[x];
       if (c !== '.' && d.pal[c]) into.appendChild(el('rect', { x: x, y: y0 + y, width: 1, height: 1, fill: d.pal[c] })); } });
@@ -709,11 +708,18 @@ function wizardCat() {
   var old = pet.querySelector('.wizard'); if (old) old.remove();
   var box = document.createElement('div'); box.className = 'wizard';
   box.appendChild(sprite(COMPANION.companion(companionPick(), pet.dataset.mood || 'content'), 3));
-  var deco = decoration(COMPANION.DECORATIONS[companionPick().decoration], 3);
-  if (deco) box.appendChild(deco);
   var first = pet.querySelector('.art');
   pet.insertBefore(box, first);
   pet.classList.add('pixel');
+  // A decoration stands left of it, as the hoard does right, with the quiz's right
+  // answers under it as the commits are under the hoard.
+  pet.querySelectorAll('.deco, .deco-n').forEach(function (n) { n.remove(); });
+  var deco = decoration(COMPANION.DECORATIONS[companionPick().decoration], COMPANION.DECORATION_PX);
+  if (deco) {
+    var right = Number(pet.dataset.quizRight) || 0, n = document.createElement('span');
+    n.className = 'deco-n'; n.textContent = right; n.title = right + ' quiz answer' + (right === 1 ? '' : 's') + ' right';
+    pet.insertBefore(deco, first); pet.insertBefore(n, first);
+  }
 }
 document.addEventListener('companionchange', function () { if (questOn()) wizardCat(); });
 

@@ -733,9 +733,11 @@ function project(r) {
 }
 
 // Optional, off-switchable, and fed only by evidence that something moved.
-function companion(pet, tally) {
+function companion(pet, tally, quiz) {
   if (!pet) return "";
-  return `<div class="pet" id="pet" data-mood="${pet.mood}" hidden>
+  // the quiz's right answers, shown under a decoration
+  const right = quiz?.stats?.correct ?? 0;
+  return `<div class="pet" id="pet" data-mood="${pet.mood}" data-quiz-right="${right}" hidden>
     ${Object.entries(pet.arts ?? { cat: pet.art })
       .map(([race, art]) => `<pre class="art" data-race="${race}"${race === "cat" ? "" : " hidden"}>${esc(art)}</pre>`)
       .join("")}
@@ -848,7 +850,7 @@ function nav(data) {
       <div class="sep"></div>
       ${groups}
     </div>
-    ${companion(data.pet, data.tally)}
+    ${companion(data.pet, data.tally, data.quiz)}
   </nav>`;
 }
 
