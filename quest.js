@@ -678,6 +678,21 @@ function undecorate() {
   var pet = document.getElementById('pet'); if (pet) pet.classList.remove('pixel');
 }
 
+/* Centring can leave a picture half a screen pixel over, and then its pixels round
+   unevenly -- some a screen pixel wider than the rest. Nudge it onto the grid. */
+function snap(svg) {
+  requestAnimationFrame(function () {
+    var r = window.devicePixelRatio || 1;
+    svg.style.transform = '';
+    var box = svg.getBoundingClientRect();
+    var dx = Math.round(box.left * r) / r - box.left, dy = Math.round(box.top * r) / r - box.top;
+    if (dx || dy) svg.style.transform = 'translate(' + dx + 'px,' + dy + 'px)';
+  });
+}
+// all three: the decoration, the companion and the hoard
+function snapPet() { document.querySelectorAll('#pet .deco, #pet .wizard > svg, #pet .tally-hoard > svg').forEach(snap); }
+window.addEventListener('resize', snapPet);
+
 /* A decoration, drawn finer than the companion, as the hoard is. */
 function decoration(d, px) {
   if (!d) return null;
@@ -714,12 +729,13 @@ function wizardCat() {
   // A decoration stands left of it, as the hoard does right, with the quiz's right
   // answers under it as the commits are under the hoard.
   pet.querySelectorAll('.deco, .deco-n').forEach(function (n) { n.remove(); });
-  var deco = decoration(COMPANION.DECORATIONS[companionPick().decoration], COMPANION.DECORATION_PX);
+  var deco = decoration(COMPANION.DECORATIONS[companionPick().decoration], COMPANION.decorationPx(window.devicePixelRatio));
   if (deco) {
     var right = Number(pet.dataset.quizRight) || 0, n = document.createElement('span');
     n.className = 'deco-n'; n.textContent = right; n.title = right + ' quiz answer' + (right === 1 ? '' : 's') + ' right';
     pet.insertBefore(deco, first); pet.insertBefore(n, first);
   }
+  snapPet();
 }
 document.addEventListener('companionchange', function () { if (questOn()) wizardCat(); });
 

@@ -560,9 +560,15 @@ function companion(pick, mood) {
 
 // ---------- decorations: something beside the companion in quest mode, standing on
 // its floor to its left -- one drawing each, the same beside every animal. Drawn
-// finer than the animal, as the hoard is (DECORATION_PX a pixel, not 3): outlines
-// one pixel, tinted by what they hold, and lit from the top left.
-const DECORATION_PX = 1.6;
+// finer than the animal, as the hoard is (about 1.5 a pixel, not 3): outlines one
+// pixel, tinted by what they hold, and lit from the top left.
+const DECORATION_PX = 1.5;
+// The size a pixel is drawn at on this screen: a whole number of the screen's own
+// pixels, or a row of them comes out uneven -- some wider than the rest.
+function decorationPx(ratio) {
+  const r = ratio || 1;
+  return Math.max(1, Math.round(DECORATION_PX * r)) / r;
+}
 const DECORATIONS = {
   // a food bowl heaped with kibble, a heart on its band
   bowl: {
@@ -1137,7 +1143,7 @@ const DECORATION_SETS = {
 const api = { MOODS, ANIMALS, HATS, COATS, HAT_COLOURS, W, H, compose, companion, dressUp, DECORATIONS,
   RACES: ["cat", "pug", "frog"], CLASSES: ["none", "wizard", "ranger", "knight"],
   COSTUMES: ["none", ...Object.keys(COSTUMES)], LOOKS: Object.keys(LOOKS),
-  DECORATION_NAMES: ["none", ...Object.keys(DECORATIONS)], DECORATION_SETS, DECORATION_PX };
+  DECORATION_NAMES: ["none", ...Object.keys(DECORATIONS)], DECORATION_SETS, DECORATION_PX, decorationPx };
 
 if (typeof module !== "undefined" && module.exports) module.exports = api;
 else root.COMPANION = api;
