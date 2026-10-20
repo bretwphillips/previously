@@ -2,6 +2,8 @@
 // hoard, a house, chapel and cemetery on the trail, and papel picado across the
 // top. The alebrijes and their send-off are in quest.js; the looks in companion.js.
 
+import { DARK_ROOT } from "./style.mjs";
+
 const rects = (rows, pal) => rows.flatMap((row, y) =>
   [...row].map((c, x) => (pal[c] ? `<rect x="${x}" y="${y}" width="1" height="1" fill="${pal[c]}"/>` : ""))).join("");
 const svgOf = (rows, pal, scale, cls) => {
@@ -196,9 +198,9 @@ export const MUERTOS_CSS = `
 body.quest.muertos .dot { width: 9px; height: 12px; background-color: transparent; background-size: 9px 12px; background-repeat: no-repeat; box-shadow: none; border-radius: 0; }
 ${candleRules("", GLASS.light, "light")}
 @media (prefers-color-scheme: dark) {
-${candleRules(':root:not([data-theme="light"])', GLASS.dark, "dark")}
+${candleRules(':root:not([data-theme])', GLASS.dark, "dark")}
 }
-${candleRules(':root[data-theme="dark"]', GLASS.dark, "dark")}
+${candleRules(DARK_ROOT, GLASS.dark, "dark")}
 @media (prefers-reduced-motion: reduce) { body.quest.muertos .dot { animation: none !important; } }
 
 /* the banner: hung from the bottom edge of the bar, over the page as it scrolls */
@@ -221,11 +223,11 @@ body.quest.muertos nav .trail[data-step="1"] { opacity: 0.6; }
 body.quest.muertos nav .trail[data-step="2"] { opacity: 0.45; }
 /* their dark-mode colours are lighter and stand out more, so they fade further there */
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) body.quest.muertos nav .trail[data-step="1"] { opacity: 0.48; }
-  :root:not([data-theme="light"]) body.quest.muertos nav .trail[data-step="2"] { opacity: 0.34; }
+  :root:not([data-theme]) body.quest.muertos nav .trail[data-step="1"] { opacity: 0.48; }
+  :root:not([data-theme]) body.quest.muertos nav .trail[data-step="2"] { opacity: 0.34; }
 }
-:root[data-theme="dark"] body.quest.muertos nav .trail[data-step="1"] { opacity: 0.48; }
-:root[data-theme="dark"] body.quest.muertos nav .trail[data-step="2"] { opacity: 0.34; }
+${DARK_ROOT} body.quest.muertos nav .trail[data-step="1"] { opacity: 0.48; }
+${DARK_ROOT} body.quest.muertos nav .trail[data-step="2"] { opacity: 0.34; }
 body.quest.muertos nav .road { opacity: 1; }
 
 /* the hoard */

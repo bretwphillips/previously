@@ -49,11 +49,238 @@ const CONTRAST = `
   --sel: #dde3ee;
 `;
 
+// Warm paper and brown ink, like a reader app's sepia mode.
+const SEPIA = `
+  --bg: #f4ecd8; --panel: #fbf4e4; --ink: #433422; --muted: #7a6650;
+  --line: #e3d5b8; --line-soft: #ede2c9;
+  --blocked: #a1301e; --action: #9a5b13; --waiting: #2f5f8a; --quiet: #a08e74;
+  --mark-other: #a1301e; --mark-unfinished: #7a4a86; --mark-new: #4f7a2c;
+  --mark-blue: #2f5f8a; --mark-amber: #a8761a;
+  --sel: #ebdfc4;
+`;
+
+// Breakfast: golden batter, butter, maple syrup; strawberry, blueberry, jam and honey.
+const WAFFLE = `
+  --bg: #f6e3b4; --panel: #fdf3d9; --ink: #4a2a12; --muted: #84603a;
+  --line: #ecd29a; --line-soft: #f3e2b8;
+  --blocked: #b3261e; --action: #b5620e; --waiting: #3a4f9a; --quiet: #b09670;
+  --mark-other: #b3261e; --mark-unfinished: #7b3f72; --mark-new: #5f7d22;
+  --mark-blue: #3a4f9a; --mark-amber: #c48a12;
+  --sel: #f0d9a3;
+`;
+
+// Cooked bacon: a mid brown, rendered-fat cream, pink meat and crisped edges in the
+// accents. Goes on top of DARK, like the dark borrowed themes.
+const BACON = `
+  --bg: #3a2a22; --panel: #45322a; --ink: #f6e9dc; --muted: #cdb5a2;
+  --line: #5a4236; --line-soft: #4f3a30;
+  --blocked: #ff6b5a; --action: #f0a050; --waiting: #8fb8d8; --quiet: #a08474;
+  --mark-other: #ff6b5a; --mark-unfinished: #e58fa6; --mark-new: #a8c47a;
+  --mark-blue: #8fb8d8; --mark-amber: #e8b45a;
+  --sel: #634638;
+`;
+
+// Strawberry milk: pale pink, cream, deep berry ink, leaf green.
+const STRAWBERRY_MILK = `
+  --bg: #fbe4e6; --panel: #fff6f6; --ink: #4a1620; --muted: #8a4f58;
+  --line: #f3cdd2; --line-soft: #f8dde0;
+  --blocked: #c41e3a; --action: #b85a12; --waiting: #2f5f9a; --quiet: #b8919a;
+  --mark-other: #c41e3a; --mark-unfinished: #8a3a8f; --mark-new: #3f8a3a;
+  --mark-blue: #2f5f9a; --mark-amber: #b9851a;
+  --sel: #f6d3d8;
+`;
+
+// Banana milk: pale banana, cream, speckle-brown ink, unripe green.
+const BANANA_MILK = `
+  --bg: #fbf3cf; --panel: #fffbea; --ink: #3e3212; --muted: #7d6a3a;
+  --line: #f0e3a8; --line-soft: #f6ecbf;
+  --blocked: #b8322a; --action: #b5650e; --waiting: #2f5f9a; --quiet: #b3a477;
+  --mark-other: #b8322a; --mark-unfinished: #7e4a8c; --mark-new: #4f8a2a;
+  --mark-blue: #2f5f9a; --mark-amber: #a77a0e;
+  --sel: #f3e6b0;
+`;
+
+// Strawberry: pink all through, panels a lighter tint, seed-brown ink.
+const STRAWBERRY = `
+  --bg: #f7c6cc; --panel: #fde4e7; --ink: #4a0f1c; --muted: #8a3b4a;
+  --line: #f0aab3; --line-soft: #f9d2d7;
+  --blocked: #b0122e; --action: #a8520c; --waiting: #2a5590; --quiet: #a9707a;
+  --mark-other: #b0122e; --mark-unfinished: #7a2f86; --mark-new: #2f7a2c;
+  --mark-blue: #2a5590; --mark-amber: #9c6c0c;
+  --sel: #f3b3bc;
+`;
+
+// Banana: yellow all through, panels a lighter tint, speckle-brown ink.
+const BANANA = `
+  --bg: #f8e48c; --panel: #fdf2bf; --ink: #3a2a0c; --muted: #6f5a22;
+  --line: #ecd170; --line-soft: #f7e7a5;
+  --blocked: #b02a20; --action: #a8560a; --waiting: #2a5590; --quiet: #9f8a4e;
+  --mark-other: #b02a20; --mark-unfinished: #74408a; --mark-new: #3f7a1e;
+  --mark-blue: #2a5590; --mark-amber: #8f6a06;
+  --sel: #f1d978;
+`;
+
+// Blueberry milk: pale blueberry, near-white panels, indigo ink.
+const BLUEBERRY_MILK = `
+  --bg: #e6e9f7; --panel: #f6f7fd; --ink: #1c2147; --muted: #565c8a;
+  --line: #d3d8ef; --line-soft: #e2e5f5;
+  --blocked: #b3263a; --action: #a8560a; --waiting: #3448a8; --quiet: #9aa0c0;
+  --mark-other: #b3263a; --mark-unfinished: #6a3a9a; --mark-new: #3a7a3a;
+  --mark-blue: #3448a8; --mark-amber: #9c6c0c;
+  --sel: #d9ddf3;
+`;
+
+// Blueberry: deep indigo, dark like the berry. Goes on top of DARK.
+const BLUEBERRY = `
+  --bg: #1b1f3a; --panel: #232848; --ink: #e8e9f7; --muted: #a9add6;
+  --line: #353b66; --line-soft: #2b3157;
+  --blocked: #ff6b81; --action: #f0a050; --waiting: #8fa8ff; --quiet: #6f75a8;
+  --mark-other: #ff6b81; --mark-unfinished: #c49af0; --mark-new: #9fd67a;
+  --mark-blue: #8fa8ff; --mark-amber: #f0c860;
+  --sel: #3a4178;
+`;
+
+// Bacon milk: pale porky pink, fat-cream panels. Nobody asked for this.
+const BACON_MILK = `
+  --bg: #f6e6dc; --panel: #fdf5ef; --ink: #4a2418; --muted: #8a5a48;
+  --line: #ecd0c2; --line-soft: #f3dfd4;
+  --blocked: #b3301e; --action: #b0580e; --waiting: #2f5f8a; --quiet: #b8988a;
+  --mark-other: #b3301e; --mark-unfinished: #b05a78; --mark-new: #5a7a2a;
+  --mark-blue: #2f5f8a; --mark-amber: #a8761a;
+  --sel: #f0d2c4;
+`;
+
+// Birthday cake: pink frosting, white frosting panels, chocolate ink, and the
+// markers in sprinkle colours.
+const BIRTHDAY_CAKE = `
+  --bg: #fbd9e4; --panel: #fff6f8; --ink: #4a2c2a; --muted: #8a5f62;
+  --line: #f4c3d3; --line-soft: #fae3eb;
+  --blocked: #e0245e; --action: #d0650a; --waiting: #2a8bd6; --quiet: #b8949c;
+  --mark-other: #e0245e; --mark-unfinished: #9b4dd6; --mark-new: #2fa45a;
+  --mark-blue: #2a8bd6; --mark-amber: #c79400;
+  --sel: #f7c6d6;
+`;
+
+// Birthday cake in white: plain white frosting, the same sprinkles.
+const BIRTHDAY_CAKE_WHITE = `
+  --bg: #ffffff; --panel: #ffffff; --ink: #4a2c2a; --muted: #866a66;
+  --line: #f6e6e4; --line-soft: #fbf1f0;
+  --blocked: #e0245e; --action: #d0650a; --waiting: #2a8bd6; --quiet: #b8a6a2;
+  --mark-other: #e0245e; --mark-unfinished: #9b4dd6; --mark-new: #2fa45a;
+  --mark-blue: #2a8bd6; --mark-amber: #c79400;
+  --sel: #f9dce6;
+`;
+
+// Patterns behind the panels: faint where the text is, fuller toward the empty
+// right edge, under a fade in the theme's own background colour.
+const SPRINKLES = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140' opacity='0.5'%3E%3Crect x='10' y='16.5' width='8' height='3' rx='1.5' fill='%23e0245e' transform='rotate(30 14 18)'/%3E%3Crect x='48' y='8.5' width='8' height='3' rx='1.5' fill='%232a8bd6' transform='rotate(-40 52 10)'/%3E%3Crect x='92' y='22.5' width='8' height='3' rx='1.5' fill='%23f2c200' transform='rotate(70 96 24)'/%3E%3Crect x='26' y='54.5' width='8' height='3' rx='1.5' fill='%232fa45a' transform='rotate(-15 30 56)'/%3E%3Crect x='74' y='48.5' width='8' height='3' rx='1.5' fill='%239b4dd6' transform='rotate(45 78 50)'/%3E%3Crect x='108' y='68.5' width='8' height='3' rx='1.5' fill='%23f07a1a' transform='rotate(-60 112 70)'/%3E%3Crect x='6' y='90.5' width='8' height='3' rx='1.5' fill='%232a8bd6' transform='rotate(80 10 92)'/%3E%3Crect x='46' y='94.5' width='8' height='3' rx='1.5' fill='%23ffffff' transform='rotate(10 50 96)'/%3E%3Crect x='84' y='106.5' width='8' height='3' rx='1.5' fill='%23e0245e' transform='rotate(-30 88 108)'/%3E%3Crect x='118' y='116.5' width='8' height='3' rx='1.5' fill='%232fa45a' transform='rotate(20 122 118)'/%3E%3Crect x='62' y='130.5' width='8' height='3' rx='1.5' fill='%23f2c200' transform='rotate(-75 66 132)'/%3E%3Crect x='20' y='128.5' width='8' height='3' rx='1.5' fill='%239b4dd6' transform='rotate(50 24 130)'/%3E%3C/svg%3E";
+// The 90s: big filled triangles and circles (some with a hard shadow), striped
+// circles, dot fields, squiggles, zigzags and confetti. Wraps seamlessly.
+const MEMPHIS = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='360' height='360' opacity='0.5'%3E%3Cdefs%3E%3Cpattern id='sa' width='8' height='8' patternUnits='userSpaceOnUse' patternTransform='rotate(45)'%3E%3Crect width='3.5' height='8' fill='%23a48fd8'/%3E%3C/pattern%3E%3Cpattern id='sb' width='8' height='8' patternUnits='userSpaceOnUse' patternTransform='rotate(-35)'%3E%3Crect width='3.5' height='8' fill='%233fc1b7'/%3E%3C/pattern%3E%3Cpattern id='sc' width='7' height='7' patternUnits='userSpaceOnUse' patternTransform='rotate(30)'%3E%3Crect width='3' height='7' fill='%23ee5a9a'/%3E%3C/pattern%3E%3C/defs%3E%3Cg transform='translate(80 250) rotate(15)'%3E%3Cpolygon points='0,-70 60.9,35.0 -60.9,35.0' fill='%23ee5a9a'/%3E%3C/g%3E%3Cg transform='translate(440 250) rotate(15)'%3E%3Cpolygon points='0,-70 60.9,35.0 -60.9,35.0' fill='%23ee5a9a'/%3E%3C/g%3E%3Cg transform='translate(272 92) rotate(0)'%3E%3Ccircle r='40' fill='%231a1a2e' cx='5' cy='5'/%3E%3Ccircle r='40' fill='%233fc1b7'/%3E%3C/g%3E%3Cg transform='translate(196 226) rotate(0)'%3E%3Ccircle r='46' fill='url(%23sa)'/%3E%3C/g%3E%3Cg transform='translate(52 58) rotate(0)'%3E%3Ccircle r='34' fill='url(%23sb)'/%3E%3C/g%3E%3Cg transform='translate(52 418) rotate(0)'%3E%3Ccircle r='34' fill='url(%23sb)'/%3E%3C/g%3E%3Cg transform='translate(412 58) rotate(0)'%3E%3Ccircle r='34' fill='url(%23sb)'/%3E%3C/g%3E%3Cg transform='translate(412 418) rotate(0)'%3E%3Ccircle r='34' fill='url(%23sb)'/%3E%3C/g%3E%3Cg transform='translate(302 300) rotate(-20)'%3E%3Cpolygon points='0,-42 36.5,21.0 -36.5,21.0' fill='%231a1a2e' transform='translate(5 5)'/%3E%3Cpolygon points='0,-42 36.5,21.0 -36.5,21.0' fill='%23f9d93b'/%3E%3C/g%3E%3Cg transform='translate(302 -60) rotate(-20)'%3E%3Cpolygon points='0,-42 36.5,21.0 -36.5,21.0' fill='%231a1a2e' transform='translate(5 5)'/%3E%3Cpolygon points='0,-42 36.5,21.0 -36.5,21.0' fill='%23f9d93b'/%3E%3C/g%3E%3Cg transform='translate(-58 300) rotate(-20)'%3E%3Cpolygon points='0,-42 36.5,21.0 -36.5,21.0' fill='%231a1a2e' transform='translate(5 5)'/%3E%3Cpolygon points='0,-42 36.5,21.0 -36.5,21.0' fill='%23f9d93b'/%3E%3C/g%3E%3Cg transform='translate(-58 -60) rotate(-20)'%3E%3Cpolygon points='0,-42 36.5,21.0 -36.5,21.0' fill='%231a1a2e' transform='translate(5 5)'/%3E%3Cpolygon points='0,-42 36.5,21.0 -36.5,21.0' fill='%23f9d93b'/%3E%3C/g%3E%3Cg transform='translate(150 118) rotate(0)'%3E%3Ccircle r='24' fill='%23a48fd8'/%3E%3C/g%3E%3Cg transform='translate(318 196) rotate(20)'%3E%3Ccircle cx='-18.0' cy='-18.0' r='2.2' fill='%23ee5a9a'/%3E%3Ccircle cx='-18.0' cy='-9.0' r='2.2' fill='%23ee5a9a'/%3E%3Ccircle cx='-18.0' cy='0.0' r='2.2' fill='%23ee5a9a'/%3E%3Ccircle cx='-18.0' cy='9.0' r='2.2' fill='%23ee5a9a'/%3E%3Ccircle cx='-18.0' cy='18.0' r='2.2' fill='%23ee5a9a'/%3E%3Ccircle cx='-9.0' cy='-18.0' r='2.2' fill='%23ee5a9a'/%3E%3Ccircle cx='-9.0' cy='-9.0' r='2.2' fill='%23ee5a9a'/%3E%3Ccircle cx='-9.0' cy='0.0' r='2.2' fill='%23ee5a9a'/%3E%3Ccircle cx='-9.0' cy='9.0' r='2.2' fill='%23ee5a9a'/%3E%3Ccircle cx='-9.0' cy='18.0' r='2.2' fill='%23ee5a9a'/%3E%3Ccircle cx='0.0' cy='-18.0' r='2.2' fill='%23ee5a9a'/%3E%3Ccircle cx='0.0' cy='-9.0' r='2.2' fill='%23ee5a9a'/%3E%3Ccircle cx='0.0' cy='0.0' r='2.2' fill='%23ee5a9a'/%3E%3Ccircle cx='0.0' cy='9.0' r='2.2' fill='%23ee5a9a'/%3E%3Ccircle cx='0.0' cy='18.0' r='2.2' fill='%23ee5a9a'/%3E%3Ccircle cx='9.0' cy='-18.0' r='2.2' fill='%23ee5a9a'/%3E%3Ccircle cx='9.0' cy='-9.0' r='2.2' fill='%23ee5a9a'/%3E%3Ccircle cx='9.0' cy='0.0' r='2.2' fill='%23ee5a9a'/%3E%3Ccircle cx='9.0' cy='9.0' r='2.2' fill='%23ee5a9a'/%3E%3Ccircle cx='9.0' cy='18.0' r='2.2' fill='%23ee5a9a'/%3E%3Ccircle cx='18.0' cy='-18.0' r='2.2' fill='%23ee5a9a'/%3E%3Ccircle cx='18.0' cy='-9.0' r='2.2' fill='%23ee5a9a'/%3E%3Ccircle cx='18.0' cy='0.0' r='2.2' fill='%23ee5a9a'/%3E%3Ccircle cx='18.0' cy='9.0' r='2.2' fill='%23ee5a9a'/%3E%3Ccircle cx='18.0' cy='18.0' r='2.2' fill='%23ee5a9a'/%3E%3C/g%3E%3Cg transform='translate(-42 196) rotate(20)'%3E%3Ccircle cx='-18.0' cy='-18.0' r='2.2' fill='%23ee5a9a'/%3E%3Ccircle cx='-18.0' cy='-9.0' r='2.2' fill='%23ee5a9a'/%3E%3Ccircle cx='-18.0' cy='0.0' r='2.2' fill='%23ee5a9a'/%3E%3Ccircle cx='-18.0' cy='9.0' r='2.2' fill='%23ee5a9a'/%3E%3Ccircle cx='-18.0' cy='18.0' r='2.2' fill='%23ee5a9a'/%3E%3Ccircle cx='-9.0' cy='-18.0' r='2.2' fill='%23ee5a9a'/%3E%3Ccircle cx='-9.0' cy='-9.0' r='2.2' fill='%23ee5a9a'/%3E%3Ccircle cx='-9.0' cy='0.0' r='2.2' fill='%23ee5a9a'/%3E%3Ccircle cx='-9.0' cy='9.0' r='2.2' fill='%23ee5a9a'/%3E%3Ccircle cx='-9.0' cy='18.0' r='2.2' fill='%23ee5a9a'/%3E%3Ccircle cx='0.0' cy='-18.0' r='2.2' fill='%23ee5a9a'/%3E%3Ccircle cx='0.0' cy='-9.0' r='2.2' fill='%23ee5a9a'/%3E%3Ccircle cx='0.0' cy='0.0' r='2.2' fill='%23ee5a9a'/%3E%3Ccircle cx='0.0' cy='9.0' r='2.2' fill='%23ee5a9a'/%3E%3Ccircle cx='0.0' cy='18.0' r='2.2' fill='%23ee5a9a'/%3E%3Ccircle cx='9.0' cy='-18.0' r='2.2' fill='%23ee5a9a'/%3E%3Ccircle cx='9.0' cy='-9.0' r='2.2' fill='%23ee5a9a'/%3E%3Ccircle cx='9.0' cy='0.0' r='2.2' fill='%23ee5a9a'/%3E%3Ccircle cx='9.0' cy='9.0' r='2.2' fill='%23ee5a9a'/%3E%3Ccircle cx='9.0' cy='18.0' r='2.2' fill='%23ee5a9a'/%3E%3Ccircle cx='18.0' cy='-18.0' r='2.2' fill='%23ee5a9a'/%3E%3Ccircle cx='18.0' cy='-9.0' r='2.2' fill='%23ee5a9a'/%3E%3Ccircle cx='18.0' cy='0.0' r='2.2' fill='%23ee5a9a'/%3E%3Ccircle cx='18.0' cy='9.0' r='2.2' fill='%23ee5a9a'/%3E%3Ccircle cx='18.0' cy='18.0' r='2.2' fill='%23ee5a9a'/%3E%3C/g%3E%3Cg transform='translate(36 160) rotate(-10)'%3E%3Ccircle cx='-13.5' cy='-13.5' r='1.9' fill='%231a1a2e'/%3E%3Ccircle cx='-13.5' cy='-4.5' r='1.9' fill='%231a1a2e'/%3E%3Ccircle cx='-13.5' cy='4.5' r='1.9' fill='%231a1a2e'/%3E%3Ccircle cx='-13.5' cy='13.5' r='1.9' fill='%231a1a2e'/%3E%3Ccircle cx='-4.5' cy='-13.5' r='1.9' fill='%231a1a2e'/%3E%3Ccircle cx='-4.5' cy='-4.5' r='1.9' fill='%231a1a2e'/%3E%3Ccircle cx='-4.5' cy='4.5' r='1.9' fill='%231a1a2e'/%3E%3Ccircle cx='-4.5' cy='13.5' r='1.9' fill='%231a1a2e'/%3E%3Ccircle cx='4.5' cy='-13.5' r='1.9' fill='%231a1a2e'/%3E%3Ccircle cx='4.5' cy='-4.5' r='1.9' fill='%231a1a2e'/%3E%3Ccircle cx='4.5' cy='4.5' r='1.9' fill='%231a1a2e'/%3E%3Ccircle cx='4.5' cy='13.5' r='1.9' fill='%231a1a2e'/%3E%3Ccircle cx='13.5' cy='-13.5' r='1.9' fill='%231a1a2e'/%3E%3Ccircle cx='13.5' cy='-4.5' r='1.9' fill='%231a1a2e'/%3E%3Ccircle cx='13.5' cy='4.5' r='1.9' fill='%231a1a2e'/%3E%3Ccircle cx='13.5' cy='13.5' r='1.9' fill='%231a1a2e'/%3E%3C/g%3E%3Cg transform='translate(396 160) rotate(-10)'%3E%3Ccircle cx='-13.5' cy='-13.5' r='1.9' fill='%231a1a2e'/%3E%3Ccircle cx='-13.5' cy='-4.5' r='1.9' fill='%231a1a2e'/%3E%3Ccircle cx='-13.5' cy='4.5' r='1.9' fill='%231a1a2e'/%3E%3Ccircle cx='-13.5' cy='13.5' r='1.9' fill='%231a1a2e'/%3E%3Ccircle cx='-4.5' cy='-13.5' r='1.9' fill='%231a1a2e'/%3E%3Ccircle cx='-4.5' cy='-4.5' r='1.9' fill='%231a1a2e'/%3E%3Ccircle cx='-4.5' cy='4.5' r='1.9' fill='%231a1a2e'/%3E%3Ccircle cx='-4.5' cy='13.5' r='1.9' fill='%231a1a2e'/%3E%3Ccircle cx='4.5' cy='-13.5' r='1.9' fill='%231a1a2e'/%3E%3Ccircle cx='4.5' cy='-4.5' r='1.9' fill='%231a1a2e'/%3E%3Ccircle cx='4.5' cy='4.5' r='1.9' fill='%231a1a2e'/%3E%3Ccircle cx='4.5' cy='13.5' r='1.9' fill='%231a1a2e'/%3E%3Ccircle cx='13.5' cy='-13.5' r='1.9' fill='%231a1a2e'/%3E%3Ccircle cx='13.5' cy='-4.5' r='1.9' fill='%231a1a2e'/%3E%3Ccircle cx='13.5' cy='4.5' r='1.9' fill='%231a1a2e'/%3E%3Ccircle cx='13.5' cy='13.5' r='1.9' fill='%231a1a2e'/%3E%3C/g%3E%3Cg transform='translate(168 38) rotate(-30)'%3E%3Cpath d='M-40.0 0 q4 -11 8 0 t8 0 q4 -11 8 0 t8 0 q4 -11 8 0 t8 0 q4 -11 8 0 t8 0 q4 -11 8 0 t8 0' stroke='%233fc1b7' fill='none' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/g%3E%3Cg transform='translate(168 398) rotate(-30)'%3E%3Cpath d='M-40.0 0 q4 -11 8 0 t8 0 q4 -11 8 0 t8 0 q4 -11 8 0 t8 0 q4 -11 8 0 t8 0 q4 -11 8 0 t8 0' stroke='%233fc1b7' fill='none' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/g%3E%3Cg transform='translate(64 334) rotate(-25)'%3E%3Cpath d='M-32.0 0 q4 -11 8 0 t8 0 q4 -11 8 0 t8 0 q4 -11 8 0 t8 0 q4 -11 8 0 t8 0' stroke='%23ee5a9a' fill='none' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/g%3E%3Cg transform='translate(64 -26) rotate(-25)'%3E%3Cpath d='M-32.0 0 q4 -11 8 0 t8 0 q4 -11 8 0 t8 0 q4 -11 8 0 t8 0 q4 -11 8 0 t8 0' stroke='%23ee5a9a' fill='none' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/g%3E%3Cg transform='translate(232 160) rotate(-35)'%3E%3Cpath d='M-24.0 0 q4 -11 8 0 t8 0 q4 -11 8 0 t8 0 q4 -11 8 0 t8 0' stroke='%231a1a2e' fill='none' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/g%3E%3Cg transform='translate(108 182) rotate(-20)'%3E%3Cpolyline points='-20.0,6 -10.0,-6 0.0,6 10.0,-6 20.0,6' stroke='%23ee5a9a' fill='none' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/g%3E%3Cg transform='translate(250 330) rotate(15)'%3E%3Cpolyline points='-20.0,6 -10.0,-6 0.0,6 10.0,-6 20.0,6' stroke='%237a3fd0' fill='none' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/g%3E%3Cg transform='translate(250 -30) rotate(15)'%3E%3Cpolyline points='-20.0,6 -10.0,-6 0.0,6 10.0,-6 20.0,6' stroke='%237a3fd0' fill='none' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/g%3E%3Cg transform='translate(18 118) rotate(-40)'%3E%3Crect x='-11' y='-3' width='22' height='6' rx='3' fill='%237a3fd0'/%3E%3C/g%3E%3Cg transform='translate(378 118) rotate(-40)'%3E%3Crect x='-11' y='-3' width='22' height='6' rx='3' fill='%237a3fd0'/%3E%3C/g%3E%3Cg transform='translate(246 22) rotate(30)'%3E%3Crect x='-11' y='-3' width='22' height='6' rx='3' fill='%23f9d93b'/%3E%3C/g%3E%3Cg transform='translate(246 382) rotate(30)'%3E%3Crect x='-11' y='-3' width='22' height='6' rx='3' fill='%23f9d93b'/%3E%3C/g%3E%3Cg transform='translate(342 140) rotate(-60)'%3E%3Crect x='-11' y='-3' width='22' height='6' rx='3' fill='%23ee5a9a'/%3E%3C/g%3E%3Cg transform='translate(-18 140) rotate(-60)'%3E%3Crect x='-11' y='-3' width='22' height='6' rx='3' fill='%23ee5a9a'/%3E%3C/g%3E%3Cg transform='translate(132 300) rotate(50)'%3E%3Crect x='-11' y='-3' width='22' height='6' rx='3' fill='%231a1a2e'/%3E%3C/g%3E%3Cg transform='translate(132 -60) rotate(50)'%3E%3Crect x='-11' y='-3' width='22' height='6' rx='3' fill='%231a1a2e'/%3E%3C/g%3E%3Cg transform='translate(206 344) rotate(-15)'%3E%3Crect x='-11' y='-3' width='22' height='6' rx='3' fill='%233fc1b7'/%3E%3C/g%3E%3Cg transform='translate(206 -16) rotate(-15)'%3E%3Crect x='-11' y='-3' width='22' height='6' rx='3' fill='%233fc1b7'/%3E%3C/g%3E%3Cg transform='translate(236 290) rotate(0)'%3E%3Ccircle r='8' stroke='%231a1a2e' fill='none' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/g%3E%3Cg transform='translate(110 60) rotate(0)'%3E%3Ccircle r='9' fill='%23f9d93b'/%3E%3C/g%3E%3Cg transform='translate(110 420) rotate(0)'%3E%3Ccircle r='9' fill='%23f9d93b'/%3E%3C/g%3E%3Cg transform='translate(330 30) rotate(0)'%3E%3Ccircle r='7' stroke='%23ee5a9a' fill='none' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/g%3E%3Cg transform='translate(330 390) rotate(0)'%3E%3Ccircle r='7' stroke='%23ee5a9a' fill='none' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/g%3E%3Cg transform='translate(-30 30) rotate(0)'%3E%3Ccircle r='7' stroke='%23ee5a9a' fill='none' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/g%3E%3Cg transform='translate(-30 390) rotate(0)'%3E%3Ccircle r='7' stroke='%23ee5a9a' fill='none' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/g%3E%3Cg transform='translate(186 286) rotate(0)'%3E%3Ccircle r='16' fill='url(%23sc)'/%3E%3C/g%3E%3C/svg%3E";
+const backdrop = (id, bg, tile) => `:root[data-theme="${id}"] body { background-image:
+  linear-gradient(to right, rgba(${bg}, 0.6) 0 55%, rgba(${bg}, 0) 90%), url("${tile}"); }`;
+
+// The 90s: sky blue, pale-blue panels, near-black ink, hot pink, teal, lavender,
+// purple and yellow.
+const NINETIES = `
+  --bg: #9fd8f5; --panel: #eef8fe; --ink: #1a1a2e; --muted: #3a4560;
+  --line: #cfe9f7; --line-soft: #e3f3fc;
+  --blocked: #d6246e; --action: #c45a00; --waiting: #1a6fb0; --quiet: #6a7a96;
+  --mark-other: #d6246e; --mark-unfinished: #7a5cc8; --mark-new: #1fa597;
+  --mark-blue: #1a6fb0; --mark-amber: #c99a00;
+  --sel: #fbe7f0;
+`;
+
+// Grass and dirt: a grass header over dark soil that deepens down the window,
+// light text. Goes on top of DARK.
+const GARDEN = `
+  --bg: #3b2a1d; --panel: #47352a; --ink: #f1e6d4; --muted: #c8b294;
+  --line: #5a4430; --line-soft: #4a3826;
+  --blocked: #ff7a5c; --action: #f0a050; --waiting: #8fb8d8; --quiet: #8a735a;
+  --mark-other: #ff7a5c; --mark-unfinished: #d39ae0; --mark-new: #a8d46a;
+  --mark-blue: #8fb8d8; --mark-amber: #e8c060;
+  --sel: #5e4632;
+`;
+
+// Borrowed palettes, each based on its author's theme (all MIT), with a few
+// colours adjusted where the original is too faint to read as text:
+// Solarized (Ethan Schoonover), Gruvbox (Pavel Pertsev), Everforest (Sainnhe Park),
+// Kanagawa (Tommaso Laurenzi), Nord (Arctic Ice Studio), Dracula (Zeno Rocha),
+// Catppuccin (the Catppuccin org), Tokyo Night (enkia).
+// Dark ones go on top of DARK, so the holiday art keeps its dark-mode colours.
+const tokens = (bg, panel, ink, muted, line, lineSoft, sel, blocked, action, waiting, quiet,
+  unfinished, newMark, blue, amber) => `
+  --bg: ${bg}; --panel: ${panel}; --ink: ${ink}; --muted: ${muted};
+  --line: ${line}; --line-soft: ${lineSoft}; --sel: ${sel};
+  --blocked: ${blocked}; --action: ${action}; --waiting: ${waiting}; --quiet: ${quiet};
+  --mark-other: ${blocked}; --mark-unfinished: ${unfinished}; --mark-new: ${newMark};
+  --mark-blue: ${blue}; --mark-amber: ${amber};
+`;
+
+const BORROWED = [
+  // Solarized's ink is a step past its body text, darker in light and brighter in dark.
+  { id: "solarized", label: "Solarized Light", dark: false,
+    tokens: tokens("#fdf6e3", "#fffcf2", "#073642", "#657b83", "#e6dfca", "#eee8d5", "#eee8d5",
+      "#dc322f", "#cb4b16", "#268bd2", "#93a1a1", "#6c71c4", "#859900", "#268bd2", "#b58900") },
+  { id: "gruvbox-light", label: "Gruvbox Light", dark: false,
+    tokens: tokens("#fbf1c7", "#f9f5d7", "#3c3836", "#7c6f64", "#ebdbb2", "#f2e5bc", "#ebdbb2",
+      "#9d0006", "#af3a03", "#076678", "#928374", "#8f3f71", "#79740e", "#076678", "#b57614") },
+  { id: "latte", label: "Catppuccin Latte", dark: false,
+    tokens: tokens("#e6e9ef", "#eff1f5", "#4c4f69", "#6c6f85", "#ccd0da", "#dce0e8", "#dce0e8",
+      "#d20f39", "#fe640b", "#1e66f5", "#8c8fa1", "#8839ef", "#40a02b", "#1e66f5", "#df8e1d") },
+  { id: "solarized-dark", label: "Solarized Dark", dark: true,
+    tokens: tokens("#002b36", "#073642", "#eee8d5", "#93a1a1", "#124552", "#0a3a47", "#0e4352",
+      "#dc322f", "#cb4b16", "#268bd2", "#657b83", "#6c71c4", "#859900", "#268bd2", "#b58900") },
+  { id: "gruvbox-dark", label: "Gruvbox Dark", dark: true,
+    tokens: tokens("#1d2021", "#282828", "#ebdbb2", "#a89984", "#3c3836", "#32302f", "#3c3836",
+      "#fb4934", "#fe8019", "#83a598", "#7c6f64", "#d3869b", "#b8bb26", "#83a598", "#fabd2f") },
+  { id: "everforest", label: "Everforest", dark: true,
+    tokens: tokens("#232a2e", "#2d353b", "#d3c6aa", "#9da9a0", "#475258", "#343f44", "#3d484d",
+      "#e67e80", "#e69875", "#7fbbb3", "#7a8478", "#d699b6", "#a7c080", "#7fbbb3", "#dbbc7f") },
+  { id: "kanagawa", label: "Kanagawa", dark: true,
+    tokens: tokens("#16161d", "#1f1f28", "#dcd7ba", "#a6a69c", "#363646", "#2a2a37", "#2d4f67",
+      "#e46876", "#ffa066", "#7e9cd8", "#727169", "#957fb8", "#98bb6c", "#7fb4ca", "#e6c384") },
+  { id: "nord", label: "Nord", dark: true,
+    tokens: tokens("#2e3440", "#3b4252", "#eceff4", "#a0a8b7", "#4c566a", "#434c5e", "#434c5e",
+      "#bf616a", "#d08770", "#88c0d0", "#7b8394", "#b48ead", "#a3be8c", "#81a1c1", "#ebcb8b") },
+  // Dracula has no blue, so cyan stands in.
+  { id: "dracula", label: "Dracula", dark: true,
+    tokens: tokens("#21222c", "#282a36", "#f8f8f2", "#a4acd0", "#44475a", "#343746", "#44475a",
+      "#ff5555", "#ffb86c", "#8be9fd", "#6272a4", "#bd93f9", "#50fa7b", "#8be9fd", "#f1fa8c") },
+  { id: "mocha", label: "Catppuccin Mocha", dark: true,
+    tokens: tokens("#181825", "#1e1e2e", "#cdd6f4", "#a6adc8", "#313244", "#2a2b3c", "#313244",
+      "#f38ba8", "#fab387", "#89b4fa", "#7f849c", "#cba6f7", "#a6e3a1", "#89b4fa", "#f9e2af") },
+  { id: "tokyo-night", label: "Tokyo Night", dark: true,
+    tokens: tokens("#16161e", "#1a1b26", "#c0caf5", "#a9b1d6", "#292e42", "#1f2335", "#292e42",
+      "#f7768e", "#ff9e64", "#7aa2f7", "#565f89", "#bb9af7", "#9ece6a", "#7aa2f7", "#e0af68") },
+];
+
+// Every theme picked by hand that wants the dark versions of pictures.
+export const DARK_ROOT = `:root:is(${["dark", "bacon", "blueberry", "garden", ...BORROWED.filter((t) => t.dark).map((t) => t.id)]
+  .map((id) => `[data-theme="${id}"]`).join(", ")})`;
+
 export const THEMES = [
-  { id: "auto", label: "Match system" },
-  { id: "light", label: "Light" },
-  { id: "dark", label: "Dark" },
-  { id: "contrast", label: "High contrast" },
+  { id: "auto", label: "Match system", group: "Previously" },
+  { id: "light", label: "Light", group: "Previously" },
+  { id: "dark", label: "Dark", group: "Previously" },
+  { id: "contrast", label: "High contrast", group: "Previously" },
+  { id: "sepia", label: "Sepia", group: "Previously" },
+  ...[...BORROWED]
+    .sort((a, b) => a.dark - b.dark || a.label.localeCompare(b.label))
+    .map((t) => ({ id: t.id, label: t.label, group: t.dark ? "Dark" : "Light" })),
+  { id: "waffle", label: "Waffle", group: "Just for fun" },
+  { id: "strawberry", label: "Strawberry", group: "Just for fun" },
+  { id: "strawberry-milk", label: "Strawberry Milk", group: "Just for fun" },
+  { id: "banana", label: "Banana", group: "Just for fun" },
+  { id: "banana-milk", label: "Banana Milk", group: "Just for fun" },
+  { id: "blueberry", label: "Blueberry", group: "Just for fun" },
+  { id: "blueberry-milk", label: "Blueberry Milk", group: "Just for fun" },
+  { id: "bacon", label: "Bacon", group: "Just for fun" },
+  { id: "bacon-milk", label: "Bacon Milk", group: "Just for fun" },
+  { id: "birthday-cake", label: "Birthday Cake (Pink)", group: "Just for fun" },
+  { id: "birthday-cake-white", label: "Birthday Cake (White)", group: "Just for fun" },
+  { id: "nineties", label: "90s", group: "Just for fun" },
+  { id: "garden", label: "Grass & Dirt", group: "Just for fun" },
 ];
 
 export const CSS = `
@@ -68,9 +295,29 @@ ${LIGHT}
 :root[data-theme="light"] {${LIGHT}}
 :root[data-theme="dark"] {${DARK}}
 :root[data-theme="contrast"] {${CONTRAST}}
+:root[data-theme="sepia"] {${SEPIA}}
+:root[data-theme="waffle"] {${WAFFLE}}
+:root[data-theme="birthday-cake"] {${BIRTHDAY_CAKE}}
+:root[data-theme="birthday-cake-white"] {${BIRTHDAY_CAKE_WHITE}}
+:root[data-theme="nineties"] {${NINETIES}}
+:root[data-theme="garden"] {${DARK}${GARDEN}}
+:root[data-theme="garden"] body { background-image: linear-gradient(#3b2a1d, #2a1d14); background-attachment: fixed; }
+:root[data-theme="garden"] .top { background: linear-gradient(#4f8a2e, #3f7524); border-bottom: 0; }
+:root[data-theme="strawberry"] {${STRAWBERRY}}
+:root[data-theme="banana"] {${BANANA}}
+:root[data-theme="strawberry-milk"] {${STRAWBERRY_MILK}}
+:root[data-theme="banana-milk"] {${BANANA_MILK}}
+:root[data-theme="blueberry"] {${DARK}${BLUEBERRY}}
+:root[data-theme="blueberry-milk"] {${BLUEBERRY_MILK}}
+:root[data-theme="bacon"] {${DARK}${BACON}}
+${BORROWED.map((t) => `:root[data-theme="${t.id}"] {${t.dark ? DARK : ""}${t.tokens}}`).join("\n")}
 :root[data-theme="contrast"] body { font-weight: 450; }
 :root[data-theme="contrast"] .src,
 :root[data-theme="contrast"] .stamp { opacity: 0.75; }
+:root[data-theme="bacon-milk"] {${BACON_MILK}}
+${backdrop("birthday-cake", "251, 217, 228", SPRINKLES)}
+${backdrop("birthday-cake-white", "255, 255, 255", SPRINKLES)}
+${backdrop("nineties", "159, 216, 245", MEMPHIS)}
 
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans);
@@ -618,6 +865,14 @@ kbd.listening { border-color: var(--waiting); color: var(--waiting); }
                             border-radius: 6px; padding: 6px 10px; }
 #pane-settings input[type="number"] { width: 64px; font: inherit; font-size: 13px; color: var(--ink); background: var(--bg);
                               border: 1px solid var(--line); border-radius: 6px; padding: 5px 8px; }
+/* drawn by hand, not by macOS, so it's the height of the text inputs; the chevron
+   is two gradients so it takes the theme's colour */
+#theme-choice { -webkit-appearance: none; appearance: none; font: inherit; font-size: 13px; color: var(--ink);
+                border: 1px solid var(--line); border-radius: 6px; padding: 6px 30px 6px 10px; min-width: 240px;
+                background: linear-gradient(45deg, transparent 50%, var(--muted) 50%) calc(100% - 15px) 50% / 5px 5px no-repeat,
+                            linear-gradient(135deg, var(--muted) 50%, transparent 50%) calc(100% - 10px) 50% / 5px 5px no-repeat,
+                            var(--bg); }
+#theme-choice:focus,
 #pane-settings input[type="text"]:focus { outline: none; border-color: var(--waiting); }
 .sheet .hint, #pane-settings .hint { font-size: 11px; color: var(--muted); margin: 10px 0 0; }
 

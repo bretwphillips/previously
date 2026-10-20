@@ -1,6 +1,9 @@
 // Halloween in quest mode: candy in place of the gold, and haunted houses on the
 // trail. The monsters and the candy they burst into are in quest.js; the
 // companion's costumes in companion.js.
+
+import { DARK_ROOT } from "./style.mjs";
+
 // ---------- candy: small sprites placed into piles, each in a flavour.
 // o outline, X/h/d the candy (body, light, shade), W the wrapper.
 export const FLAVOURS = {
@@ -154,11 +157,11 @@ ${potionRules("", LIGHT_GLASS)}
 @media (prefers-color-scheme: dark) {
 ${potionRules(":root:not([data-theme])", DARK_GLASS)}
 }
-${potionRules(':root[data-theme="dark"]', DARK_GLASS)}
+${potionRules(DARK_ROOT, DARK_GLASS)}
 ${drinkRules("", LIGHT_GLASS, "light")}
 @media (prefers-color-scheme: dark) {
 ${drinkRules(":root:not([data-theme])", DARK_GLASS, "dark")}
 }
-${drinkRules(':root[data-theme="dark"]', DARK_GLASS, "dark")}
+${drinkRules(DARK_ROOT, DARK_GLASS, "dark")}
 @media (prefers-reduced-motion: reduce) { body.quest.halloween .dot.drinking { animation: none !important; } }
 `;

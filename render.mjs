@@ -1,4 +1,4 @@
-import { CSS, THEMES } from "./style.mjs";
+import { CSS, DARK_ROOT, THEMES } from "./style.mjs";
 import { CLIENT } from "./client.mjs";
 import { esc, markdown } from "./md.mjs";
 import { GROUPS, NEEDS_YOU } from "./alerts.mjs";
@@ -9,7 +9,9 @@ import { readFileSync } from "node:fs";
 const here = new URL(".", import.meta.url);
 const QUEST_JS = readFileSync(new URL("quest.js", here), "utf8");
 const COMPANION_JS = readFileSync(new URL("companion.js", here), "utf8");
-const QUEST_CSS = readFileSync(new URL("quest.css", here), "utf8");
+// quest.css names only "dark"; every other dark theme gets its dark pictures too.
+const QUEST_CSS = readFileSync(new URL("quest.css", here), "utf8")
+  .replaceAll(':root[data-theme="dark"]', DARK_ROOT);
 const QUEST_DEFS = readFileSync(new URL("quest-defs.svg", here), "utf8");
 import { HOARD, HOARD_PALETTE } from "./hoard.mjs";
 import { CANDY, pile, HOUSES, HOUSE_COLOURS, POTION_CSS } from "./halloween.mjs";
@@ -897,9 +899,10 @@ function settingsPane(userName, weightLimit = 5, terminals = [], update = null, 
         ${updateRow(update, settings, row, about)}
         ${row(
           "Theme",
-          `<div class="themes">${THEMES.map(
-            (t) => `<button data-theme="${t.id}">${esc(t.label)}</button>`,
-          ).join("")}</div>`,
+          `<select id="theme-choice" aria-label="Theme">${[...new Set(THEMES.map((t) => t.group))]
+            .map((group) => `<optgroup label="${esc(group)}">${THEMES.filter((t) => t.group === group)
+              .map((t) => `<option value="${t.id}">${esc(t.label)}</option>`).join("")}</optgroup>`)
+            .join("")}</select>`,
         )}
         ${row(
           "Title card name",

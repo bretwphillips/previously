@@ -28,10 +28,8 @@ var store = {
 function applyTheme(id) {
   if (id && id !== 'auto') document.documentElement.setAttribute('data-theme', id);
   else document.documentElement.removeAttribute('data-theme');
-  var buttons = document.querySelectorAll('#pane-settings .themes button[data-theme]');
-  for (var i = 0; i < buttons.length; i++) {
-    buttons[i].setAttribute('aria-pressed', String(buttons[i].dataset.theme === (id || 'auto')));
-  }
+  var select = document.getElementById('theme-choice');
+  if (select) select.value = id || 'auto';
   themeChanged();
 }
 
@@ -1456,13 +1454,11 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  var themeButtons = sheet.querySelectorAll('.themes button[data-theme]');
-  for (var t = 0; t < themeButtons.length; t++) {
-    themeButtons[t].addEventListener('click', function () {
-      store.set('worklog.theme', this.dataset.theme);
-      applyTheme(this.dataset.theme);
-    });
-  }
+  var themeSelect = sheet.querySelector('#theme-choice');
+  if (themeSelect) themeSelect.addEventListener('change', function () {
+    store.set('worklog.theme', this.value);
+    applyTheme(this.value);
+  });
 
   /* Notes editing only exists inside the app, which can write the file. In a
      plain browser the edit button stays hidden and the page is read-only. */
