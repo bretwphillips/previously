@@ -88,19 +88,21 @@ const ALTAR = [
   [50, 50, "bigSkull", 13, 23], [50, 50, "bread", 25, 25], [50, 50, "bigFlower", 21, 25],
   [75, 75, "bigSkull", 13, 23], [75, 75, "bread", 25, 25], [75, 75, "bigFlower", 10, 25], [75, 75, "bigFlower", 21, 25], [75, 75, "bigFlower", 32, 25],
   // the table and its photo; candles with marigolds; a skull and bread beside the photo
-  [100, 1e9, "tier", 5, 21, 37, 9],
+  [100, 1e9, "tier", 6, 21, 35, 9],
   [100, 299, "bigPhoto", 20, 15],
   [150, 1e9, "candle", 6, 15], [150, 1e9, "candle", 38, 15], [150, 699, "flower", 9, 18], [150, 699, "flower", 35, 18],
   [200, 1e9, "garland", 6, 23, 35], [200, 299, "skull", 12, 15], [200, 299, "bread", 27, 16],
   [700, 1e9, "photo", 9, 16], [700, 1e9, "photo", 33, 16],
   // the second tier takes the photo, skull and bread up
   [300, 1e9, "tier", 13, 16, 21, 5],
-  [300, 999, "bigPhoto", 20, 10], [300, 1e9, "skull", 13, 10], [300, 1e9, "bread", 27, 11],
+  [300, 999, "bigPhoto", 20, 10], [300, 999, "skull", 13, 10], [300, 999, "bread", 27, 11],
   [500, 1e9, "garland", 14, 18, 19],
   // the last tier, the photo on top between candles
   [1000, 1e9, "tier", 18, 11, 11, 5], [1000, 1e9, "bigPhoto", 20, 5], [1000, 1e9, "candle", 17, 5], [1000, 1e9, "candle", 27, 5],
+  // the skull and bread drawn after the last tier, so they stand in front of its corners, whole
+  [1000, 1e9, "skull", 13, 10], [1000, 1e9, "bread", 27, 11],
   // either side and at the foot
-  [100, 1e9, "bigSkull", 0, 23], [100, 1e9, "bread", 39, 25], [100, 1e9, "bigFlower", 14, 25], [100, 1e9, "bigFlower", 28, 25],
+  [100, 1e9, "bigSkull", 2, 23], [100, 1e9, "bread", 37, 25], [100, 1e9, "bigFlower", 14, 25], [100, 1e9, "bigFlower", 28, 25],
   [200, 1e9, "bigFlower", 21, 25],
   [500, 1e9, "candle", 10, 24], [500, 1e9, "candle", 34, 24],
   [700, 1e9, "flower", 19, 27], [700, 1e9, "flower", 25, 27], [700, 1e9, "flower", 9, 27], [700, 1e9, "flower", 35, 27],
@@ -126,7 +128,8 @@ function altarAt(count) {
     else if (kind === "garland") for (let gx = x; gx < x + w; gx++) g[y][gx] = gx % 2 ? "M" : "N";
     else if (kind === "petals") {
       let seed = 7; const r = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
-      for (let i = 0; i < 26; i++) { const px = Math.floor(r() * W), py = 27 + Math.floor(r() * 3); if (g[py][px] === ".") g[py][px] = r() < 0.5 ? "M" : "N"; }
+      // petals only between the table legs, so none strays off on its own
+      for (let i = 0; i < 26; i++) { const px = 7 + Math.floor(r() * 33), py = 27 + Math.floor(r() * 3); if (g[py][px] === ".") g[py][px] = r() < 0.5 ? "M" : "N"; }
     } else stamp(SPRITES[kind], x, y);
   }
   return g.map((r) => r.join(""));
@@ -227,6 +230,8 @@ body.quest.muertos nav .road { opacity: 1; }
 
 /* the hoard */
 body:not(.muertos) .hoard.ofrenda, body.muertos .hoard:not(.ofrenda) { display: none; }
+/* the widest hoard, so it sits a little further right, clear of the companion */
+body.muertos .hoard.ofrenda { position: relative; left: 5px; }
 body.muertos .tally-hoard .tally-n { color: #c4641a; }
 body.quest.muertos .tally { left: calc(50% + 14px); }
 
