@@ -969,17 +969,8 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  /* The character builder. Every choice repaints the preview, the sidebar's text
-     animal and, in fantasy mode, its sprite. */
-  function builderSvg(v, px, bar) {
-    var rows = bar === false ? v.rows : v.rows.slice(0, -4), w = rows[0].length, h = rows.length, out = '<g class="body">';
-    rows.forEach(function (row, y) {
-      for (var x = 0; x < w; x++) if (row[x] !== '.' && v.pal[row[x]]) {
-        out += '<rect x="' + x + '" y="' + y + '" width="1" height="1" fill="' + v.pal[row[x]] + '"/>';
-      }
-    });
-    return '<svg viewBox="0 0 ' + w + ' ' + h + '" width="' + w * px + '" height="' + h * px + '">' + out + '</g></svg>';
-  }
+  /* The character builder. Every choice repaints the sidebar's text animal and,
+     in fantasy mode, its sprite. */
   function swatches(holder, list, current, key) {
     holder.textContent = '';
     list.forEach(function (item) {
@@ -1026,8 +1017,6 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('costume-choice').closest('.srow').hidden = !petOn || !questOn || !pick.halloween;
     document.getElementById('look-choice').closest('.srow').hidden = !petOn || !questOn || !pick.muertos;
     document.getElementById('decoration-choice').closest('.srow').hidden = !petOn || !questOn;
-    document.getElementById('builder-preview').hidden = !petOn;
-    // Shown happy: the preview is for choosing a look, not reading the mood.
     // The text companion's colour, kept per animal like its coat; "text" is the
     // page's own ink.
     var TEXT_COLOURS = { text: '', red: '#d0453a', orange: '#d9822b', green: '#3a9d5d', blue: '#3f7fd9', purple: '#8a55c9', pink: '#d1508a' };
@@ -1041,17 +1030,6 @@ document.addEventListener('DOMContentLoaded', function () {
     if (petBox) {
       petBox.style.setProperty('--pet-text', TEXT_COLOURS[tint] || 'var(--ink)');
       petBox.classList.toggle('tinted', Boolean(TEXT_COLOURS[tint]));
-    }
-    // With no overlay the companion is text, so the preview is too.
-    var preview = document.getElementById('builder-preview');
-    if (store.get('worklog.quest', 'off') === 'on') {
-      var deco = C.DECORATIONS[pick.decoration];
-      preview.innerHTML = (deco ? builderSvg(deco, C.decorationPx(window.devicePixelRatio, deco), false) : '') + builderSvg(C.companion(pick, 'happy'), deco ? 3 : 4);
-    } else {
-      var texts = JSON.parse(document.getElementById('text-companions').textContent);
-      preview.innerHTML = '<pre class="text-companion"></pre>';
-      preview.firstChild.textContent = texts[pick.race] || '';
-      preview.firstChild.style.color = TEXT_COLOURS[tint] || '';
     }
     applyPet(store.get('worklog.pet', 'off'));
     document.dispatchEvent(new Event('companionchange'));

@@ -733,8 +733,7 @@ body.quest .thread-tabs .mark { display: none; }
   cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
 .stabs button:hover { color: var(--ink); }
 .stabs button[aria-selected="true"] { color: var(--ink); font-weight: 600; border-bottom-color: var(--ink); }
-.stab[hidden], .builder-preview[hidden] { display: none; }
-.builder-preview .text-companion { margin: 0; font-family: var(--mono); font-size: 15px; line-height: 1.25; color: var(--ink); white-space: pre; }
+.stab[hidden] { display: none; }
 .stab > .hint:first-child { margin: 0 0 12px; max-width: 640px; }
 /* A setting's short description, and its details behind Learn more. */
 #update-choice + .hint, #update-choice + .update-card { margin: 8px 0 0; }
@@ -866,13 +865,9 @@ nav .space-switch select { width: 100%; font: inherit; font-size: 12.5px; font-w
 .settings-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; }
 #pane-settings h3 { margin-top: 30px; }
 #pane-settings .srow { max-width: 640px; }
-/* The character builder: choices on the left, the companion as built on the right. */
+/* The character builder's choices. */
 .builder { display: flex; gap: 28px; align-items: flex-start; max-width: 720px; }
 .builder-rows { flex: 1; min-width: 0; }
-.builder-preview { flex: none; width: 112px; min-height: 120px; display: flex; align-items: flex-end;
-                   justify-content: center; padding: 8px; border: 1px solid var(--line); border-radius: 8px;
-                   background: var(--panel); }
-.builder-preview svg { display: block; shape-rendering: crispEdges; }
 .swatches { display: flex; gap: 7px; flex-wrap: wrap; padding-top: 3px; }
 .swatches button { width: 22px; height: 22px; border-radius: 50%; padding: 0; cursor: pointer;
                    border: 2px solid var(--line); box-shadow: inset 0 0 0 2px var(--panel); }
