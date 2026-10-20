@@ -427,6 +427,13 @@ function addShell(tab, id, label, index) {
 
   term.textarea.addEventListener('focus', function () { typing = id; paintTyping(); });
   term.textarea.addEventListener('blur', function () { if (typing === id) { typing = null; paintTyping(); } });
+  // Shift+Enter sends ESC+Enter, as iTerm2 does, so Claude Code starts a new line
+  // instead of sending; plain Enter is xterm's own.
+  term.attachCustomKeyEventHandler(function (e) {
+    if (e.key !== 'Enter' || !e.shiftKey || e.metaKey || e.ctrlKey || e.altKey) return true;
+    if (e.type === 'keydown') app.termInput.postMessage({ id: id, data: '\x1b\r' });
+    return false;
+  });
   term.onData(function (data) { app.termInput.postMessage({ id: id, data: data }); });
   term.onBinary(function (data) { app.termInput.postMessage({ id: id, binary: data }); });
   pane.addEventListener('mousedown', function () { focusShell(id); });
