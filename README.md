@@ -428,6 +428,35 @@ companion measures momentum rather than reportable output.
 
 ---
 
+## Code quiz
+
+With AI writing much of the code, it is easy to lose track of how your projects
+actually work. **Quiz**, beside Standup, asks a few multiple-choice questions on code
+you've been near: the repo you've committed to most recently (every fourth quiz, the
+one you last reviewed), from changes it hasn't quizzed you on yet. When a repo has
+none left it moves to the next most active, and to older code when nothing is
+recent. It never repeats a question.
+
+- **Made when you click**, one Claude Code call (Sonnet), never in the background:
+  about ten cents, or that much of your plan's usage. Showing it costs nothing, and
+  without Claude Code installed there's no button.
+- **Only checkable facts**: where something lives, what calls what, what a change did.
+  Each question quotes the code it rests on, and one whose quote isn't in the file it
+  cites is dropped before you see it; the line is wherever the quote actually is.
+- **Each answer points at its line**: your editor opens there (Settings → General →
+  Editor: VS Code, Cursor, Windsurf or Zed) when your copy has that code, otherwise
+  the commit on GitLab or GitHub -- code you reviewed may be newer than your clone.
+- **Bad question** on any question takes it out of your score and it's never asked
+  again.
+- **Repeats:** after 30 questions, every other quiz is one fewer new question plus one
+  asked before -- one you got wrong first, else the longest ago -- rechecked against
+  the code: if its quote is no longer in the file it's never tried again.
+- Don't want it? Settings → A.I. → Code quiz → Quiz button: Off hides it.
+- How many questions: Settings → A.I. → Code quiz, 3 by default. Questions asked,
+  answers, and a streak (weekends don't break it) are kept in the space's
+  `quiz-history.json`, for a reward still to come.
+
+---
 ## Sync
 
 Each space sets its own schedule in Settings → Projects. **Manual** by default —

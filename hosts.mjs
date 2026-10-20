@@ -6,3 +6,6 @@ export const issueUrl = (web, n) => (!web ? null : isGitHub(web) ? `${web}/issue
 export const mrUrl = (web, n) => (!web ? null : isGitHub(web) ? `${web}/pull/${n}` : `${web}/-/merge_requests/${n}`);
 export const branchUrl = (web, b) =>
   !web ? null : isGitHub(web) ? `${web}/tree/${encodeURIComponent(b)}` : `${web}/-/tree/${encodeURIComponent(b)}`;
+// A file at a line, at a given commit.
+export const fileUrl = (web, commit, file, line) =>
+  !web ? null : isGitHub(web) ? `${web}/blob/${commit}/${file}#L${line}` : `${web}/-/blob/${commit}/${file}#L${line}`;

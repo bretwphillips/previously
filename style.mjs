@@ -427,6 +427,29 @@ section[hidden] { display: none; }
   border: 1px solid var(--line); border-radius: 5px; background: var(--panel); color: var(--muted); }
 .review-local:hover, .review-remove:hover { color: var(--ink); border-color: var(--muted); }
 .review-local[hidden], .review-remove[hidden] { display: none; }
+.quiz-list { margin: 8px 0 0; padding-left: 22px; }
+.quiz-q { margin: 0 0 18px; }
+.quiz-ask { margin: 0 0 8px; font-weight: 500; }
+.quiz-choices { display: grid; gap: 6px; }
+.quiz-choices button { font: inherit; font-size: 13px; text-align: left; padding: 7px 10px; cursor: pointer;
+  border: 1px solid var(--line); border-radius: 7px; background: var(--bg); color: var(--ink); }
+.quiz-choices button b { color: var(--muted); margin-right: 6px; font-weight: 600; }
+.quiz-choices button:hover:not(:disabled) { border-color: var(--muted); }
+.quiz-choices button:disabled { cursor: default; opacity: 0.6; }
+.quiz-choices button.is-answer { opacity: 1; border-color: var(--mark-new); box-shadow: inset 3px 0 0 var(--mark-new); }
+.quiz-choices button.is-chosen { opacity: 1; border-color: var(--blocked); box-shadow: inset 3px 0 0 var(--blocked); }
+.quiz-why { margin: 8px 0 0; font-size: 13px; }
+.quiz-why[hidden] { display: none; }
+.quiz-why p { margin: 0 0 4px; }
+.quiz-code { font-family: var(--mono); font-size: 12px; }
+.quiz-again { font-size: 11px; font-weight: 600; color: var(--muted); border: 1px solid var(--line);
+  border-radius: 4px; padding: 0 5px; margin-left: 6px; vertical-align: 1px; }
+.quiz-flag { font: inherit; font-size: 11.5px; margin-top: 6px; padding: 0; border: 0; background: none;
+  color: var(--muted); cursor: pointer; text-decoration: underline dotted; }
+.quiz-flag:hover { color: var(--ink); }
+.quiz-flagged { margin: 6px 0 0; font-size: 12px; color: var(--muted); }
+.quiz-q.flagged .quiz-ask { color: var(--muted); text-decoration: line-through; }
+#quiz h2 .sub { font-size: 13px; font-weight: 400; color: var(--muted); }
 
 h2.pane { font-size: 19px; margin: 0 0 2px; letter-spacing: -0.015em; }
 .sub { color: var(--muted); font-size: 12.5px; margin-bottom: 22px; }

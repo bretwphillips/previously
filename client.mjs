@@ -727,6 +727,23 @@ document.addEventListener('DOMContentLoaded', function () {
 
   /* Saved with sync in settings.json, because the standup is drafted by the
      build, which cannot read this page's storage. */
+  var editorButtons = document.querySelectorAll('#editor-choice button');
+  for (var eb = 0; eb < editorButtons.length; eb++) {
+    editorButtons[eb].addEventListener('click', function () {
+      saveSetting('editor', this.dataset.editor);
+      for (var x = 0; x < editorButtons.length; x++) editorButtons[x].setAttribute('aria-pressed', String(editorButtons[x] === this));
+    });
+  }
+  var quizCount = document.getElementById('quiz-count');
+  if (quizCount) {
+    if (!settingsBridge) quizCount.disabled = true;
+    quizCount.addEventListener('change', function () {
+      var n = Math.max(1, Math.min(10, Math.round(Number(this.value) || 3)));
+      this.value = n;
+      saveSetting('quizCount', n);
+    });
+  }
+
   var weightField = document.getElementById('weight-limit');
   if (weightField) {
     if (!settingsBridge) weightField.disabled = true;
@@ -857,6 +874,25 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
   paintResume();
+
+  /* Settings -> A.I. -> Code quiz: the Quiz button, on unless turned off. */
+  function paintQuizChoice() {
+    var on = syncState.quiz !== 'off';
+    var buttons = document.querySelectorAll('#quiz-choice button');
+    for (var i = 0; i < buttons.length; i++) buttons[i].setAttribute('aria-pressed', String((buttons[i].dataset.quiz === 'on') === on));
+    var open = document.getElementById('quiz-open');
+    if (open && open.dataset.ready) open.hidden = !on;
+  }
+  var quizChoice = document.querySelectorAll('#quiz-choice button');
+  for (var qc = 0; qc < quizChoice.length; qc++) {
+    if (!settingsBridge) quizChoice[qc].disabled = true;
+    quizChoice[qc].addEventListener('click', function () {
+      saveSetting('quiz', this.dataset.quiz);
+      paintQuizChoice();
+    });
+  }
+  paintQuizChoice();
+
   var resumeButtons = document.querySelectorAll('#resume-choice button');
   for (var rb = 0; rb < resumeButtons.length; rb++) {
     resumeButtons[rb].addEventListener('click', function () {
@@ -1930,6 +1966,74 @@ document.addEventListener('DOMContentLoaded', function () {
   }
   document.getElementById('standup-open').addEventListener('click', openStandup);
 
+  /* Quiz: made by the app (quiz.mjs) when asked, answered here. A new quiz
+     reloads the page, so an open sheet is remembered and opened again. */
+  var quiz = document.getElementById('quiz');
+  var quizOpen = document.getElementById('quiz-open');
+  var quizBridge = window.webkit && window.webkit.messageHandlers;
+  if (quiz && quizOpen && quizBridge && quizBridge.makeQuiz) {
+    quizOpen.dataset.ready = '1';
+    paintQuizChoice();
+    var showQuiz = function () {
+      quiz.hidden = false;
+      try { sessionStorage.setItem('quiz-open', '1'); } catch (e) {}
+    };
+    var hideQuiz = function () {
+      quiz.hidden = true;
+      try { sessionStorage.removeItem('quiz-open'); } catch (e) {}
+    };
+    var make = document.getElementById('quiz-make');
+    var start = function () {
+      if (!make || make.disabled) return;
+      make.disabled = true;
+      make.textContent = 'Making\u2026';
+      document.getElementById('quiz-status').textContent = 'Reading the code; this takes a minute or so.';
+      quizBridge.makeQuiz.postMessage('');
+    };
+    // Opening it is asking for today's quiz -- unless the last try failed, or it's
+    // a reload reopening it.
+    quizOpen.addEventListener('click', function () {
+      showQuiz();
+      if (make && make.hasAttribute('data-auto')) start();
+    });
+    quiz.querySelector('.close').addEventListener('click', hideQuiz);
+    quiz.addEventListener('click', function (e) { if (e.target === quiz) hideQuiz(); });
+    try { if (sessionStorage.getItem('quiz-open')) quiz.hidden = false; } catch (e) {}
+
+    if (make) make.addEventListener('click', start);
+
+    quiz.addEventListener('click', function (e) {
+      var bad = e.target.closest ? e.target.closest('.quiz-flag') : null;
+      if (bad) {
+        var flagged = bad.closest('.quiz-q');
+        flagged.classList.remove('right', 'wrong');
+        flagged.classList.add('flagged');
+        var off = flagged.querySelectorAll('.quiz-choices button');
+        for (var f = 0; f < off.length; f++) off[f].disabled = true;
+        var note = document.createElement('p');
+        note.className = 'quiz-flagged';
+        note.textContent = 'Marked as a bad question: not scored, and it won\u2019t be asked again.';
+        bad.replaceWith(note);
+        if (quizBridge.quizFlag) quizBridge.quizFlag.postMessage(flagged.dataset.id);
+        return;
+      }
+      var choice = e.target.closest ? e.target.closest('.quiz-choices button') : null;
+      if (!choice || choice.disabled) return;
+      var item = choice.closest('.quiz-q');
+      var picked = Number(choice.dataset.choice);
+      var answer = Number(item.dataset.answer);
+      var buttons = item.querySelectorAll('.quiz-choices button');
+      for (var i = 0; i < buttons.length; i++) {
+        buttons[i].disabled = true;
+        if (i === answer) buttons[i].classList.add('is-answer');
+        else if (i === picked) buttons[i].classList.add('is-chosen');
+      }
+      item.classList.add(picked === answer ? 'right' : 'wrong');
+      item.querySelector('.quiz-why').hidden = false;
+      if (quizBridge.quizAnswer) quizBridge.quizAnswer.postMessage(JSON.stringify({ id: item.dataset.id, choice: picked }));
+    });
+  }
+
   /* A ticket's own checklist, ticked here. Saved to checks.json beside the
      narrative; GitLab is never written to. Read-only outside the app. */
   var checksBridge = window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.saveChecks;
@@ -1995,6 +2099,13 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   };
 
+  /* Editor links go through the app: WebKit can drop a click on a scheme it can't load. */
+  document.addEventListener('click', function (e) {
+    var link = e.target.closest ? e.target.closest('a[href^="vscode:"], a[href^="cursor:"], a[href^="windsurf:"], a[href^="zed:"]') : null;
+    if (!link || !(handlers && handlers.openLink)) return;
+    e.preventDefault();
+    handlers.openLink.postMessage(link.getAttribute('href'));
+  });
   document.addEventListener('click', function (e) {
     var here = e.target.closest ? e.target.closest('[data-term-repo]') : null;
     if (here && handlers && handlers.openTerminal) handlers.openTerminal.postMessage(here.dataset.termRepo);

@@ -4,6 +4,7 @@
 import { readFileSync, writeFileSync, existsSync, readdirSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { homedir } from "node:os";
 
 import { readRepo, readProgress } from "./git.mjs";
 import { spaceFor, reposOf, adopt, CODE, SPACE_SETTINGS } from "./spaces.mjs";
@@ -16,6 +17,8 @@ import { petState } from "./pet.mjs";
 import { standup } from "./standup.mjs";
 import { quoteFor } from "./quotes.mjs";
 import { installedTerminals } from "./terminals.mjs";
+import { installedEditors, editorLink } from "./editors.mjs";
+import { fileUrl, isGitHub } from "./hosts.mjs";
 import { currentVersion, readUpdate, isNewer, ownBranch, defaultBranch } from "./update.mjs";
 
 // The space this build is for: its own data folder, and the repos in its folders.
@@ -541,6 +544,27 @@ const readText = (file) => {
 };
 const aiNotes = { all: readText(join(CODE, "ai-notes.md")), space: readText(join(here, "ai-notes.md")), spaceName: space.name };
 
+// The daily quiz (quiz.mjs): today's questions, each with where its answer lives --
+// your editor at the line when your copy has it, else the commit on the web.
+const editors = installedEditors();
+const quiz = (() => {
+  const claude = ["/opt/homebrew/bin", "/usr/local/bin", join(homedir(), ".local/bin"), ...(process.env.PATH ?? "").split(":")]
+    .some((dir) => dir && existsSync(join(dir, "claude")));
+  const today = readJson(join(here, "quiz.json"), null);
+  const stats = readJson(join(here, "quiz-history.json"), {}).stats ?? {};
+  const editor = editors.find((e) => e.id === sync.editor) ?? editors[0] ?? null;
+  const questions = (today?.questions ?? []).map((q) => {
+    // a question brought back may be from another repo than today's
+    const name = q.repo ?? today.repo;
+    const repo = repoList.find((r) => r.name === name);
+    const web = repos.find((r) => r.name === name)?.web;
+    const local = q.local && repo && editor ? { href: editorLink(editor.scheme, join(repo.path, q.file), q.line), via: editor.id } : null;
+    const remote = q.commit && web ? { href: fileUrl(web, q.commit, q.file, q.line), via: isGitHub(web) ? "GitHub" : "GitLab" } : null;
+    return { ...q, link: local ?? remote ?? (web ? { href: fileUrl(web, "HEAD", q.file, q.line), via: "web" } : null) };
+  });
+  return { claude, count: sync.quizCount ?? 3, today: today ? { ...today, questions } : null, stats };
+})();
+
 const html = renderPage({
   update,
   aiNotes,
@@ -564,6 +588,8 @@ const html = renderPage({
   standup: standupDraft,
   sync,
   terminals: installedTerminals(),
+  editors,
+  quiz,
   goals: [...writtenGoals, ...epicGoals],
   epicLinks,
   writtenGoals,

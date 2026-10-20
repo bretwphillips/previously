@@ -1140,8 +1140,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, WKN
         // The only thing this window should ever load is the local page. Anything
         // web-bound belongs in the real browser — WKWebView does not always report
         // a click as .linkActivated, so the scheme is what decides.
+        // Editor links (a quiz answer's file and line) go to the editor the same way.
         if let url = navigationAction.request.url,
-           url.scheme == "http" || url.scheme == "https" {
+           ["http", "https", "vscode", "cursor", "windsurf", "zed"].contains(url.scheme ?? "") {
             NSWorkspace.shared.open(url)
             decisionHandler(.cancel)
             return
@@ -1150,8 +1151,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, WKN
     }
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-        // A fresh page has no sheet open, and will not say so.
-        drawer.shade.isHidden = true
+        // A fresh page can come back with a sheet open (the quiz, reopened once it's
+        // made) and only reports changes after that, so ask it.
+        webView.evaluateJavaScript("Array.prototype.some.call(document.querySelectorAll('.scrim'), function (s) { return !s.hidden; })") { [weak self] open, _ in
+            self?.drawer.shade.isHidden = (open as? Bool) != true
+        }
         tellPageDrawerHeight()
         matchTheme()
         // Give the page a beat to restore its pane and scroll before showing it.
@@ -1485,6 +1489,44 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, WKN
             return
         }
 
+        // The daily quiz: made on request (one Claude Code call), then the page is
+        // rebuilt to show it; an answer is only recorded -- the page has shown it.
+        if message.name == "makeQuiz" {
+            guard !quizRunning else { return }
+            quizRunning = true
+            let task = script("quiz.sh", args: ["make"])
+            task.terminationHandler = { [weak self] _ in
+                DispatchQueue.main.async {
+                    self?.quizRunning = false
+                    self?.refresh()
+                }
+            }
+            if (try? task.run()) == nil { quizRunning = false }
+            return
+        }
+        if message.name == "quizAnswer" {
+            guard let raw = message.body as? String,
+                  let body = try? JSONSerialization.jsonObject(with: Data(raw.utf8)) as? [String: Any],
+                  let id = body["id"] as? String, let choice = body["choice"] as? Int
+            else { return }
+            try? script("quiz.sh", args: ["answer", id, String(choice)]).run()
+            return
+        }
+        // An editor link (a quiz answer's file and line): WebKit doesn't always
+        // navigate to a scheme it can't load, so the page hands it over.
+        if message.name == "openLink" {
+            guard let text = message.body as? String, let url = URL(string: text),
+                  ["vscode", "cursor", "windsurf", "zed"].contains(url.scheme ?? "")
+            else { return }
+            NSWorkspace.shared.open(url)
+            return
+        }
+        if message.name == "quizFlag" {
+            guard let id = message.body as? String else { return }
+            try? script("quiz.sh", args: ["flag", id]).run()
+            return
+        }
+
         // A merge request checked out beside your work to review, and taken away again.
         if message.name == "reviewLocally" || message.name == "reviewRemove" {
             guard let body = message.body as? [String: Any],
@@ -1712,6 +1754,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, WKN
         config.userContentController.add(self, name: "pickFolder")
         config.userContentController.add(self, name: "toggleTerminal")
         config.userContentController.add(self, name: "openTerminal")
+        config.userContentController.add(self, name: "makeQuiz")
+        config.userContentController.add(self, name: "quizAnswer")
+        config.userContentController.add(self, name: "quizFlag")
+        config.userContentController.add(self, name: "openLink")
         config.userContentController.add(self, name: "reviewLocally")
         config.userContentController.add(self, name: "reviewRemove")
         config.userContentController.add(self, name: "themeChanged")
@@ -1925,6 +1971,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, WKN
     private var hourlyPending: DispatchWorkItem?
     private var hourlyBackoff: Double = 1
     private var hourlyRunning = false
+    private var quizRunning = false
 
     private func watchPresence() {
         let dnc = DistributedNotificationCenter.default()
