@@ -758,9 +758,13 @@ function wizardCat() {
   var pickedDeco = COMPANION.DECORATIONS[companionPick().decoration];
   var deco = decoration(pickedDeco, COMPANION.decorationPx(window.devicePixelRatio, pickedDeco));
   if (deco) {
-    var right = Number(pet.dataset.quizRight) || 0, n = document.createElement('span');
-    n.className = 'deco-n'; n.textContent = right; n.title = right + ' quiz answer' + (right === 1 ? '' : 's') + ' right';
-    pet.insertBefore(deco, first); pet.insertBefore(n, first);
+    pet.insertBefore(deco, first);
+    // with no quiz (no Claude Code) the hoard's count is the one that counts
+    if (pet.dataset.quizAi !== '0') {
+      var right = Number(pet.dataset.quizRight) || 0, n = document.createElement('span');
+      n.className = 'deco-n'; n.textContent = right; n.title = right + ' quiz answer' + (right === 1 ? '' : 's') + ' right';
+      pet.insertBefore(n, first);
+    }
     fitDeco(deco);
   }
   snapPet();

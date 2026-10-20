@@ -101,7 +101,7 @@ function companionPick() {
   var theme = halloween ? 'halloween' : muertos ? 'muertos' : store.get('worklog.questTheme', 'quest') === 'none' ? 'none' : 'quest';
   if (theme === 'none') cls = 'none';
   var decoration = store.get(decorationKey(theme), 'none');
-  var have = C.decorationsFor(theme, quizRight(), quizRun()).filter(function (d) { return d.unlocked; })
+  var have = C.decorationsFor(theme, quizRight(), quizRun(), byCommits()).filter(function (d) { return d.unlocked; })
     .map(function (d) { return d.name; });
   if (have.indexOf(decoration) < 0) decoration = 'none';
   return { race: race, coat: coat, cls: cls, colour: colour, halloween: halloween, costume: costume, muertos: muertos, look: look,
@@ -111,6 +111,12 @@ function companionPick() {
 // With everything unlocked for a look (settings.json), they count as reached.
 function unlockAll() { var p = document.getElementById('pet'); return Boolean(p && p.hasAttribute('data-unlock-all')); }
 function quizRight() { var p = document.getElementById('pet'); return unlockAll() ? Infinity : p ? Number(p.dataset.quizRight) || 0 : 0; }
+// With no Claude Code there's no quiz: decorations unlock at the hoard's commit steps.
+function byCommits() {
+  var p = document.getElementById('pet');
+  if (!p || p.dataset.quizAi !== '0') return undefined;
+  return unlockAll() ? Infinity : Number(p.dataset.commits) || 0;
+}
 function quizStreak() { var p = document.getElementById('pet'); return p ? Number(p.dataset.quizStreak) || 0 : 0; }
 function quizRun() { var p = document.getElementById('pet'); return unlockAll() ? Infinity : p ? Number(p.dataset.quizRun) || 0 : 0; }
 // The plain decorations were once the only ones, so their pick keeps the old key.
@@ -1069,7 +1075,8 @@ document.addEventListener('DOMContentLoaded', function () {
     var holder = document.getElementById('decoration-choice'), specials = document.getElementById('decoration-specials');
     if (!holder || !specials) return;
     var right = quizRight(), run = quizRun(), streak = quizStreak();
-    var list = window.COMPANION.decorationsFor(pick.theme, right, run);
+    var commits = byCommits();
+    var list = window.COMPANION.decorationsFor(pick.theme, right, run, commits);
     holder.textContent = '';
     specials.textContent = '';
     var tag = document.createElement('span'); tag.className = 'deco-specials-label'; tag.textContent = 'Streak specials';
@@ -1082,7 +1089,8 @@ document.addEventListener('DOMContentLoaded', function () {
       if (!d.unlocked) {
         b.disabled = true;
         b.className = 'locked';
-        b.title = d.kind === 'run' ? 'Unlocks after ' + d.need + ' right answers in a row' : 'Unlocks at ' + d.need + ' right quiz answers';
+        b.title = d.by === 'commits' ? 'Unlocks at ' + d.need + ' commits'
+          : d.kind === 'run' ? 'Unlocks after ' + d.need + ' right answers in a row' : 'Unlocks at ' + d.need + ' right quiz answers';
       }
       b.setAttribute('aria-pressed', String(d.name === pick.decoration));
       (d.kind === 'run' ? specials : holder).appendChild(b);
@@ -1091,6 +1099,13 @@ document.addEventListener('DOMContentLoaded', function () {
     var nextRight = next.filter(function (d) { return d.kind === 'right'; })[0];
     var nextRun = next.filter(function (d) { return d.kind === 'run'; })[0];
     if (unlockAll()) { document.getElementById('decoration-progress').textContent = 'All unlocked for a look (unlockAllDecorations in settings.json).'; return; }
+    if (commits !== undefined) {
+      var soonest = next.slice().sort(function (a, b) { return a.need - b.need; })[0];
+      document.getElementById('decoration-progress').textContent = commits + ' commit' + (commits === 1 ? '' : 's') + '.' +
+        (soonest ? ' Next: ' + soonest.label + ' at ' + soonest.need + ' commits.' : ' Everything here is unlocked.');
+      if (window.questDecorate) window.questDecorate();
+      return;
+    }
     var line = right + ' right answer' + (right === 1 ? '' : 's') + ' \u00b7 streak ' + streak + ' in a row, best ' + run + '.';
     if (nextRight) line += ' Next: ' + nextRight.label + ' at ' + nextRight.need + ' right' + (nextRun ? ', ' + nextRun.label + ' at ' + nextRun.need + ' in a row.' : '.');
     else if (nextRun) line += ' Next: ' + nextRun.label + ' at ' + nextRun.need + ' in a row.';
