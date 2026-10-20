@@ -444,7 +444,7 @@ function overview(data) {
     <div id="notes-view">${
       data.notesHtml
         ? `<div class="notes">${data.notesHtml}</div>`
-        : '<p class="empty">notes.md is empty — write anything here and it shows up on this page.</p>'
+        : '<p class="empty">notes.md is empty. Anything you write here shows up on this page, and Claude sessions that follow your <code>CLAUDE.md</code> read it when they start — a scratchpad, or a place to leave work queued up.</p>'
     }</div>
     <div id="notes-editor" hidden>
       <textarea id="notes-text" spellcheck="false">${esc(data.notesRaw ?? "")}</textarea>
