@@ -553,9 +553,11 @@ const quiz = (() => {
   const today = readJson(join(here, "quiz.json"), null);
   const stats = readJson(join(here, "quiz-history.json"), {}).stats ?? {};
   const editor = editors.find((e) => e.id === sync.editor) ?? editors[0] ?? null;
-  const repo = today?.repo ? repoList.find((r) => r.name === today.repo) : null;
-  const web = today?.repo ? repos.find((r) => r.name === today.repo)?.web : null;
   const questions = (today?.questions ?? []).map((q) => {
+    // a question brought back may be from another repo than today's
+    const name = q.repo ?? today.repo;
+    const repo = repoList.find((r) => r.name === name);
+    const web = repos.find((r) => r.name === name)?.web;
     const local = q.local && repo && editor ? { href: editorLink(editor.scheme, join(repo.path, q.file), q.line), via: editor.id } : null;
     const remote = q.commit && web ? { href: fileUrl(web, q.commit, q.file, q.line), via: isGitHub(web) ? "GitHub" : "GitLab" } : null;
     return { ...q, link: local ?? remote ?? (web ? { href: fileUrl(web, "HEAD", q.file, q.line), via: "web" } : null) };

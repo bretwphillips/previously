@@ -2,11 +2,13 @@
 // The daily code quiz (Settings -> A.I.). Made on request, never in the background:
 //   node quiz.mjs make             write today's quiz for the space (one Claude Code call)
 //   node quiz.mjs answer <id> <n>  record an answer
+//   node quiz.mjs flag <id>        a question that's wrong: never asked again, not scored
 // Questions come from the repo you've committed to most recently -- now and then one
 // you only reviewed -- from changes not quizzed on yet, moving to the next repo when
 // it has none, or its older code when nothing is recent. Each
 // question quotes the code it rests on, and one whose quote isn't at the cited file
-// and line is dropped: only what can be checked against the code is shown.
+// is dropped: only what can be checked against the code is shown. Once you've had a
+// few dozen, every other quiz brings one back -- rechecked against the code first.
 import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -36,7 +38,7 @@ const DAY = 86400;
 function answer(id, choice) {
   const quiz = read(QUIZ, null);
   const q = quiz?.questions?.find((x) => x.id === id);
-  if (!q || q.chosen != null || !(choice >= 0 && choice < q.choices.length)) return;
+  if (!q || q.chosen != null || q.flagged || !(choice >= 0 && choice < q.choices.length)) return;
   q.chosen = choice;
   write(QUIZ, quiz);
   // Kept from the start, for whatever reward comes of them.
@@ -44,15 +46,43 @@ function answer(id, choice) {
   const s = history.stats;
   s.answered = (s.answered ?? 0) + 1;
   s.correct = (s.correct ?? 0) + (choice === q.answer ? 1 : 0);
-  if (quiz.questions.every((x) => x.chosen != null) && s.lastDay !== quiz.day) {
-    // a streak is days in a row with a quiz finished; weekends don't break it
-    const gap = s.lastDay ? workingDaysBetween(s.lastDay, quiz.day) : null;
-    s.streak = gap === 1 ? (s.streak ?? 0) + 1 : 1;
-    s.best = Math.max(s.best ?? 0, s.streak);
-    s.lastDay = quiz.day;
-    s.days = (s.days ?? 0) + 1;
+  const asked = history.asked.find((a) => a.key === (q.ref ?? q.id));
+  if (asked) {
+    asked.right = choice === q.answer;
+    asked.last = quiz.day;
   }
+  finished(quiz, s);
   write(HISTORY, history);
+}
+
+// A question you say is wrong: it isn't scored, doesn't hold up the day's quiz,
+// and never comes back.
+function flag(id) {
+  const quiz = read(QUIZ, null);
+  const q = quiz?.questions?.find((x) => x.id === id);
+  if (!q || q.flagged) return;
+  q.flagged = true;
+  write(QUIZ, quiz);
+  const history = read(HISTORY, { asked: [], stats: {} });
+  const s = history.stats;
+  if (q.chosen != null) {
+    s.answered = Math.max(0, (s.answered ?? 0) - 1);
+    if (q.chosen === q.answer) s.correct = Math.max(0, (s.correct ?? 0) - 1);
+  }
+  const asked = history.asked.find((a) => a.key === (q.ref ?? q.id));
+  if (asked) asked.flagged = true;
+  finished(quiz, s);
+  write(HISTORY, history);
+}
+
+function finished(quiz, s) {
+  if (!quiz.questions.every((x) => x.chosen != null || x.flagged) || s.lastDay === quiz.day) return;
+  // a streak is days in a row with a quiz finished; weekends don't break it
+  const gap = s.lastDay ? workingDaysBetween(s.lastDay, quiz.day) : null;
+  s.streak = gap === 1 ? (s.streak ?? 0) + 1 : 1;
+  s.best = Math.max(s.best ?? 0, s.streak);
+  s.lastDay = quiz.day;
+  s.days = (s.days ?? 0) + 1;
 }
 
 function workingDaysBetween(from, to) {
@@ -66,28 +96,56 @@ function workingDaysBetween(from, to) {
   return n;
 }
 
+const REPEAT_AFTER = 30;
+
 function make() {
   const settings = read(join(CODE, "settings.json"), {});
   const count = Math.max(1, Math.min(10, Number(settings.quizCount) || 3));
   const history = read(HISTORY, { asked: [], stats: {} });
   try {
+    const again = count > 1 && history.asked.length >= REPEAT_AFTER && !history.lastRepeated ? repeat(history) : null;
     const { repo, source, diff, shas, reviewed } = pick(history);
-    const questions = ask(repo, source, diff, count, history);
+    const questions = ask(repo, source, diff, again ? count - 1 : count, history)
+      .map((q, i) => ({ ...q, repo: repo.name, id: `${today()}-${i}` }));
     if (!questions.length) throw new Error("No question could be checked against the code. Try again later.");
-    history.asked.push(...questions.map((q) => ({ day: today(), repo: repo.name, question: q.question })));
-    history.asked = history.asked.slice(-200);
+    history.asked.push(...questions.map(({ id, ...q }) => ({ ...q, key: id, day: today() })));
+    history.asked = history.asked.slice(-500);
     history.lastRepo = repo.name;
+    history.lastRepeated = Boolean(again);
     history.sinceReview = reviewed ? 0 : (history.sinceReview ?? 0) + 1;
     history.quizzed = { ...history.quizzed, [repo.name]: [...(history.quizzed?.[repo.name] ?? []), ...shas].slice(-500) };
+    if (again) questions.push({ ...again, id: `${today()}-again` });
     write(HISTORY, history);
-    write(QUIZ, {
-      day: today(), repo: repo.name, path: repo.path, source,
-      questions: questions.map((q, i) => ({ ...q, id: `${today()}-${i}` })),
-    });
+    write(QUIZ, { day: today(), repo: repo.name, path: repo.path, source, questions });
   } catch (e) {
     write(QUIZ, { day: today(), error: String(e.message ?? e).slice(0, 400), questions: [] });
     process.exit(1);
   }
+}
+
+// One asked before -- one you got wrong if there is one, else the longest ago --
+// still true of the code: its quote still in the file, wherever it has moved to.
+// One whose code has gone is never tried again.
+function repeat(history) {
+  const repos = reposOf(space);
+  const recent = (a) => a.last && workingDaysBetween(a.last, today()) < 10;
+  const candidates = history.asked
+    .filter((a) => a.quote && !a.flagged && !a.gone && a.day !== today() && !recent(a))
+    .sort((a, b) => (a.right === false ? 0 : 1) - (b.right === false ? 0 : 1) || (a.last ?? a.day).localeCompare(b.last ?? b.day));
+  for (const a of candidates.slice(0, 10)) {
+    const repo = repos.find((r) => r.name === a.repo && existsSync(join(r.path, ".git")));
+    if (!repo) continue;
+    const { git, fetched } = gitOf(repo);
+    const at = checks(repo, a, git, fetched);
+    if (!at) {
+      a.gone = true;
+      continue;
+    }
+    a.last = today();
+    const { key, day, right, last, gone, flagged, local, commit, ...q } = a;
+    return { ...q, local: false, commit: undefined, ...at, ref: key, again: day };
+  }
+  return null;
 }
 
 // ---- which repo, and what of it
@@ -184,7 +242,9 @@ function code(repo, git) {
 
 // ---- asking Claude, and checking what comes back
 
-function ask(repo, source, material, count, history) {
+// git in a repo, and its fetched default branch: code you reviewed that your own
+// copy hasn't pulled.
+function gitOf(repo) {
   const git = (...a) => {
     try {
       return execFileSync("git", ["-C", repo.path, ...a], { encoding: "utf8", maxBuffer: 64 << 20, stdio: ["ignore", "pipe", "ignore"] });
@@ -192,9 +252,12 @@ function ask(repo, source, material, count, history) {
       return null;
     }
   };
-  // The fetched default branch, for code you reviewed that your own copy hasn't pulled.
   const head = git("symbolic-ref", "--short", "refs/remotes/origin/HEAD")?.trim();
-  const fetched = head ? git("rev-parse", head)?.trim() : null;
+  return { git, fetched: head ? git("rev-parse", head)?.trim() : null };
+}
+
+function ask(repo, source, material, count, history) {
+  const { git, fetched } = gitOf(repo);
   const before = history.asked.filter((a) => a.repo === repo.name).slice(-40).map((a) => `- ${a.question}`).join("\n");
   const prompt = `You are writing a short quiz to help a developer keep up with code in this repository -- largely
 written by an AI, so they may not know it well. Below is ${source === "changes" ? "recent commits and their diffs" : "some of its source files"}.
@@ -229,7 +292,7 @@ ${material}`;
     for (const { q, at } of found) console.error(at ? `ok ${at.commit ? "fetched" : "local"}` : "drop", q.file, q.line, JSON.stringify(q.quote));
   }
   return found.filter(({ at }) => at).slice(0, count)
-    .map(({ q: { question, choices, answer, explanation, file, line }, at }) => ({ question, choices, answer, explanation, file, line, ...at }));
+    .map(({ q: { question, choices, answer, explanation, file, line, quote }, at }) => ({ question, choices, answer, explanation, file, line, quote, ...at }));
 }
 
 // The quote has to be in the cited file: in your own copy (the link opens your
@@ -261,8 +324,9 @@ function checks(repo, q, git, fetched) {
 
 const [action, ...rest] = process.argv.slice(2);
 if (action === "answer") answer(rest[0], Number(rest[1]));
+else if (action === "flag") flag(rest[0]);
 else if (action === "make") make();
 else {
-  console.error("usage: node quiz.mjs make | answer <id> <choice>");
+  console.error("usage: node quiz.mjs make | answer <id> <choice> | flag <id>");
   process.exit(1);
 }

@@ -1509,6 +1509,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, WKN
             try? script("quiz.sh", args: ["answer", id, String(choice)]).run()
             return
         }
+        if message.name == "quizFlag" {
+            guard let id = message.body as? String else { return }
+            try? script("quiz.sh", args: ["flag", id]).run()
+            return
+        }
 
         // A merge request checked out beside your work to review, and taken away again.
         if message.name == "reviewLocally" || message.name == "reviewRemove" {
@@ -1739,6 +1744,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, WKN
         config.userContentController.add(self, name: "openTerminal")
         config.userContentController.add(self, name: "makeQuiz")
         config.userContentController.add(self, name: "quizAnswer")
+        config.userContentController.add(self, name: "quizFlag")
         config.userContentController.add(self, name: "reviewLocally")
         config.userContentController.add(self, name: "reviewRemove")
         config.userContentController.add(self, name: "themeChanged")

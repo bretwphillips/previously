@@ -1976,6 +1976,20 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     quiz.addEventListener('click', function (e) {
+      var bad = e.target.closest ? e.target.closest('.quiz-flag') : null;
+      if (bad) {
+        var flagged = bad.closest('.quiz-q');
+        flagged.classList.remove('right', 'wrong');
+        flagged.classList.add('flagged');
+        var off = flagged.querySelectorAll('.quiz-choices button');
+        for (var f = 0; f < off.length; f++) off[f].disabled = true;
+        var note = document.createElement('p');
+        note.className = 'quiz-flagged';
+        note.textContent = 'Marked as a bad question: not scored, and it won\u2019t be asked again.';
+        bad.replaceWith(note);
+        if (quizBridge.quizFlag) quizBridge.quizFlag.postMessage(flagged.dataset.id);
+        return;
+      }
       var choice = e.target.closest ? e.target.closest('.quiz-choices button') : null;
       if (!choice || choice.disabled) return;
       var item = choice.closest('.quiz-q');

@@ -446,8 +446,13 @@ recent. It never repeats a question.
 - **Each answer points at its line**: your editor opens there (Settings → General →
   Editor: VS Code, Cursor, Windsurf or Zed) when your copy has that code, otherwise
   the commit on GitLab or GitHub -- code you reviewed may be newer than your clone.
-- How many questions: Settings → A.I. → Code quiz, 3 by default. Answers, right and
-  wrong, and a streak (weekends don't break it) are kept in the space's
+- **Bad question** on any question takes it out of your score and it's never asked
+  again.
+- **Repeats:** after 30 questions, every other quiz is one fewer new question plus one
+  asked before -- one you got wrong first, else the longest ago -- rechecked against
+  the code: if its quote is no longer in the file it's never tried again.
+- How many questions: Settings → A.I. → Code quiz, 3 by default. Questions asked,
+  answers, and a streak (weekends don't break it) are kept in the space's
   `quiz-history.json`, for a reward still to come.
 
 ---

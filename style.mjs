@@ -442,6 +442,13 @@ section[hidden] { display: none; }
 .quiz-why[hidden] { display: none; }
 .quiz-why p { margin: 0 0 4px; }
 .quiz-code { font-family: var(--mono); font-size: 12px; }
+.quiz-again { font-size: 11px; font-weight: 600; color: var(--muted); border: 1px solid var(--line);
+  border-radius: 4px; padding: 0 5px; margin-left: 6px; vertical-align: 1px; }
+.quiz-flag { font: inherit; font-size: 11.5px; margin-top: 6px; padding: 0; border: 0; background: none;
+  color: var(--muted); cursor: pointer; text-decoration: underline dotted; }
+.quiz-flag:hover { color: var(--ink); }
+.quiz-flagged { margin: 6px 0 0; font-size: 12px; color: var(--muted); }
+.quiz-q.flagged .quiz-ask { color: var(--muted); text-decoration: line-through; }
 #quiz h2 .sub { font-size: 13px; font-weight: 400; color: var(--muted); }
 
 h2.pane { font-size: 19px; margin: 0 0 2px; letter-spacing: -0.015em; }

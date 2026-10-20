@@ -900,9 +900,10 @@ function quizSheet(quiz) {
   const questions = current?.questions ?? [];
   const letter = (i) => String.fromCharCode(65 + i);
   const item = (q) => {
-    const answered = q.chosen != null;
-    return `<li class="quiz-q${answered ? (q.chosen === q.answer ? " right" : " wrong") : ""}" data-id="${esc(q.id)}" data-answer="${q.answer}">
-      <p class="quiz-ask">${esc(q.question)}</p>
+    const answered = q.chosen != null || q.flagged;
+    const again = q.again ? ` <span class="quiz-again" title="First asked ${esc(q.again)}${q.repo && q.repo !== current.repo ? `, in ${esc(q.repo)}` : ""}">Again</span>` : "";
+    return `<li class="quiz-q${q.flagged ? " flagged" : q.chosen != null ? (q.chosen === q.answer ? " right" : " wrong") : ""}" data-id="${esc(q.id)}" data-answer="${q.answer}">
+      <p class="quiz-ask">${esc(q.question)}${again}</p>
       <div class="quiz-choices">${q.choices
         .map((c, i) => `<button data-choice="${i}"${answered ? " disabled" : ""}${answered && i === q.answer ? ' class="is-answer"' : answered && i === q.chosen ? ' class="is-chosen"' : ""}><b>${letter(i)}</b> ${esc(c)}</button>`)
         .join("")}</div>
@@ -910,20 +911,23 @@ function quizSheet(quiz) {
         <p>${esc(q.explanation)}</p>
         ${q.link ? `<a class="quiz-code" href="${esc(q.link.href)}">${esc(q.file)}:${q.line}</a> <span class="seen">in ${esc(q.link.via)}</span>` : `<span class="quiz-code">${esc(q.file)}:${q.line}</span>`}
       </div>
+      ${q.flagged
+        ? `<p class="quiz-flagged">Marked as a bad question: not scored, and it won’t be asked again.</p>`
+        : `<button class="quiz-flag" title="The question or its answer is wrong. It won’t be scored or asked again.">Bad question</button>`}
     </li>`;
   };
   const s = quiz.stats ?? {};
   const record = s.answered
     ? `${s.correct ?? 0} of ${s.answered} right${s.streak ? ` \u00b7 ${s.streak}-day streak` : ""}${s.best > (s.streak ?? 0) ? ` (best ${s.best})` : ""}`
     : "";
-  const done = questions.length && questions.every((q) => q.chosen != null);
+  const done = questions.length && questions.every((q) => q.chosen != null || q.flagged);
   return `<div class="scrim" id="quiz" hidden>
   <div class="sheet wide">
     <button class="close" aria-label="Close">\u00d7</button>
     <h2>Quiz${current?.repo ? ` <span class="sub">${esc(current.repo)} \u00b7 ${current.source === "code" ? "its code" : "recent changes"}</span>` : ""}</h2>
     ${questions.length ? `<ol class="quiz-list">${questions.map(item).join("")}</ol>` : ""}
     ${current?.error ? `<p class="hint">${esc(current.error)}</p>` : ""}
-    ${!questions.length && !current?.error ? `<p class="hint">${esc(String(quiz.count))} question${quiz.count === 1 ? "" : "s"} on code you\u2019ve committed to or reviewed lately, each pointing at the line it comes from.</p>` : ""}
+    ${!questions.length && !current?.error ? `<p class="hint">${esc(String(quiz.count))} question${quiz.count === 1 ? "" : "s"} on code you\u2019ve been working in, each pointing at the line it comes from.</p>` : ""}
     <div class="notes-actions">
       ${questions.length ? "" : `<button class="mini primary" id="quiz-make">Make today\u2019s quiz</button>`}
       <span class="hint" id="quiz-status">${done ? "Done for today. " : ""}${esc(record)}</span>
@@ -1040,9 +1044,9 @@ function settingsPane(userName, weightLimit = 5, terminals = [], update = null, 
           `<input type="number" id="quiz-count" min="1" max="10" step="1" value="${esc(String(settings.quizCount ?? 3))}">
           ${about(
             "How many questions the Quiz button asks each day.",
-            `<p><b>What it asks about.</b> Code in a repo you\u2019ve committed to or reviewed lately -- its latest changes, or older code when nothing is recent -- taking repos in turn. Questions are facts you can read in the code, never opinions, and each one points at the line it comes from: your editor opens there when your copy has it, otherwise the commit on the web.</p>
+            `<p><b>What it asks about.</b> The repo you\u2019ve committed to most recently -- every fourth quiz, the one you last reviewed -- from changes it hasn\u2019t asked about yet, moving on when there are none, and older code when nothing is recent. After 30 questions, every other quiz brings one back, rechecked against the code first. Questions are facts you can read in the code, never opinions, and each one points at the line it comes from: your editor opens there when your copy has it, otherwise the commit on the web.</p>
             <p><b>What it costs.</b> Each quiz is one Claude Code call (Sonnet), made when you click and never in the background -- about ten cents, or that much of your plan\u2019s usage. Showing it costs nothing. Without Claude Code installed there is no Quiz button.</p>
-            <p><b>Checked, not trusted.</b> Each question has to quote the code it rests on, and one whose quote isn\u2019t at the line it cites is dropped before you see it.</p>`,
+            <p><b>Checked, not trusted.</b> Each question has to quote the code it rests on, and one whose quote isn\u2019t in the file it cites is dropped before you see it. If one still gets through wrong, <b>Bad question</b> takes it out of your score and it\u2019s never asked again.</p>`,
           )}`,
         )}
         <h3>Sessions</h3>
