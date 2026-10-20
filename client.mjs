@@ -750,6 +750,10 @@ document.addEventListener('DOMContentLoaded', function () {
     if (openButton) openButton.hidden = !on;
     var icons = document.querySelectorAll('[data-term-repo]');
     for (var j = 0; j < icons.length; j++) icons[j].hidden = !on;
+    var reviewButtons = document.querySelectorAll('.review-local');
+    for (var k = 0; k < reviewButtons.length; k++) reviewButtons[k].hidden = !(on && app.reviewLocally);
+    var removeButtons = document.querySelectorAll('.review-remove');
+    for (var l = 0; l < removeButtons.length; l++) removeButtons[l].hidden = !(app && app.reviewRemove);
   }
   paintTerminal();
   var terminalButtons = document.querySelectorAll('#terminal-choice button');
@@ -1995,6 +1999,15 @@ document.addEventListener('DOMContentLoaded', function () {
     var here = e.target.closest ? e.target.closest('[data-term-repo]') : null;
     if (here && handlers && handlers.openTerminal) handlers.openTerminal.postMessage(here.dataset.termRepo);
   });
+  /* Review copies: made, or taken away, by the app (review.sh). */
+  document.addEventListener('click', function (e) {
+    var button = e.target.closest ? e.target.closest('.review-local, .review-remove') : null;
+    if (!button || !handlers) return;
+    e.stopPropagation();
+    var body = { repo: button.dataset.reviewRepo, number: Number(button.dataset.reviewNumber), host: button.dataset.reviewHost };
+    var handler = button.classList.contains('review-local') ? handlers.reviewLocally : handlers.reviewRemove;
+    if (handler) handler.postMessage(body);
+  }, true);
 
   /* While the standup is open the app hands it fresh drafts instead of
      reloading the page; the rest of the page catches up when it closes. */

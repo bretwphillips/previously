@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Regenerates worklog.html. Safe to run constantly: it only reads git and
 // worklog.json, and writes the one output file.
-import { readFileSync, writeFileSync, existsSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync, readdirSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -22,6 +22,7 @@ import { currentVersion, readUpdate, isNewer, ownBranch, defaultBranch } from ".
 const space = spaceFor();
 const here = space.data;
 const repoList = reposOf(space);
+const reviewCopies = existsSync(join(CODE, "reviews")) ? readdirSync(join(CODE, "reviews")) : [];
 adopt(space, repoList.map((r) => r.name));
 
 const readJson = (path, fallback) => {
@@ -231,6 +232,17 @@ const repos = await Promise.all(
     // from the sync, and their commits on your branches from git.
     // Review requests are listed apart: they stay until you approve.
     const reviews = (activity.reviews ?? []).filter((r) => r.repo === name);
+    // This repo's review tree (review.sh) and the MR it's on; once that review is
+    // over -- approved, merged or closed -- it's offered for removal.
+    const folder = basename(repoList.find((r) => r.name === name)?.path ?? name);
+    const mark = join(CODE, "reviews", `${folder}.mr`);
+    const onMr = reviewCopies.includes(folder) && existsSync(mark) ? Number(readFileSync(mark, "utf8").trim()) || null : null;
+    for (const r of reviews) Object.assign(r, { copy: r.number === onMr, tree: onMr != null });
+    // still open somewhere the page shows it: a review request, or one of the threads' MRs
+    const stillOpen = (n) =>
+      reviews.some((r) => r.number === n) ||
+      threads.some((t) => (t.mrs ?? []).some((m) => m.number === n && m.state !== "merged" && m.state !== "closed"));
+    const doneCopies = onMr && !stillOpen(onMr) ? [onMr] : [];
     const problems = (activity.problems ?? []).filter((p) => p.repo === name);
     const messages = [
       ...(activity.messages ?? []).filter((m) => m.repo === name && m.kind !== "review"),
@@ -250,6 +262,8 @@ const repos = await Promise.all(
       commentsOn,
       messages,
       reviews,
+      doneCopies,
+      reviewCopyOn: onMr,
       problems,
       alerts,
       scopeDone: Object.values(progress.done),
