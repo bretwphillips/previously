@@ -648,10 +648,8 @@ ul.tasks { list-style: none; padding: 0; margin: 0; }
 .task-add input:focus { outline: none; border-color: var(--waiting); }
 
 .thread-tabs { display: flex; flex-wrap: wrap; gap: 6px 4px; margin: 22px 0 0; }
-/* fantasy mode's monsters and locks sit on an open tab's top edge: the room above is on
-   those tabs, so a wrapped row of finished ones (no monsters) packs close */
-body.quest .thread-tabs { row-gap: 6px; align-items: flex-end; margin-top: 4px; }
-body.quest .thread-tabs button:not(.done) { margin-top: 18px; }
+/* fantasy mode's monsters and locks sit on a tab's top edge, so wrapped rows leave them room */
+body.quest .thread-tabs { row-gap: 24px; }
 .thread-tabs button { font: inherit; font-size: 11px; font-family: var(--mono); cursor: pointer;
                       border: 1px solid var(--line); background: var(--bg); color: var(--muted);
                       border-radius: 6px; padding: 4px 10px; display: flex; gap: 7px;
