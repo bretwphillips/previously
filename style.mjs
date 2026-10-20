@@ -396,16 +396,16 @@ nav .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 nav .trail { flex: none; display: inline-flex; align-items: center; font-size: 11px; }
 nav .trail[data-step="1"] { opacity: 0.5; }
 nav .trail[data-step="2"] { opacity: 0.25; }
-nav .trail .paws, nav .trail .camp, body.pet-on nav .trail .feet, body.quest nav .trail .feet,
-body.quest nav .trail .paws { display: none; }
-body.pet-on:not(.quest) nav .trail .paws, body.quest nav .trail .camp { display: inline; }
+nav .trail .paws, nav .trail .camp, body.pet-on nav .trail .feet, body.quest:not(.quest-none) nav .trail .feet,
+body.quest:not(.quest-none) nav .trail .paws { display: none; }
+body.pet-on:not(.quest) nav .trail .paws, body.pet-on.quest-none nav .trail .paws, body.quest:not(.quest-none) nav .trail .camp { display: inline; }
 /* A frog leaves webbed prints instead of paws. */
 nav .trail .webs { display: none; }
 body.pet-on.race-frog:not(.quest) nav .trail .paws { display: none; }
 body.pet-on.race-frog:not(.quest) nav .trail .webs { display: inline; }
-body.quest nav .trail { position: relative; z-index: 1; }
-body.quest nav .trail[data-step="1"] { opacity: 0.7; }
-body.quest nav .trail[data-step="2"] { opacity: 0.45; }
+body.quest:not(.quest-none) nav .trail { position: relative; z-index: 1; }
+body.quest:not(.quest-none) nav .trail[data-step="1"] { opacity: 0.7; }
+body.quest:not(.quest-none) nav .trail[data-step="2"] { opacity: 0.45; }
 /* Halloween: a haunted house at each stop; the house tells the order, so they fade less. */
 nav .trail .haunt, body.quest.halloween nav .trail .camp { display: none; }
 body.quest.halloween nav .trail .haunt { display: inline; }
@@ -526,7 +526,7 @@ p { margin: 8px 0; }
 .alerts li:last-child { border-bottom: 0; }
 /* The marker sits on the middle of the first line of text, whatever its size. */
 .alerts .dot { position: relative; top: 0; align-self: flex-start; margin-top: calc(0.65em - 2px); }
-body.quest .alerts .dot { margin-top: calc(0.65em - 3.5px); }
+body.quest:not(.quest-none) .alerts .dot { margin-top: calc(0.65em - 3.5px); }
 body.quest.halloween .alerts .dot, body.quest.muertos .alerts .dot { margin-top: calc(0.65em - 4.5px); }
 .alerts .who { font-family: var(--mono); font-size: 11.5px; color: var(--muted);
                flex: none; width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -678,7 +678,7 @@ ul.tasks { list-style: none; padding: 0; margin: 0; }
 
 .thread-tabs { display: flex; flex-wrap: wrap; gap: 6px 4px; margin: 22px 0 0; }
 /* fantasy mode's monsters and locks sit on a tab's top edge, so wrapped rows leave them room */
-body.quest .thread-tabs { row-gap: 24px; }
+body.quest:not(.quest-none) .thread-tabs { row-gap: 24px; }
 .thread-tabs button { font: inherit; font-size: 11px; font-family: var(--mono); cursor: pointer;
                       border: 1px solid var(--line); background: var(--bg); color: var(--muted);
                       border-radius: 6px; padding: 4px 10px; display: flex; gap: 7px;
@@ -686,7 +686,7 @@ body.quest .thread-tabs { row-gap: 24px; }
 /* The tab's 7px gap is for number and title; the marks sit closer. */
 .thread-tabs .mark { display: inline-flex; align-self: center; margin-left: -2px; }
 .thread-tabs .mark + .mark { margin-left: -5px; }
-body.quest .thread-tabs .mark { display: none; }
+body.quest:not(.quest-none) .thread-tabs .mark { display: none; }
 .thread-tabs button:hover { border-color: var(--muted); color: var(--ink); }
 .thread-tabs button[aria-pressed="true"] { background: var(--sel); border-color: var(--muted);
                                            color: var(--ink); font-weight: 600; }
@@ -783,16 +783,16 @@ body.quest .thread-tabs .mark { display: none; }
 .alerts li[data-key] > .dot::after { content: ""; position: absolute; inset: -6px -8px; }
 /* Empty markers recede, so a page of them stays quiet and the lit ones show. */
 .dot.none { opacity: .7; }
-body.quest .dot.none, body.quest.halloween .dot.none, body.quest.muertos .dot.none { opacity: 1; }
+body.quest:not(.quest-none) .dot.none, body.quest.halloween .dot.none, body.quest.muertos .dot.none { opacity: 1; }
 /* A click shows in each style its own way: a dot just changes; an orb lets out
    a faint light as its energy is spent (or gathers it back); potions drink. */
-body.quest:not(.halloween):not(.muertos) .dot.drinking { animation: gem-release .6s ease-out forwards; }
-body.quest:not(.halloween):not(.muertos) .dot.filling { animation: gem-gather .6s ease-out; }
-body.quest:not(.halloween):not(.muertos) .dot.waiting { --gem-light: rgba(255,90,106,.55); }
-body.quest:not(.halloween):not(.muertos) .dot.action, body.quest:not(.halloween):not(.muertos) .dot.blocked { --gem-light: rgba(192,138,255,.55); }
-body.quest:not(.halloween):not(.muertos) .dot.news { --gem-light: rgba(94,224,143,.55); }
-body.quest:not(.halloween):not(.muertos) .dot.blue { --gem-light: rgba(90,160,255,.55); }
-body.quest:not(.halloween):not(.muertos) .dot.amber { --gem-light: rgba(255,190,70,.55); }
+body.quest:not(.quest-none):not(.halloween):not(.muertos) .dot.drinking { animation: gem-release .6s ease-out forwards; }
+body.quest:not(.quest-none):not(.halloween):not(.muertos) .dot.filling { animation: gem-gather .6s ease-out; }
+body.quest:not(.quest-none):not(.halloween):not(.muertos) .dot.waiting { --gem-light: rgba(255,90,106,.55); }
+body.quest:not(.quest-none):not(.halloween):not(.muertos) .dot.action, body.quest:not(.quest-none):not(.halloween):not(.muertos) .dot.blocked { --gem-light: rgba(192,138,255,.55); }
+body.quest:not(.quest-none):not(.halloween):not(.muertos) .dot.news { --gem-light: rgba(94,224,143,.55); }
+body.quest:not(.quest-none):not(.halloween):not(.muertos) .dot.blue { --gem-light: rgba(90,160,255,.55); }
+body.quest:not(.quest-none):not(.halloween):not(.muertos) .dot.amber { --gem-light: rgba(255,190,70,.55); }
 @keyframes gem-release {
   0% { filter: drop-shadow(0 0 0 transparent); }
   35% { filter: drop-shadow(0 0 2px var(--gem-light)); }
