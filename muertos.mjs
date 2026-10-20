@@ -230,8 +230,8 @@ body.quest.muertos nav .road { opacity: 1; }
 
 /* the hoard */
 body:not(.muertos) .hoard.ofrenda, body.muertos .hoard:not(.ofrenda) { display: none; }
-/* the widest hoard, so it sits a little further right, clear of the companion */
-body.muertos .hoard.ofrenda { position: relative; left: 5px; }
+/* the widest hoard, so it and its count sit a little further right, clear of the companion */
+body.quest.muertos .tally-hoard { position: relative; left: 5px; }
 body.muertos .tally-hoard .tally-n { color: #c4641a; }
 body.quest.muertos .tally { left: calc(50% + 14px); }
 
