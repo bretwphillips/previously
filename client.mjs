@@ -1962,18 +1962,25 @@ document.addEventListener('DOMContentLoaded', function () {
       quiz.hidden = true;
       try { sessionStorage.removeItem('quiz-open'); } catch (e) {}
     };
-    quizOpen.addEventListener('click', showQuiz);
+    var make = document.getElementById('quiz-make');
+    var start = function () {
+      if (!make || make.disabled) return;
+      make.disabled = true;
+      make.textContent = 'Making\u2026';
+      document.getElementById('quiz-status').textContent = 'Reading the code; this takes a minute or so.';
+      quizBridge.makeQuiz.postMessage('');
+    };
+    // Opening it is asking for today's quiz -- unless the last try failed, or it's
+    // a reload reopening it.
+    quizOpen.addEventListener('click', function () {
+      showQuiz();
+      if (make && make.hasAttribute('data-auto')) start();
+    });
     quiz.querySelector('.close').addEventListener('click', hideQuiz);
     quiz.addEventListener('click', function (e) { if (e.target === quiz) hideQuiz(); });
     try { if (sessionStorage.getItem('quiz-open')) quiz.hidden = false; } catch (e) {}
 
-    var make = document.getElementById('quiz-make');
-    if (make) make.addEventListener('click', function () {
-      make.disabled = true;
-      make.textContent = 'Making\u2026';
-      document.getElementById('quiz-status').textContent = 'Reading the code; this takes a few seconds.';
-      quizBridge.makeQuiz.postMessage('');
-    });
+    if (make) make.addEventListener('click', start);
 
     quiz.addEventListener('click', function (e) {
       var bad = e.target.closest ? e.target.closest('.quiz-flag') : null;
