@@ -19,15 +19,16 @@ const SPRITES = {
   carrot: [".G.oooo..", "GGoXhXXo.", ".GoXXXXXo", "GGoXXdXo.", ".G.oooo.."],
   // small and upright, where candy corn would be
   yarn: [".ooo.", "ohXXo", "oXhXo", "oXXho", ".ooo.", "..ho."],
-  duck: [".oo..", "oXKOO", ".oXo.", "oXhXo", "oXXdo", ".ooo."],
-  star: ["..o..", ".oXo.", "oXhXo", ".oXo.", "oXoXo", ".o.o."],
+  duck: ["..oo.", ".oXXo", "OOKXo", "oXXXo", "oXhXX", ".ooo."],
+  heart: [".....", ".o.o.", "oXoXo", "oXhXo", ".oXo.", "..o.."],
   // round ones, where a drop would be
   ball: [".ooo.", "ohXXo", "oWWWo", "oXXdo", ".ooo."],
   tennis: [".ooo.", "oWXXo", "oXWXo", "oXXWo", ".ooo."],
   ring: [".ooo.", "oXhXo", "oXoXo", "oXXdo", ".ooo."],
   // tall ones, where a lollipop would be
   rope: [".ooo.", "oXhXo", ".oXo.", ".oWo.", ".oXo.", ".oWo.", "oXhXo", ".ooo."],
-  wand: [".oXo.", "oXhXo", "oXXXo", ".oXo.", "..b..", "..b..", "..b..", "..b.."],
+  // a feather on a stick: the plume left unoutlined, so it reads soft
+  wand: ["...Xh", "..XhX", ".XhX.", ".hX..", ".b...", ".b...", ".b...", ".b..."],
   handle: ["....nnnnnnn....", "..nn.......nn..", ".n...........n.", ".n...........n."],
   basket: ["ooooooooooooooo", "oBBBBBBBBBBBBBo", "oNbNbNbNbNbNbNo", "obNbNbNbNbNbNbo", "oNbNbNbNbNbNbNo",
     "obNbNbNbNbNbNbo", "oNbNbNbNbNbNbNo", ".obNbNbNbNbNbo.", "..ooooooooooo.."],
@@ -38,7 +39,7 @@ const SPRITES = {
     "oTTTTTTTTTTTTTTto", "oRRRRRRRRRRRRRRRo", "ooooooooooooooooo"],
 };
 // each sweet's place takes a toy of its shape, taken in turn so a pile is a mix
-const AS = { wrapped: ["mouse", "bone", "carrot", "fish"], corn: ["yarn", "duck", "star"], drop: ["ball", "tennis", "ring"],
+const AS = { wrapped: ["mouse", "bone", "carrot", "fish"], corn: ["yarn", "duck", "heart"], drop: ["ball", "tennis", "ring"],
   pop: ["rope", "wand"], handle: ["handle"], pail: ["basket"], sackBack: ["boxBack"], sackFront: ["boxFront"] };
 const NAMES = ["a ball", "a ball and a toy", "a handful of toys", "a small pile", "a basket", "a few in the basket", "a full basket",
   "a brimming basket", "an overflowing basket", "a toy box", "a toy box overflowing"];
