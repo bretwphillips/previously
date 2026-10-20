@@ -95,6 +95,7 @@ function companionPick() {
   var muertos = !halloween && store.get('worklog.muertos', 'off') === 'on';
   var look = store.get('worklog.pet.look', 'catrina');
   if (C.LOOKS.indexOf(look) < 0) look = 'catrina';
+  var facePaint = store.get('worklog.pet.facePaint', 'on') !== 'off';
   // Each quest theme has its own decorations, and remembers its own pick. With no
   // theme the companion is just itself: no class to wear.
   var theme = halloween ? 'halloween' : muertos ? 'muertos' : store.get('worklog.questTheme', 'quest') === 'none' ? 'none' : 'quest';
@@ -104,7 +105,7 @@ function companionPick() {
     .map(function (d) { return d.name; });
   if (have.indexOf(decoration) < 0) decoration = 'none';
   return { race: race, coat: coat, cls: cls, colour: colour, halloween: halloween, costume: costume, muertos: muertos, look: look,
-    theme: theme, decoration: decoration };
+    theme: theme, decoration: decoration, facePaint: facePaint };
 }
 // Right quiz answers, and the best run of them, as the page was built with.
 // With everything unlocked for a look (settings.json), they count as reached.
@@ -969,17 +970,8 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  /* The character builder. Every choice repaints the preview, the sidebar's text
-     animal and, in fantasy mode, its sprite. */
-  function builderSvg(v, px, bar) {
-    var rows = bar === false ? v.rows : v.rows.slice(0, -4), w = rows[0].length, h = rows.length, out = '<g class="body">';
-    rows.forEach(function (row, y) {
-      for (var x = 0; x < w; x++) if (row[x] !== '.' && v.pal[row[x]]) {
-        out += '<rect x="' + x + '" y="' + y + '" width="1" height="1" fill="' + v.pal[row[x]] + '"/>';
-      }
-    });
-    return '<svg viewBox="0 0 ' + w + ' ' + h + '" width="' + w * px + '" height="' + h * px + '">' + out + '</g></svg>';
-  }
+  /* The character builder. Every choice repaints the sidebar's text animal and,
+     in fantasy mode, its sprite. */
   function swatches(holder, list, current, key) {
     holder.textContent = '';
     list.forEach(function (item) {
@@ -1004,6 +996,7 @@ document.addEventListener('DOMContentLoaded', function () {
     mark('#class-choice', 'cls', pick.cls);
     mark('#costume-choice', 'costume', pick.costume);
     mark('#look-choice', 'look', pick.look);
+    mark('#paint-choice', 'paint', pick.facePaint ? 'on' : 'off');
     paintDecorations(pick);
     mark('#halloween-toggle', 'halloween', pick.halloween ? 'on' : 'off');
     swatches(document.getElementById('coat-choice'), Object.keys(C.COATS[pick.race]).map(function (n) {
@@ -1025,9 +1018,8 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('class-choice').closest('.srow').hidden = !petOn || !questOn || dressed || pick.theme === 'none';
     document.getElementById('costume-choice').closest('.srow').hidden = !petOn || !questOn || !pick.halloween;
     document.getElementById('look-choice').closest('.srow').hidden = !petOn || !questOn || !pick.muertos;
+    document.getElementById('paint-choice').closest('.srow').hidden = !petOn || !questOn || !pick.muertos || C.LOOKS_PAINTED.indexOf(pick.look) >= 0;
     document.getElementById('decoration-choice').closest('.srow').hidden = !petOn || !questOn;
-    document.getElementById('builder-preview').hidden = !petOn;
-    // Shown happy: the preview is for choosing a look, not reading the mood.
     // The text companion's colour, kept per animal like its coat; "text" is the
     // page's own ink.
     var TEXT_COLOURS = { text: '', red: '#d0453a', orange: '#d9822b', green: '#3a9d5d', blue: '#3f7fd9', purple: '#8a55c9', pink: '#d1508a' };
@@ -1041,17 +1033,6 @@ document.addEventListener('DOMContentLoaded', function () {
     if (petBox) {
       petBox.style.setProperty('--pet-text', TEXT_COLOURS[tint] || 'var(--ink)');
       petBox.classList.toggle('tinted', Boolean(TEXT_COLOURS[tint]));
-    }
-    // With no overlay the companion is text, so the preview is too.
-    var preview = document.getElementById('builder-preview');
-    if (store.get('worklog.quest', 'off') === 'on') {
-      var deco = C.DECORATIONS[pick.decoration];
-      preview.innerHTML = (deco ? builderSvg(deco, C.decorationPx(window.devicePixelRatio, deco), false) : '') + builderSvg(C.companion(pick, 'happy'), deco ? 3 : 4);
-    } else {
-      var texts = JSON.parse(document.getElementById('text-companions').textContent);
-      preview.innerHTML = '<pre class="text-companion"></pre>';
-      preview.firstChild.textContent = texts[pick.race] || '';
-      preview.firstChild.style.color = TEXT_COLOURS[tint] || '';
     }
     applyPet(store.get('worklog.pet', 'off'));
     document.dispatchEvent(new Event('companionchange'));
@@ -1075,6 +1056,9 @@ document.addEventListener('DOMContentLoaded', function () {
   for (var lb = 0; lb < lookButtons.length; lb++) lookButtons[lb].addEventListener('click', function () {
     store.set('worklog.pet.look', this.dataset.look);
     paintBuilder();
+  });
+  document.querySelectorAll('#paint-choice button').forEach(function (b) {
+    b.addEventListener('click', function () { store.set('worklog.pet.facePaint', this.dataset.paint); paintBuilder(); });
   });
   /* Decorations: this theme's, then the streak specials on a row of their own as
      they're not the theme's; the locked ones saying what they take, and a line

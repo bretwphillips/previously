@@ -20,7 +20,6 @@ import { OFRENDA, ofrendaArt, DOTD_STOPS, PAPEL_PICADO, MUERTOS_CSS } from "./mu
 import { COBWEB, COBWEB_CSS } from "./cobweb.mjs";
 import { IVY, IVY_CSS } from "./ivy.mjs";
 import { TRIGGERS, COLOURS, DEFAULT_MARKERS, readMarkers, triggerOf } from "./markers.mjs";
-import { textArts } from "./pet.mjs";
 import { HOLIDAYS } from "./holidays.mjs";
 
 const shortDate = (seconds) =>
@@ -1186,6 +1185,11 @@ function settingsPane(userName, weightLimit = 5, terminals = [], update = null, 
                 .join("")}</div>`,
               "What it wears in fantasy mode during Día de los Muertos.",
             )}
+            ${row(
+              "Face paint",
+              `<div class="themes" id="paint-choice"><button data-paint="off">None</button><button data-paint="on">Sugar skull</button></div>`,
+              "A sugar skull painted on, or its own face. La Catrina and El Catrín are always calaveras.",
+            )}
             ${row("Colour", `<div class="swatches" id="colour-choice"></div>`, "The hat, plume or cloak.")}
             ${row(
               "Decoration",
@@ -1195,7 +1199,6 @@ function settingsPane(userName, weightLimit = 5, terminals = [], update = null, 
               "Something beside it in quest mode. Each theme has its own and remembers its pick; right quiz answers unlock more, and streaks of them a few specials.",
             )}
           </div>
-          <div class="builder-preview" id="builder-preview" aria-hidden="true"></div>
         </div>
       </div>
 
@@ -1284,7 +1287,6 @@ ${quizSheet(data.quiz)}
       return [...tally.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
     })(),
   ).replace(/</g, "\\u003c")}</script>
-<script type="application/json" id="text-companions">${JSON.stringify(textArts("happy")).replace(/</g, "\\u003c")}</script>
 <div class="holiday-ask" id="holiday-ask" role="dialog" aria-live="polite" hidden>
   <p id="holiday-ask-text"></p>
   <p><button class="mini primary" data-answer="yes">Switch</button> <button class="mini" data-answer="no">Not now</button> <button class="mini" data-answer="never">Don\u2019t ask again</button></p>
