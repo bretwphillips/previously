@@ -110,6 +110,7 @@ function companionPick() {
 // With everything unlocked for a look (settings.json), they count as reached.
 function unlockAll() { var p = document.getElementById('pet'); return Boolean(p && p.hasAttribute('data-unlock-all')); }
 function quizRight() { var p = document.getElementById('pet'); return unlockAll() ? Infinity : p ? Number(p.dataset.quizRight) || 0 : 0; }
+function quizStreak() { var p = document.getElementById('pet'); return p ? Number(p.dataset.quizStreak) || 0 : 0; }
 function quizRun() { var p = document.getElementById('pet'); return unlockAll() ? Infinity : p ? Number(p.dataset.quizRun) || 0 : 0; }
 // The plain decorations were once the only ones, so their pick keeps the old key.
 function decorationKey(theme) {
@@ -1081,7 +1082,7 @@ document.addEventListener('DOMContentLoaded', function () {
   function paintDecorations(pick) {
     var holder = document.getElementById('decoration-choice'), specials = document.getElementById('decoration-specials');
     if (!holder || !specials) return;
-    var right = quizRight(), run = quizRun();
+    var right = quizRight(), run = quizRun(), streak = quizStreak();
     var list = window.COMPANION.decorationsFor(pick.theme, right, run);
     holder.textContent = '';
     specials.textContent = '';
@@ -1090,14 +1091,12 @@ document.addEventListener('DOMContentLoaded', function () {
     [{ name: 'none', label: 'None', unlocked: true }].concat(list).forEach(function (d) {
       var b = document.createElement('button');
       b.dataset.deco = d.name;
-      b.textContent = d.unlocked ? d.label : d.label + ' \u00b7 ' + d.needs;
+      b.textContent = d.label;
+      if (d.need) b.dataset.decoLock = d.unlocked ? 'open' : 'shut';
       if (!d.unlocked) {
-        if (window.questPadlock) b.insertBefore(window.questPadlock(d.name), b.firstChild);
-        else b.textContent = '\ud83d\udd12 ' + b.textContent;
         b.disabled = true;
         b.className = 'locked';
-        b.title = d.kind === 'run' ? 'Unlocks after ' + d.need + ' right answers in a row (your best is ' + run + ')'
-          : 'Unlocks at ' + d.need + ' right quiz answers (you have ' + right + ')';
+        b.title = d.kind === 'run' ? 'Unlocks after ' + d.need + ' right answers in a row' : 'Unlocks at ' + d.need + ' right quiz answers';
       }
       b.setAttribute('aria-pressed', String(d.name === pick.decoration));
       (d.kind === 'run' ? specials : holder).appendChild(b);
@@ -1106,11 +1105,12 @@ document.addEventListener('DOMContentLoaded', function () {
     var nextRight = next.filter(function (d) { return d.kind === 'right'; })[0];
     var nextRun = next.filter(function (d) { return d.kind === 'run'; })[0];
     if (unlockAll()) { document.getElementById('decoration-progress').textContent = 'All unlocked for a look (unlockAllDecorations in settings.json).'; return; }
-    var line = right + ' right answer' + (right === 1 ? '' : 's') + ' \u00b7 best streak ' + run + ' in a row.';
+    var line = right + ' right answer' + (right === 1 ? '' : 's') + ' \u00b7 streak ' + streak + ' in a row, best ' + run + '.';
     if (nextRight) line += ' Next: ' + nextRight.label + ' at ' + nextRight.need + ' right' + (nextRun ? ', ' + nextRun.label + ' at ' + nextRun.need + ' in a row.' : '.');
     else if (nextRun) line += ' Next: ' + nextRun.label + ' at ' + nextRun.need + ' in a row.';
     else line += ' Everything here is unlocked.';
     document.getElementById('decoration-progress').textContent = line;
+    if (window.questDecorate) window.questDecorate();
   }
   ['decoration-choice', 'decoration-specials'].forEach(function (id) {
     var decoHolder = document.getElementById(id);

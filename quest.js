@@ -594,7 +594,7 @@ function sprite(v, px) {
 function questOn() { return store.get('worklog.quest', 'off') === 'on'; }
 function seen() {
   try { var s = JSON.parse(store.get('worklog.quest.seen', '{}')); } catch (e) { s = {}; }
-  s.locks = s.locks || {}; s.keys = s.keys || {}; s.mon = s.mon || {};
+  s.locks = s.locks || {}; s.keys = s.keys || {}; s.mon = s.mon || {}; s.decos = s.decos || {};
   return s;
 }
 function remember(fn) { var s = seen(); fn(s); store.set('worklog.quest.seen', JSON.stringify(s)); }
@@ -620,11 +620,11 @@ function playVisible() {
 window.addEventListener('focus', function () { setTimeout(playVisible, 250); });
 document.addEventListener('visibilitychange', function () { setTimeout(playVisible, 250); });
 
-function unlock(tab, pair) {
+function unlock(tab, pair, kind) {
   var b = tab.querySelector('.bound'); if (!b) return;
   unpixelate(b); b.classList.add('unlocking');
   setTimeout(function () { b.remove(); }, 1450);
-  remember(function (s) { delete s.locks[pair]; });
+  remember(function (s) { delete s[kind || 'locks'][pair]; });
 }
 function turnKey(tab, pair) {
   var k = tab.querySelector('.keyed'); if (!k) return;
@@ -663,6 +663,15 @@ function decorate() {
       else if (s.mon[q.id]) { monsterOn(tab, q.weight); later(tab, 0, function () { defeat(tab, q.id); }); }
     }
   });
+  // Settings' locked decorations are chained the same way, and the chain falls
+  // off the first time you see one after reaching what it takes.
+  document.querySelectorAll('button[data-deco-lock]').forEach(function (b) {
+    if (b.dataset.questDone || !b.offsetWidth) return;
+    b.dataset.questDone = '1';
+    var name = b.dataset.deco, set = setFor('deco:' + name);
+    if (b.dataset.decoLock === 'shut') { bind(b, set); s.decos[name] = 1; }
+    else if (s.decos[name]) { bind(b, set); later(b, 550, function () { unlock(b, name, 'decos'); }); }
+  });
   store.set('worklog.quest.seen', JSON.stringify(s));
   document.querySelectorAll('.bound > svg, .keyed > svg').forEach(function (svg) {
     if (!svg.dataset.pix) { svg.dataset.pix = '1'; pixelate(svg); }
@@ -674,7 +683,7 @@ function decorate() {
 function undecorate() {
   pending = [];
   document.querySelectorAll('.bound, .keyed, .monster, .wizard, .deco, .deco-n').forEach(function (n) { n.remove(); });
-  document.querySelectorAll('[data-quest-done]').forEach(function (t) { delete t.dataset.questDone; t.removeAttribute('title'); });
+  document.querySelectorAll('[data-quest-done]').forEach(function (t) { delete t.dataset.questDone; if (t.dataset.quest) t.removeAttribute('title'); });
   var pet = document.getElementById('pet'); if (pet) pet.classList.remove('pixel');
 }
 
@@ -813,12 +822,7 @@ new MutationObserver(function () { if (questOn()) decorate(); drawRoad(); playVi
 document.addEventListener('halloweenchange', applyQuest);
 applyQuest();
 
-/* A blocked ticket's padlock, small, for Settings' locked decorations: the same
-   name always gets the same shape and metal. */
-window.questPadlock = function (name) {
-  var svg = el('svg', { class: 'mini-lock', width: 15, height: 14, viewBox: '-9 -6.5 18 17', filter: 'url(#worn)', 'aria-hidden': 'true' });
-  svg.appendChild(padlock(0, 0, 1, setFor(name)));
-  return svg;
-};
+/* Settings repaints its decoration buttons; chain the new ones. */
+window.questDecorate = function () { if (questOn()) decorate(); };
 
 })();
