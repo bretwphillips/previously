@@ -18,7 +18,9 @@ body.quest .pet-line .questy { display: inline; }
 .wizard { display: flex; justify-content: center; margin-bottom: 4px; position: relative; }
 /* Decoration, companion and hoard side by side, their pictures standing on one line
    and their labels on the next -- however tall each picture is. */
-body.quest .pet.pixel { display: grid; grid-template-columns: 1fr auto 1fr; column-gap: 6px; row-gap: 4px;
+/* The side columns keep their share however wide a decoration is, so a big one
+   spills off the left edge rather than shoving the companion over. */
+body.quest .pet.pixel { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); column-gap: 6px; row-gap: 4px;
   grid-template-areas: "deco wiz hoard" "dnum line hnum"; align-items: end; }
 body.quest .pet.pixel .wizard { grid-area: wiz; margin: 0; }
 body.quest .pet.pixel .pet-line { grid-area: line; align-self: start; text-align: center; }
