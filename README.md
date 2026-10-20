@@ -307,6 +307,9 @@ git state -- a commit, checkout, stash, fetch or staging -- the page rebuilds.
 - The app starts shells, ends them and reads which folder each is in from macOS.
   It never writes to one, and nothing a shell prints reaches the page.
 - `xterm.js` is vendored in `terminal/vendor/`; nothing loads from the network.
+- A web address in a shell's output opens in your browser on click, as do links a
+  program marks as links (Claude Code's). Only `http` and `https`; the app opens them,
+  never the drawer.
 
 Settings and Standup work around the drawer: Settings is a pane, padded like the
 rest, and while Standup is open the app dims the drawer to match its backdrop;
@@ -737,7 +740,7 @@ the rest sit beside the code. None of them are tracked by git.
 | `companion.js` | The companion's art: each animal, costume and colour as layers that change with mood. Inlined at build time. |
 | `terminals.mjs` | Which terminal apps Settings offers, by what is installed. |
 | `terminal/terminal.html` | The in-app terminal's page: tabs and one xterm.js per shell. It never sees the dashboard. |
-| `terminal/vendor/` | xterm.js 5.5.0 with its fit and WebGL addons, and their licences. Copied in, never fetched. WebGL is what draws block and box characters edge to edge. |
+| `terminal/vendor/` | xterm.js 5.5.0 with its fit, WebGL and web-links addons, and their licences. Copied in, never fetched. WebGL is what draws block and box characters edge to edge. |
 | `quotes.mjs` | The quote of the day on the Overview (Settings turns it off). Picked by date, so it holds until midnight; add your own to the list. |
 | `standup.mjs` | Builds the morning post from threads, commits and activity. |
 | `activity.mjs` | Turns raw GitLab events and MRs into per-ticket comments, approvals and MR states. |

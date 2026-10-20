@@ -565,7 +565,7 @@ final class TerminalDrawer: NSObject, WKScriptMessageHandler, WKNavigationDelega
         super.init()
         let config = WKWebViewConfiguration()
         config.websiteDataStore = .nonPersistent()
-        for name in ["termInput", "termResize", "termReady", "termClose", "termNew", "termSplit", "termLayout"] {
+        for name in ["termInput", "termResize", "termReady", "termClose", "termNew", "termSplit", "termLayout", "termLink"] {
             config.userContentController.add(self, name: name)
         }
         let dropView = DropWebView(frame: .zero, configuration: config)
@@ -884,6 +884,14 @@ final class TerminalDrawer: NSObject, WKScriptMessageHandler, WKNavigationDelega
         }
         if message.name == "termLayout" {
             if let body = message.body as? [String: Any] { saveLayout(body) }
+            return
+        }
+        // A link clicked in a shell's output: web addresses only, in the browser.
+        if message.name == "termLink" {
+            if let text = message.body as? String, let url = URL(string: text),
+               ["http", "https"].contains(url.scheme?.lowercased() ?? "") {
+                NSWorkspace.shared.open(url)
+            }
             return
         }
 

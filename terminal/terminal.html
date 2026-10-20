@@ -74,6 +74,7 @@
 <script src="vendor/xterm.js"></script>
 <script src="vendor/addon-fit.js"></script>
 <script src="vendor/addon-webgl.js"></script>
+<script src="vendor/addon-web-links.js"></script>
 <script>
 // The terminal's own page. It never sees the dashboard: the app hands it bytes
 // from each shell, names and colours, and it hands back keystrokes, sizes, and
@@ -393,6 +394,8 @@ function newTab(position) {
   return tab;
 }
 
+function openLink(uri) { app.termLink.postMessage(uri); }
+
 function addShell(tab, id, label, index) {
   var pane = document.createElement('div');
   pane.className = 'pane';
@@ -406,10 +409,15 @@ function addShell(tab, id, label, index) {
     cursorBlink: true,
     scrollback: 5000,
     macOptionClickForcesSelection: true,
-    theme: theme ? xtermTheme(theme) : undefined
+    theme: theme ? xtermTheme(theme) : undefined,
+    // Links a program marks (OSC 8, as Claude Code prints them) open on click too.
+    linkHandler: { activate: function (e, uri) { openLink(uri); } }
   });
   var fit = new FitAddon.FitAddon();
   term.loadAddon(fit);
+  // A web address in the output opens in the browser on click. This page can't
+  // go anywhere itself, so the app opens it.
+  term.loadAddon(new WebLinksAddon.WebLinksAddon(function (e, uri) { openLink(uri); }));
 
   var s = { id: id, term: term, fit: fit, pane: pane, tab: tab, label: label, size: '', grow: 1 };
   shells[id] = s;
