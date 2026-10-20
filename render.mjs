@@ -849,7 +849,7 @@ function updateRow(update, settings, row, about) {
         </div>`;
   return row(
     "Updates",
-    `<div class="themes" id="update-choice"><button data-updates="daily">Check daily</button><button data-updates="off">Off</button></div>
+    `<div class="themes" id="update-choice"><button data-updates="off">Off</button><button data-updates="daily">Check daily</button></div>
     ${status}${problem}
     ${about(
       "Once a day, when the window opens, Previously asks GitHub whether there is a newer release.",

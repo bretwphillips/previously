@@ -1494,7 +1494,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, WKN
                         .flatMap { $0 } ?? [:]
                     settings["sync"] = sync
                     if let out = try? JSONSerialization.data(withJSONObject: settings, options: [.prettyPrinted, .sortedKeys]) {
-                        try? out.write(to: file)
+                        try? out.write(to: file, options: .atomic)
                     }
                 }
             }
@@ -1602,7 +1602,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, WKN
                 if let out = try? JSONSerialization.data(
                     withJSONObject: settings, options: [.prettyPrinted, .sortedKeys])
                 {
-                    try? out.write(to: file)
+                    try? out.write(to: file, options: .atomic)
                 }
             }
             if terminalChoice() != "app" {
@@ -1776,7 +1776,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, WKN
         else { return }
         config["current"] = id
         if let out = try? JSONSerialization.data(withJSONObject: config, options: [.prettyPrinted, .sortedKeys]) {
-            try? out.write(to: file)
+            try? out.write(to: file, options: .atomic)
         }
         model.reload()
         // Its last page at once, then a fresh one when the build finishes.
@@ -1954,7 +1954,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, WKN
             .flatMap { $0 } ?? ["sync": "manual"]
         for key in keys { settings[key] = Date().timeIntervalSince1970 }
         if let out = try? JSONSerialization.data(withJSONObject: settings, options: [.prettyPrinted, .sortedKeys]) {
-            try? out.write(to: file)
+            try? out.write(to: file, options: .atomic)
         }
     }
 
@@ -2034,7 +2034,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, WKN
             "at": Date().timeIntervalSince1970,
         ]
         if let out = try? JSONSerialization.data(withJSONObject: state, options: [.prettyPrinted, .sortedKeys]) {
-            try? out.write(to: file)
+            try? out.write(to: file, options: .atomic)
         }
     }
 
