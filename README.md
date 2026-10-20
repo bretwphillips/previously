@@ -246,6 +246,15 @@ sh previously/show.sh api   # one project in full, from whichever space has it
 Settings → General → **Terminal** turns it on: *In app*, or one of your terminal apps. It adds a **Terminal** button
 (`` ⌃` ``) and a small terminal icon beside the ticket line on every repo's pane.
 
+A review request also gets **Review locally**: the merge request is fetched into its
+own git worktree under `reviews/` (detached at its head, forks included), and a terminal
+opens there. Your branch, uncommitted files and stashes stay as they are. A new worktree
+has no dependencies installed, so run your install there first, and a dev server started
+there may clash on its port with one already running. Clicked again it brings the copy up
+to the MR's latest commit (unless you've changed something in it) and reopens the
+terminal. Once the review is over -- approved, merged or closed -- the repo's pane offers
+**Remove**; a copy with changes of its own is kept.
+
 **In app** opens a drawer along the bottom of the window, to the right of the
 sidebar, which stays full height beside it. Each shell is a tab:
 

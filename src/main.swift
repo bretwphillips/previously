@@ -637,6 +637,16 @@ final class TerminalDrawer: NSObject, WKScriptMessageHandler, WKNavigationDelega
         open(in: dir, repo: name)
     }
 
+    /// A shell in a folder that isn't one of the repos -- a review copy -- reusing
+    /// one already open there.
+    func open(dir: URL, label: String) {
+        if let found = shells.values.sorted(by: { $0.id < $1.id }).first(where: { $0.repo == label }) {
+            call("window.termActivate(\(found.id))")
+            return
+        }
+        open(in: dir, repo: label)
+    }
+
     /// Asks the page which shell is focused; it answers with a termSplit.
     func requestSplit() { call("window.termRequestSplit()") }
 
@@ -1291,6 +1301,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, WKN
         }
     }
 
+    /// A terminal in a folder that isn't one of the repos, by the same setting.
+    private func openTerminal(at dir: URL, label: String) {
+        switch terminalChoice() {
+        case "off": return
+        case "app":
+            showTerminal(startPlain: false)
+            drawer.open(dir: dir, label: label)
+            drawer.focus()
+        case let other:
+            openExternal(other, in: dir)
+        }
+    }
+
     /// The terminal apps Settings can offer (`terminals.mjs` lists the same
     /// ids). Most open a folder as a new window; the rest take it as an argument.
     private let externalTerminals: [String: (bundle: String, args: ((String) -> [String])?)] = [
@@ -1459,6 +1482,41 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, WKN
         }
         if message.name == "openTerminal" {
             if let repo = message.body as? String { openTerminal(repo: repo) }
+            return
+        }
+
+        // A merge request checked out beside your work to review, and taken away again.
+        if message.name == "reviewLocally" || message.name == "reviewRemove" {
+            guard let body = message.body as? [String: Any],
+                  let repo = body["repo"] as? String, let path = repoPaths()[repo],
+                  let number = body["number"] as? Int
+            else { return }
+            let adding = message.name == "reviewLocally"
+            var args = [adding ? "add" : "remove", path, String(number)]
+            if adding, body["host"] as? String == "github" { args.append("github") }
+            let task = script("review.sh", args: args)
+            let out = Pipe(), err = Pipe()
+            task.standardOutput = out
+            task.standardError = err
+            task.terminationHandler = { [weak self] done in
+                let dir = String(decoding: out.fileHandleForReading.readDataToEndOfFile(), as: UTF8.self)
+                    .trimmingCharacters(in: .whitespacesAndNewlines)
+                let why = String(decoding: err.fileHandleForReading.readDataToEndOfFile(), as: UTF8.self)
+                    .trimmingCharacters(in: .whitespacesAndNewlines)
+                DispatchQueue.main.async {
+                    guard let self else { return }
+                    if done.terminationStatus != 0 {
+                        let alert = NSAlert()
+                        alert.messageText = adding ? "Couldn't check out !\(number)" : "Kept the review copy of !\(number)"
+                        alert.informativeText = why
+                        alert.runModal()
+                    } else if adding, !dir.isEmpty {
+                        self.openTerminal(at: URL(fileURLWithPath: dir), label: "\(repo) !\(number)")
+                    }
+                    self.refresh()
+                }
+            }
+            try? task.run()
             return
         }
 
@@ -1654,6 +1712,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, WKN
         config.userContentController.add(self, name: "pickFolder")
         config.userContentController.add(self, name: "toggleTerminal")
         config.userContentController.add(self, name: "openTerminal")
+        config.userContentController.add(self, name: "reviewLocally")
+        config.userContentController.add(self, name: "reviewRemove")
         config.userContentController.add(self, name: "themeChanged")
         config.userContentController.add(self, name: "markerStyle")
         config.userContentController.add(self, name: "sheetOpen")

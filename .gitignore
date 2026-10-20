@@ -36,3 +36,6 @@ update.json
 
 # Which Claude session runs in each terminal-drawer tab, for auto-resume.
 terminal-sessions/
+
+# Local copies of merge requests checked out for review (review.sh).
+reviews/

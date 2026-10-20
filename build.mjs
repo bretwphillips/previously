@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Regenerates worklog.html. Safe to run constantly: it only reads git and
 // worklog.json, and writes the one output file.
-import { readFileSync, writeFileSync, existsSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync, readdirSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -22,6 +22,7 @@ import { currentVersion, readUpdate, isNewer, ownBranch, defaultBranch } from ".
 const space = spaceFor();
 const here = space.data;
 const repoList = reposOf(space);
+const reviewCopies = existsSync(join(CODE, "reviews")) ? readdirSync(join(CODE, "reviews")) : [];
 adopt(space, repoList.map((r) => r.name));
 
 const readJson = (path, fallback) => {
@@ -231,6 +232,15 @@ const repos = await Promise.all(
     // from the sync, and their commits on your branches from git.
     // Review requests are listed apart: they stay until you approve.
     const reviews = (activity.reviews ?? []).filter((r) => r.repo === name);
+    // Review copies checked out beside this repo (review.sh); one whose review is
+    // over -- approved, merged or closed -- is offered for removal.
+    const folder = basename(repoList.find((r) => r.name === name)?.path ?? name);
+    const copies = reviewCopies
+      .map((d) => new RegExp(`^${folder.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}-(\\d+)$`).exec(d)?.[1])
+      .filter(Boolean)
+      .map(Number);
+    for (const r of reviews) r.copy = copies.includes(r.number);
+    const doneCopies = copies.filter((n) => !reviews.some((r) => r.number === n));
     const problems = (activity.problems ?? []).filter((p) => p.repo === name);
     const messages = [
       ...(activity.messages ?? []).filter((m) => m.repo === name && m.kind !== "review"),
@@ -250,6 +260,7 @@ const repos = await Promise.all(
       commentsOn,
       messages,
       reviews,
+      doneCopies,
       problems,
       alerts,
       scopeDone: Object.values(progress.done),

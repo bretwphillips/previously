@@ -423,6 +423,10 @@ section[hidden] { display: none; }
              margin-left: 6px; border-radius: 4px; vertical-align: -2px; line-height: 0; opacity: 0.7; }
 .term-here:hover { background: var(--line-soft); color: var(--ink); opacity: 1; }
 .term-here[hidden] { display: none; }
+.review-local, .review-remove { font: inherit; font-size: 11.5px; margin-left: 8px; padding: 1px 8px; cursor: pointer;
+  border: 1px solid var(--line); border-radius: 5px; background: var(--panel); color: var(--muted); }
+.review-local:hover, .review-remove:hover { color: var(--ink); border-color: var(--muted); }
+.review-local[hidden], .review-remove[hidden] { display: none; }
 
 h2.pane { font-size: 19px; margin: 0 0 2px; letter-spacing: -0.015em; }
 .sub { color: var(--muted); font-size: 12.5px; margin-bottom: 22px; }
