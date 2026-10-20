@@ -788,7 +788,14 @@ document.addEventListener('DOMContentLoaded', function () {
     b.addEventListener('click', function () {
       var on = paintStreakDays().slice(), day = Number(this.dataset.day), at = on.indexOf(day);
       if (at >= 0) { if (on.length === 1) return; on.splice(at, 1); } else on.push(day);
-      saveSetting('streakDays', on.sort());
+      on.sort();
+      // kept with the day it starts, so the days before are still judged as they were
+      var today = new Date().toLocaleDateString('en-CA');
+      var schedule = (Array.isArray(syncState.streakSchedule) ? syncState.streakSchedule : []).filter(function (e) { return e.from !== today; });
+      if (!schedule.length && Array.isArray(syncState.streakDays) && syncState.streakDays.length) schedule.push({ from: '0000-00-00', days: syncState.streakDays });
+      schedule.push({ from: today, days: on });
+      saveSetting('streakSchedule', schedule);
+      saveSetting('streakDays', on);
       paintStreakDays();
     });
   });

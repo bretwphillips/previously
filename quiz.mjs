@@ -13,7 +13,7 @@ import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { spaceFor, reposOf, CODE } from "./spaces.mjs";
-import { nextStreakDay, STREAK_DAYS } from "./ledger.mjs";
+import { counts, nextStreakDay, streakSchedule } from "./ledger.mjs";
 
 const space = spaceFor();
 const QUIZ = join(space.data, "quiz.json");
@@ -85,9 +85,9 @@ function finished(quiz, s) {
   // a streak is your streak days in a row with a quiz finished, right or wrong
   // (Settings -> Extras -> Streak days); a quiz on another day neither counts nor breaks it
   s.days = (s.days ?? 0) + 1;
-  const on = read(join(CODE, "settings.json"), {}).streakDays ?? STREAK_DAYS;
-  if (!on.includes(new Date(`${quiz.day}T12:00:00`).getDay())) return;
-  s.streak = s.lastDay && nextStreakDay(s.lastDay, on) >= quiz.day ? (s.streak ?? 0) + 1 : 1;
+  const schedule = streakSchedule(read(join(CODE, "settings.json"), {}));
+  if (!counts(quiz.day, schedule)) return;
+  s.streak = s.lastDay && nextStreakDay(s.lastDay, schedule) >= quiz.day ? (s.streak ?? 0) + 1 : 1;
   s.best = Math.max(s.best ?? 0, s.streak);
   s.lastDay = quiz.day;
 }

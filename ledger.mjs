@@ -55,24 +55,42 @@ export function updateLedger(file, paths, authorOf) {
 // count nor break it, as a lot of people don't work weekends.
 export const STREAK_DAYS = [1, 2, 3, 4, 5];
 const ofWeek = (day) => new Date(`${day}T12:00:00`).getDay();
-const plan = (days) => (Array.isArray(days) && days.length ? days : STREAK_DAYS);
-// the next of your days after this one
-export function nextStreakDay(day, days) {
-  const on = plan(days), d = new Date(`${day}T12:00:00`);
-  do d.setDate(d.getDate() + 1); while (!on.includes(d.getDay()));
-  return d.toLocaleDateString("en-CA");
+
+// Each change is kept with the day it starts (settings.streakSchedule), so a day is
+// always judged by the days in force then: changing them never breaks a streak
+// you're on, or lowers your best. settings is the app's settings.json.
+export function streakSchedule(settings = {}) {
+  const kept = (settings.streakSchedule ?? []).filter((e) => e?.from && Array.isArray(e.days) && e.days.length);
+  if (!kept.length && Array.isArray(settings.streakDays) && settings.streakDays.length) kept.push({ from: "0000-00-00", days: settings.streakDays });
+  return [{ from: "0000-00-00", days: STREAK_DAYS }, ...kept].sort((a, b) => (a.from < b.from ? -1 : a.from > b.from ? 1 : 0));
+}
+// the day of a change counts under the days before it or after, so changing them
+// can't take back a day already done
+export const counts = (day, schedule) => {
+  const upTo = schedule.filter((e) => e.from <= day), now = upTo[upTo.length - 1];
+  const before = now.from === day ? upTo[upTo.length - 2] : null;
+  return now.days.includes(ofWeek(day)) || Boolean(before?.days.includes(ofWeek(day)));
+};
+// the next day after this one that counts
+export function nextStreakDay(day, schedule) {
+  const d = new Date(`${day}T12:00:00`);
+  for (let i = 0; i < 400; i++) {
+    d.setDate(d.getDate() + 1);
+    const next = d.toLocaleDateString("en-CA");
+    if (counts(next, schedule)) return next;
+  }
+  return "9999-12-31";
 }
 
 // Your days in a row with a commit. The current run holds while the last one is
-// today, or today is the next of your days, or none of them has come round yet.
-export function commitStreak(ledger, days, today = new Date().toLocaleDateString("en-CA")) {
-  const on = plan(days);
+// today, or the next day that counts hasn't passed.
+export function commitStreak(ledger, schedule, today = new Date().toLocaleDateString("en-CA")) {
   let run = 0, best = 0, last = null;
-  for (const day of (ledger?.days ?? []).filter((d) => on.includes(ofWeek(d)))) {
-    run = last && nextStreakDay(last, on) === day ? run + 1 : 1;
+  for (const day of (ledger?.days ?? []).filter((d) => counts(d, schedule))) {
+    run = last && nextStreakDay(last, schedule) === day ? run + 1 : 1;
     best = Math.max(best, run);
     last = day;
   }
-  const current = last && (last === today || nextStreakDay(last, on) >= today) ? run : 0;
+  const current = last && (last === today || nextStreakDay(last, schedule) >= today) ? run : 0;
   return { current, best };
 }

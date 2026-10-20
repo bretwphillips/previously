@@ -997,7 +997,10 @@ there's no quiz, so commits unlock them instead -- 50, 100, 200, 300, 500 and 70
 and the specials a 5- and a 10-day streak of days with a commit; the count under
 the hoard is the one that counts. **Streak days** (beside Decoration) sets which
 days a streak counts, Monday to Friday by default: miss one and it starts over;
-the other days neither count nor break it. It goes for the quiz's day streak too. In Settings a
+the other days neither count nor break it. It goes for the quiz's day streak too.
+Each change is kept with the day it starts, and earlier days are still judged by
+the days set then, so changing them never breaks a streak you're on or lowers
+your best. In Settings a
 locked one is chained like a blocked ticket, says what it takes when you hover it,
 and its chain falls off the first time you see it after reaching that.
 `"unlockAllDecorations": true` in `settings.json` unlocks them all, to look them over.
