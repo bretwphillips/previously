@@ -16,9 +16,11 @@ body.quest .pet-status { display: none; }
 @media (prefers-reduced-motion: reduce) { .wizard .swell, .wizard .surge, .wizard .spark { animation: none; } .wizard .spark { opacity: .8; } }
 body.quest .pet-line .questy { display: inline; }
 .wizard { display: flex; justify-content: center; margin-bottom: 4px; position: relative; }
-/* The sprite is 21 pixels wide around a 17-wide animal: its left edge is 25.5px
-   left of centre at 3px a pixel, and the decoration stands a pixel clear of it. */
-.wizard svg.decoration { position: absolute; bottom: 0; right: calc(50% + 28.5px); }
+/* Centred in the empty space left of the companion, as the hoard is in the space
+   to its right (.tally: from 30px right of centre to the edge of .pet). The sprite
+   box sits inside .pet's 22px padding, so in its own terms that centre is 25%
+   less 26px. */
+.wizard svg.decoration { position: absolute; bottom: 0; left: calc(25% - 26px); transform: translateX(-50%); }
 .wizard svg { display: block; shape-rendering: crispEdges; overflow: visible; }
 .spk { transform-box: fill-box; transform-origin: center; animation: twinkle 1.8s steps(3, end) infinite; opacity: 0; }
 @keyframes twinkle { 0% { opacity: 0; transform: scale(.34) } 25% { opacity: 1; transform: scale(.67) } 50% { opacity: 1; transform: scale(1) } 75% { opacity: .8; transform: scale(.67) } 100% { opacity: 0; transform: scale(.34) } }
