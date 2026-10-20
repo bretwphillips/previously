@@ -427,8 +427,6 @@ section[hidden] { display: none; }
   border: 1px solid var(--line); border-radius: 5px; background: var(--panel); color: var(--muted); }
 .review-local:hover, .review-remove:hover { color: var(--ink); border-color: var(--muted); }
 .review-local[hidden], .review-remove[hidden] { display: none; }
-.thread-review { margin: 4px 0 2px; }
-.thread-review .review-local { margin: 0 6px 0 0; }
 
 h2.pane { font-size: 19px; margin: 0 0 2px; letter-spacing: -0.015em; }
 .sub { color: var(--muted); font-size: 12.5px; margin-bottom: 22px; }

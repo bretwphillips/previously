@@ -242,9 +242,13 @@ function mrLine(r, thread) {
     .map((m) => {
       const label = `!${m.number}`;
       const href = mrUrl(r.web, m.number);
+      // any open MR can go in the review copy, bar the one already checked out here
+      const review = !finished(m) && thread.ticket !== r.ticket
+        ? reviewButton({ repo: r.name, number: m.number, copy: r.reviewCopyOn === m.number })
+        : "";
       return `<span${finished(m) ? ' class="done"' : ""}>${link(href, label)} ${esc(
         MR_STATE[m.state] ?? m.state,
-      )}${m.seenAt ? ` <span class="seen">seen ${esc(m.seenAt)}</span>` : ""}</span>`;
+      )}${m.seenAt ? ` <span class="seen">seen ${esc(m.seenAt)}</span>` : ""}${review}</span>`;
     })
     .join(" · ");
 }
@@ -338,21 +342,11 @@ const REVIEW_TIP =
   "so it switches to this MR unless it has changes of its own.\n\n" +
   "The first time, it has no dependencies installed: run your install there (again if the lockfile changed). " +
   "A dev server started there may clash on its port with one already running.";
-function reviewButton(r, named = false) {
+function reviewButton(r) {
   const host = isGitHub(REPO_WEB.get(r.repo)) ? "github" : "gitlab";
-  const label = r.copy ? `Open review copy${named ? ` of !${r.number}` : ""}` : named ? `Review !${r.number} locally` : "Review locally";
   return `<button class="review-local" data-review-repo="${esc(r.repo)}" data-review-number="${r.number}" data-review-host="${host}" title="${esc(
     r.copy ? `Open the review copy of !${r.number}.\n\n${REVIEW_TIP}` : REVIEW_TIP,
-  )}" hidden>${esc(label)}</button>`;
-}
-// A thread's open MRs, each with its own button on a line under the MR row --
-// bar the one already checked out here.
-function reviewRow(r, thread) {
-  if (thread.ticket === r.ticket) return "";
-  const open = (thread.mrs ?? []).filter((m) => m.state !== "merged" && m.state !== "closed");
-  return open.length
-    ? `<div class="thread-review">${open.map((m) => reviewButton({ repo: r.name, number: m.number, copy: r.reviewCopyOn === m.number }, true)).join("")}</div>`
-    : "";
+  )}" hidden>${r.copy ? "Open review copy" : "Review locally"}</button>`;
 }
 // A review copy whose review is over: offered for removal, never removed unasked.
 function doneCopyLine(repo, number) {
@@ -603,7 +597,7 @@ function threadBody(r, thread, index, current) {
               : ""
           }</div>`
         : ""
-    }${reviewRow(r, thread)}
+    }
     ${blockerLine(r, thread)}
     ${childrenLine(thread)}
 
