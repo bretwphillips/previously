@@ -74,6 +74,7 @@
 <script src="vendor/xterm.js"></script>
 <script src="vendor/addon-fit.js"></script>
 <script src="vendor/addon-webgl.js"></script>
+<script src="vendor/addon-web-links.js"></script>
 <script>
 // The terminal's own page. It never sees the dashboard: the app hands it bytes
 // from each shell, names and colours, and it hands back keystrokes, sizes, and
@@ -393,6 +394,44 @@ function newTab(position) {
   return tab;
 }
 
+// ⌘-click opens a link, as in other Mac terminals: a plain click focuses or
+// selects and never opens anything by accident.
+function openLink(e, uri) { if (e && e.metaKey) app.termLink.postMessage(uri); }
+// Hovering a link says how to open it -- and, for a link a program marked, where
+// it really goes, as its text can say anything.
+function hint(holder, text) { holder.title = text; }
+
+// A full path in the output (/... or ~/...) is a link too; the app checks it is
+// there when it's clicked. Soft-wrapped lines are read as one, so a path the
+// terminal wrapped still works -- one a program broke with its own newline can't.
+var PATH = /(^|[\s"'`(\[=])((?:~|\/(?!\/))(?:\/?[\w.@%+~-])+(?::\d+)?)/g;
+function pathLinks(term, holder) {
+  return {
+    provideLinks: function (y, done) {
+      var buf = term.buffer.active, cols = term.cols, first = y - 1;
+      while (first > 0 && buf.getLine(first) && buf.getLine(first).isWrapped) first--;
+      var rows = [], i = first, line;
+      while ((line = buf.getLine(i)) && (i === first || line.isWrapped)) { rows.push(line.translateToString(false)); i++; }
+      var text = rows.join('').replace(/\s+$/, ''), links = [], m;
+      var at = function (n) { return { x: n % cols + 1, y: first + Math.floor(n / cols) + 1 }; };
+      PATH.lastIndex = 0;
+      while ((m = PATH.exec(text))) {
+        var path = m[2].replace(/[.,:;]+$/, ''), start = m.index + m[1].length;
+        if (path.length < 3 || path === '~/') continue;
+        var from = at(start), to = at(start + path.length - 1);
+        if (from.y > y || to.y < y) continue;
+        links.push({
+          range: { start: from, end: to }, text: path,
+          activate: openLink,
+          hover: function () { hint(holder, '\u2318-click to open'); },
+          leave: function () { hint(holder, ''); }
+        });
+      }
+      done(links.length ? links : undefined);
+    }
+  };
+}
+
 function addShell(tab, id, label, index) {
   var pane = document.createElement('div');
   pane.className = 'pane';
@@ -406,10 +445,23 @@ function addShell(tab, id, label, index) {
     cursorBlink: true,
     scrollback: 5000,
     macOptionClickForcesSelection: true,
-    theme: theme ? xtermTheme(theme) : undefined
+    theme: theme ? xtermTheme(theme) : undefined,
+    // Links a program marks (OSC 8, as Claude Code prints them) open on click too.
+    linkHandler: {
+      activate: openLink,
+      hover: function (e, uri) { hint(holder, '\u2318-click to open ' + uri); },
+      leave: function () { hint(holder, ''); }
+    }
   });
   var fit = new FitAddon.FitAddon();
   term.loadAddon(fit);
+  // A web address in the output opens in the browser on click. This page can't
+  // go anywhere itself, so the app opens it.
+  term.loadAddon(new WebLinksAddon.WebLinksAddon(openLink, {
+    hover: function () { hint(holder, '\u2318-click to open'); },
+    leave: function () { hint(holder, ''); }
+  }));
+  term.registerLinkProvider(pathLinks(term, holder));
 
   var s = { id: id, term: term, fit: fit, pane: pane, tab: tab, label: label, size: '', grow: 1 };
   shells[id] = s;

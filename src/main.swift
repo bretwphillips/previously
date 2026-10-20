@@ -1,4 +1,5 @@
 import AppKit
+import UniformTypeIdentifiers
 import Combine
 import SwiftUI
 import WebKit
@@ -565,7 +566,7 @@ final class TerminalDrawer: NSObject, WKScriptMessageHandler, WKNavigationDelega
         super.init()
         let config = WKWebViewConfiguration()
         config.websiteDataStore = .nonPersistent()
-        for name in ["termInput", "termResize", "termReady", "termClose", "termNew", "termSplit", "termLayout"] {
+        for name in ["termInput", "termResize", "termReady", "termClose", "termNew", "termSplit", "termLayout", "termLink"] {
             config.userContentController.add(self, name: name)
         }
         let dropView = DropWebView(frame: .zero, configuration: config)
@@ -850,6 +851,30 @@ final class TerminalDrawer: NSObject, WKScriptMessageHandler, WKNavigationDelega
         return newest.map { $0.deletingPathExtension().lastPathComponent }
     }
 
+    /// A folder opens in Finder, and a plain document -- image, PDF, text, audio,
+    /// video -- in its own app. Anything else is only shown in Finder: a list of
+    /// what's safe, not of what isn't, as a script, a page with scripts in it, a web
+    /// shortcut or an installer can each look like an ordinary file.
+    private func openPath(_ path: String) {
+        let url = URL(fileURLWithPath: path)
+        guard let values = try? url.resourceValues(forKeys: [.isDirectoryKey, .isPackageKey, .contentTypeKey])
+        else { return }
+        if values.isDirectory == true, values.isPackage != true {
+            NSWorkspace.shared.open(url)
+            return
+        }
+        let type = values.contentType
+        let document = [UTType.image, .pdf, .text, .audiovisualContent].contains { type?.conforms(to: $0) == true }
+        let runs = [UTType.script, .executable, .html, .svg, .webArchive, UTType("com.apple.mobileconfig")].contains {
+            $0.map { type?.conforms(to: $0) == true } ?? false
+        }
+        if document, !runs, values.isDirectory != true, !FileManager.default.isExecutableFile(atPath: path) {
+            NSWorkspace.shared.open(url)
+        } else {
+            NSWorkspace.shared.activateFileViewerSelecting([url])
+        }
+    }
+
     /// A line in a tab's view, from Previously -- shown, never sent to the shell.
     private func note(_ text: String, in id: Int) {
         let line = "\u{1b}[2m[Previously] \(text)\u{1b}[0m\r\n"
@@ -884,6 +909,23 @@ final class TerminalDrawer: NSObject, WKScriptMessageHandler, WKNavigationDelega
         }
         if message.name == "termLayout" {
             if let body = message.body as? [String: Any] { saveLayout(body) }
+            return
+        }
+        // A link clicked in a shell's output: a web address in the browser, a path
+        // (or file:// link) that exists in Finder or its own app.
+        if message.name == "termLink" {
+            guard let text = message.body as? String else { return }
+            if text.hasPrefix("/") || text.hasPrefix("~") {
+                // a trailing :line, as compilers and grep print, is not part of the file
+                let bare = text.range(of: #":\d+$"#, options: .regularExpression).map { String(text[..<$0.lowerBound]) } ?? text
+                openPath((bare as NSString).expandingTildeInPath)
+            } else if let url = URL(string: text) {
+                switch url.scheme?.lowercased() {
+                case "http", "https": NSWorkspace.shared.open(url)
+                case "file": openPath(url.path)
+                default: break
+                }
+            }
             return
         }
 

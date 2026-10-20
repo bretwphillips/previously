@@ -307,6 +307,15 @@ git state -- a commit, checkout, stash, fetch or staging -- the page rebuilds.
 - The app starts shells, ends them and reads which folder each is in from macOS.
   It never writes to one, and nothing a shell prints reaches the page.
 - `xterm.js` is vendored in `terminal/vendor/`; nothing loads from the network.
+- **⌘-click** a web address in a shell's output to open it in your browser, as in
+  other Mac terminals; a plain click only focuses or selects. Links a program marks
+  as links (Claude Code's) work too, and hovering one shows where it really goes --
+  its text can say anything. A full path (`/…` or `~/…`, a trailing `:line` ignored)
+  opens as well: a folder in Finder, and a plain document (image, PDF, text, audio,
+  video) in its own app. Anything else -- an app, a script, a web page, a web
+  shortcut, an installer, an executable -- is only shown in Finder. The app opens
+  them, never the drawer. A path a program broke across lines itself can't be
+  followed; one the terminal wrapped can.
 
 Settings and Standup work around the drawer: Settings is a pane, padded like the
 rest, and while Standup is open the app dims the drawer to match its backdrop;
@@ -737,7 +746,7 @@ the rest sit beside the code. None of them are tracked by git.
 | `companion.js` | The companion's art: each animal, costume and colour as layers that change with mood. Inlined at build time. |
 | `terminals.mjs` | Which terminal apps Settings offers, by what is installed. |
 | `terminal/terminal.html` | The in-app terminal's page: tabs and one xterm.js per shell. It never sees the dashboard. |
-| `terminal/vendor/` | xterm.js 5.5.0 with its fit and WebGL addons, and their licences. Copied in, never fetched. WebGL is what draws block and box characters edge to edge. |
+| `terminal/vendor/` | xterm.js 5.5.0 with its fit, WebGL and web-links addons, and their licences. Copied in, never fetched. WebGL is what draws block and box characters edge to edge. |
 | `quotes.mjs` | The quote of the day on the Overview (Settings turns it off). Picked by date, so it holds until midnight; add your own to the list. |
 | `standup.mjs` | Builds the morning post from threads, commits and activity. |
 | `activity.mjs` | Turns raw GitLab events and MRs into per-ticket comments, approvals and MR states. |
