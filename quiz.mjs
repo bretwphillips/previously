@@ -2,8 +2,9 @@
 // The daily code quiz (Settings -> A.I.). Made on request, never in the background:
 //   node quiz.mjs make             write today's quiz for the space (one Claude Code call)
 //   node quiz.mjs answer <id> <n>  record an answer
-// Questions come from a repo you've committed to or reviewed lately -- its latest
-// changes, or its older code when nothing is recent -- taking repos in turn. Each
+// Questions come from a repo you've committed to lately -- now and then one you only
+// reviewed -- from its latest changes, or its older code when nothing is recent,
+// taking repos in turn. Each
 // question quotes the code it rests on, and one whose quote isn't at the cited file
 // and line is dropped: only what can be checked against the code is shown.
 import { execFileSync } from "node:child_process";
@@ -70,12 +71,13 @@ function make() {
   const count = Math.max(1, Math.min(10, Number(settings.quizCount) || 3));
   const history = read(HISTORY, { asked: [], stats: {} });
   try {
-    const { repo, source, diff } = pick(history);
+    const { repo, source, diff, reviewed } = pick(history);
     const questions = ask(repo, source, diff, count, history);
     if (!questions.length) throw new Error("No question could be checked against the code. Try again later.");
     history.asked.push(...questions.map((q) => ({ day: today(), repo: repo.name, question: q.question })));
     history.asked = history.asked.slice(-200);
     history.lastRepo = repo.name;
+    history.sinceReview = reviewed ? 0 : (history.sinceReview ?? 0) + 1;
     history.repoAt = { ...history.repoAt, [repo.name]: Date.now() / 1000 };
     write(HISTORY, history);
     write(QUIZ, {
@@ -109,21 +111,26 @@ function pick(history) {
     Boolean(git(r, "log", "--all", `--author=${me(r)}`, `--since=${Math.round(seconds / DAY)} days ago`, "-1", "--format=%h").trim());
 
   // Recent first; wider windows when nothing is; any repo of yours as a last resort.
+  // Repos you commit to, with one you only reviewed every few quizzes.
   for (const window of [7 * DAY, 30 * DAY, 365 * DAY]) {
-    const active = repos.filter((r) => committedSince(r, window) || reviewedSince(r, window));
+    const committed = repos.filter((r) => committedSince(r, window));
+    const reviewed = repos.filter((r) => !committed.includes(r) && reviewedSince(r, window));
+    const reviewTurn = reviewed.length && (!committed.length || (history.sinceReview ?? 0) >= REVIEW_EVERY - 1);
+    const active = reviewTurn ? reviewed : committed;
     if (!active.length) continue;
     // in turn: the repo quizzed longest ago
     active.sort((a, b) => (history.repoAt?.[a.name] ?? 0) - (history.repoAt?.[b.name] ?? 0));
     for (const repo of active) {
       const diff = changes(repo, window, git, me(repo));
-      if (diff) return { repo, source: "changes", diff };
+      if (diff) return { repo, source: "changes", diff, reviewed: reviewTurn };
     }
-    return { repo: active[0], source: "code", diff: code(active[0], git) };
+    return { repo: active[0], source: "code", diff: code(active[0], git), reviewed: reviewTurn };
   }
   if (!repos.length) throw new Error("This space has no repos to ask about.");
   return { repo: repos[0], source: "code", diff: code(repos[0], git) };
 }
 
+const REVIEW_EVERY = 4;
 const BUDGET = 40_000;
 const SKIP = [":!*.lock", ":!*lock.json", ":!*.snap", ":!*.min.*", ":!dist/*", ":!build/*"];
 
@@ -212,18 +219,30 @@ ${material}`;
     .map(({ q: { question, choices, answer, explanation, file, line }, at }) => ({ question, choices, answer, explanation, file, line, ...at }));
 }
 
-// The quote has to be in the cited file, within a few lines of the cited line: in
-// your own copy (the link opens your editor there), else in the fetched default
-// branch (the link opens that commit on the web, as your copy is behind).
+// The quote has to be in the cited file: in your own copy (the link opens your
+// editor there), else in the fetched default branch (the link opens that commit on
+// the web, as your copy is behind). Its line is where the quote is -- the nearest to
+// the cited one -- as Claude may have counted lines in an older copy.
 function checks(repo, q, git, fetched) {
   if (!Array.isArray(q.choices) || q.choices.length < 2 || !(q.answer >= 0 && q.answer < q.choices.length)) return null;
   if (!q.file || q.file.startsWith("/") || q.file.includes("..")) return null;
   const quote = (q.quote ?? "").trim();
   if (quote.length < 12) return null;
-  const near = (text) => (text ?? "").split("\n").slice(Math.max(0, q.line - 4), q.line + 3).join("\n").includes(quote);
+  const find = (text) => {
+    const lines = (text ?? "").split("\n");
+    let best = null;
+    for (let i = 0; i < lines.length; i++) {
+      // the quote may run over a line break: look at it and the next few
+      if (!lines.slice(i, i + 4).join("\n").includes(quote) || lines.slice(i + 1, i + 4).join("\n").includes(quote)) continue;
+      if (best == null || Math.abs(i + 1 - q.line) < Math.abs(best - q.line)) best = i + 1;
+    }
+    return best;
+  };
   const path = join(repo.path, q.file);
-  if (existsSync(path) && near(readFileSync(path, "utf8"))) return { local: true };
-  if (fetched && near(git("show", `${fetched}:${q.file}`))) return { local: false, commit: fetched };
+  const mine = existsSync(path) ? find(readFileSync(path, "utf8")) : null;
+  if (mine) return { local: true, line: mine };
+  const theirs = fetched ? find(git("show", `${fetched}:${q.file}`)) : null;
+  if (theirs) return { local: false, commit: fetched, line: theirs };
   return null;
 }
 

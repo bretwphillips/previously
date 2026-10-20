@@ -432,16 +432,16 @@ companion measures momentum rather than reportable output.
 
 With AI writing much of the code, it is easy to lose track of how your projects
 actually work. **Quiz**, beside Standup, asks a few multiple-choice questions on code
-you've been near: a repo you've committed to or reviewed lately, from its latest
-changes, or its older code when nothing is recent, taking repos in turn and never
-repeating a question.
+you've been near: a repo you've committed to lately, with one you only reviewed every
+fourth quiz, from its latest changes, or its older code when nothing is recent,
+taking repos in turn and never repeating a question.
 
 - **Made when you click**, one Claude Code call (Sonnet), never in the background:
   about ten cents, or that much of your plan's usage. Showing it costs nothing, and
   without Claude Code installed there's no button.
 - **Only checkable facts**: where something lives, what calls what, what a change did.
-  Each question quotes the code it rests on, and one whose quote isn't at the line it
-  cites is dropped before you see it.
+  Each question quotes the code it rests on, and one whose quote isn't in the file it
+  cites is dropped before you see it; the line is wherever the quote actually is.
 - **Each answer points at its line**: your editor opens there (Settings → General →
   Editor: VS Code, Cursor, Windsurf or Zed) when your copy has that code, otherwise
   the commit on GitLab or GitHub -- code you reviewed may be newer than your clone.
