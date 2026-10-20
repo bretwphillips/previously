@@ -659,6 +659,75 @@ const DECORATIONS = {
       ".ooooooooooooo.",
     ],
   },
+  // ---------- Fantasy's: a treasure chest (B wood, G gilt bands, Y lock), a campfire
+  // (flames hottest inside, L logs, S stones), a sword in the stone (Y gold, H grip,
+  // M blade), and potions (R/B/G glass, w a glint, c cork).
+  chest: {
+    pal: { o: "#3a2a1a", B: "#9a6a3a", b: "#6b4a2a", G: "#e8b021", Y: "#ffd23f", k: "#1d1b22" },
+    rows: [
+      "..ooooooooooo..",
+      ".oBBbBBBBBbBBo.",
+      "oBBBbBBBBBbBBBo",
+      "oGGGGGGYGGGGGGo",
+      "ooooooYkYoooooo",
+      "oBBbBBYYYBBbBBo",
+      "oBBbBBBBBBBbBBo",
+      "oGGGGGGGGGGGGGo",
+      "oBBbBBBBBBBbBBo",
+      "ooooooooooooooo",
+    ],
+  },
+  campfire: {
+    pal: { o: "#3a2a1a", y: "#e5383b", Y: "#f08a1c", F: "#ffd23f", R: "#fff3b0", L: "#8a5a2b", l: "#5a3a1a", S: "#9aa3ad", s: "#6b7280" },
+    rows: [
+      "......y......",
+      ".....yY..y...",
+      "....yYYy.Y...",
+      "....YFFYyY...",
+      "...yFRRFYy...",
+      "...YFRRRFY...",
+      "..oLLLLLLLLo.",
+      ".oLlLLLlLLLlo",
+      "SsSoooooooSsS",
+    ],
+  },
+  sword: {
+    pal: { o: "#3a2a1a", Y: "#e8b021", H: "#6b3a10", M: "#e6eaee", S: "#9aa3ad", s: "#6b7280", G: "#5c8a3a" },
+    rows: [
+      "....ooo....",
+      "....oYo....",
+      "....oHo....",
+      "....oHo....",
+      "..ooooooo..",
+      "..oYYYYYo..",
+      "..ooooooo..",
+      "....oMo....",
+      "....oMo....",
+      "....oMo....",
+      "...ooMoo...",
+      "..oSSSSSo..",
+      ".oGSsSSSSo.",
+      "oSSSSSsSSSo",
+      "oSsSSSSSSGo",
+      "ooooooooooo",
+    ],
+  },
+  potions: {
+    pal: { o: "#3a2a1a", c: "#b07a3c", w: "#ffffff", R: "#e5383b", r: "#a8322f", B: "#3f7fd9", b: "#2a5aa8", G: "#5fe08a", g: "#2f9a5a" },
+    rows: [
+      "......oco......",
+      "......oBo......",
+      "......oBo......",
+      "......oBo......",
+      ".oco.ooBoo.....",
+      ".oRo.owBbo.oco.",
+      "ooRoooBBbo.oGo.",
+      "owRrooBBboooGoo",
+      "oRRrooBBboowGgo",
+      "oRRrooBBbooGGgo",
+      "ooooooooooooooo",
+    ],
+  },
   // ---------- Halloween's: a jack-o'-lantern (P/q, Y lit), a cauldron (G brew, K iron,
   // a fire under it), a tombstone (S stone, d carved, M moss, G grass).
   pumpkin: {
@@ -769,7 +838,8 @@ const DECORATIONS = {
 
 // Which decorations each quest theme offers; a theme without a set has none.
 const DECORATION_SETS = {
-  quest: ["bowl", "house", "yarn", "arcade"],
+  none: ["bowl", "house", "yarn", "arcade"],
+  quest: ["chest", "campfire", "sword", "potions"],
   halloween: ["pumpkin", "cauldron", "tombstone"],
   muertos: ["veladoras", "marigolds", "sugarskull"],
 };

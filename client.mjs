@@ -95,15 +95,18 @@ function companionPick() {
   var muertos = !halloween && store.get('worklog.muertos', 'off') === 'on';
   var look = store.get('worklog.pet.look', 'catrina');
   if (C.LOOKS.indexOf(look) < 0) look = 'catrina';
-  // Each quest theme has its own decorations, and remembers its own pick.
-  var theme = halloween ? 'halloween' : muertos ? 'muertos' : 'quest';
+  // Each quest theme has its own decorations, and remembers its own pick. With no
+  // theme the companion is just itself: no class to wear.
+  var theme = halloween ? 'halloween' : muertos ? 'muertos' : store.get('worklog.questTheme', 'quest') === 'none' ? 'none' : 'quest';
+  if (theme === 'none') cls = 'none';
   var decoration = store.get(decorationKey(theme), 'none');
   if ((C.DECORATION_SETS[theme] || []).indexOf(decoration) < 0) decoration = 'none';
   return { race: race, coat: coat, cls: cls, colour: colour, halloween: halloween, costume: costume, muertos: muertos, look: look,
     theme: theme, decoration: decoration };
 }
+// The plain decorations were once the only ones, so their pick keeps the old key.
 function decorationKey(theme) {
-  return theme === 'quest' ? 'worklog.pet.decoration' : 'worklog.pet.decoration.' + theme;
+  return theme === 'none' ? 'worklog.pet.decoration' : 'worklog.pet.decoration.' + theme;
 }
 window.companionPick = companionPick;
 
@@ -1016,7 +1019,7 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('text-colour-choice').closest('.srow').hidden = !petOn || questOn;
     var dressed = pick.halloween || pick.muertos;
     if (colourRow) colourRow.hidden = !petOn || !questOn || dressed || pick.cls === 'none';
-    document.getElementById('class-choice').closest('.srow').hidden = !petOn || !questOn || dressed;
+    document.getElementById('class-choice').closest('.srow').hidden = !petOn || !questOn || dressed || pick.theme === 'none';
     document.getElementById('costume-choice').closest('.srow').hidden = !petOn || !questOn || !pick.halloween;
     document.getElementById('look-choice').closest('.srow').hidden = !petOn || !questOn || !pick.muertos;
     document.getElementById('decoration-choice').closest('.srow').hidden = !petOn || !questOn;

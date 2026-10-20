@@ -1124,6 +1124,7 @@ function settingsPane(userName, weightLimit = 5, terminals = [], update = null, 
             ${row(
               "Theme",
               `<div class="themes" id="overlay-choice">
+                <button data-overlay="none">None</button>
                 <button data-overlay="quest">Fantasy</button>
                 <button data-overlay="halloween">Halloween</button>
                 <button data-overlay="muertos">Día de los Muertos</button>
@@ -1188,12 +1189,13 @@ function settingsPane(userName, weightLimit = 5, terminals = [], update = null, 
               "Decoration",
               `<div class="themes" id="decoration-choice">${[
                 ["none", "None"], ["bowl", "Food bowl"], ["house", "Dog house"], ["yarn", "Yarn"], ["arcade", "Arcade"],
+                ["chest", "Treasure chest"], ["campfire", "Campfire"], ["sword", "Sword in the stone"], ["potions", "Potions"],
                 ["pumpkin", "Jack-o\u2019-lantern"], ["cauldron", "Cauldron"], ["tombstone", "Tombstone"],
                 ["veladoras", "Veladoras"], ["marigolds", "Cempas\u00fachil"], ["sugarskull", "Sugar skull"],
               ]
                 .map(([d, label]) => `<button data-deco="${d}">${label}</button>`)
                 .join("")}</div>`,
-              "Something beside it in fantasy mode. Halloween and D\u00eda de los Muertos have their own, and each remembers its pick.",
+              "Something beside it in quest mode. Each theme has its own, and remembers its pick.",
             )}
           </div>
           <div class="builder-preview" id="builder-preview" aria-hidden="true"></div>
