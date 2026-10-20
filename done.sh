@@ -6,7 +6,8 @@
 set -e
 HERE=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 . "$HERE/env.sh"
-REPO=$("$NODE" "$HERE/spaces.mjs" which "$1" | cut -f3) || REPO="$1"
+REPO=$("$NODE" "$HERE/spaces.mjs" which "$1" 2>/dev/null | cut -f3)
+[ -n "$REPO" ] || REPO="$1"
 shift
 [ -d "$REPO/.git" ] || { echo "no repo at $REPO" >&2; exit 1; }
 
