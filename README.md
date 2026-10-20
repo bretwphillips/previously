@@ -508,7 +508,8 @@ does every space in turn.
 **Hourly** adds a sync of GitLab and GitHub (no git fetch) once an hour on top of
 the daily one, and **Every 15 min** adds, between those, just what someone
 may be waiting on you for -- your events (comments, approvals) and review
-requests, two small calls. They run only while you're there: the screen
+requests, two small calls -- plus any ticket it has never seen, such as a branch just
+cut, so its tab has its title and weight. They run only while you're there: the screen
 unlocked and awake, the keyboard or mouse used in the last 15 minutes, and the
 window showing. One that comes due while you're away waits for you, then a
 random 0-5 minutes more (up to one for the quick check) so people arriving

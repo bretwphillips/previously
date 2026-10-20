@@ -271,11 +271,13 @@ for (const [key, t] of tickets) {
   byProject.get(t.path).push({ key, iid: t.iid });
 }
 const changed = new Set();
-if (!quick) await Promise.all(
+// A quick check asks only about tickets never seen before -- a branch just cut --
+// so its tab has a title and weight without waiting for the hourly sync.
+await Promise.all(
   [...byProject].map(async ([path, list]) => {
     const unseen = list.filter((t) => !cache.issues[t.key]);
     const open = list.filter((t) => cache.issues[t.key] && cache.issues[t.key].issue.state !== "closed");
-    const ask = [...unseen, ...open];
+    const ask = quick ? unseen : [...unseen, ...open];
     if (!ask.length) return;
     const query = ask.map((t) => `iids[]=${t.iid}`).join("&");
     const since = unseen.length ? "" : `&updated_after=${iso(last - 300)}`;
