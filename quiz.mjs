@@ -2,9 +2,9 @@
 // The daily code quiz (Settings -> A.I.). Made on request, never in the background:
 //   node quiz.mjs make             write today's quiz for the space (one Claude Code call)
 //   node quiz.mjs answer <id> <n>  record an answer
-// Questions come from a repo you've committed to lately -- now and then one you only
-// reviewed -- from its latest changes, or its older code when nothing is recent,
-// taking repos in turn. Each
+// Questions come from the repo you've committed to most recently -- now and then one
+// you only reviewed -- from changes not quizzed on yet, moving to the next repo when
+// it has none, or its older code when nothing is recent. Each
 // question quotes the code it rests on, and one whose quote isn't at the cited file
 // and line is dropped: only what can be checked against the code is shown.
 import { execFileSync } from "node:child_process";
@@ -71,14 +71,14 @@ function make() {
   const count = Math.max(1, Math.min(10, Number(settings.quizCount) || 3));
   const history = read(HISTORY, { asked: [], stats: {} });
   try {
-    const { repo, source, diff, reviewed } = pick(history);
+    const { repo, source, diff, shas, reviewed } = pick(history);
     const questions = ask(repo, source, diff, count, history);
     if (!questions.length) throw new Error("No question could be checked against the code. Try again later.");
     history.asked.push(...questions.map((q) => ({ day: today(), repo: repo.name, question: q.question })));
     history.asked = history.asked.slice(-200);
     history.lastRepo = repo.name;
     history.sinceReview = reviewed ? 0 : (history.sinceReview ?? 0) + 1;
-    history.repoAt = { ...history.repoAt, [repo.name]: Date.now() / 1000 };
+    history.quizzed = { ...history.quizzed, [repo.name]: [...(history.quizzed?.[repo.name] ?? []), ...shas].slice(-500) };
     write(HISTORY, history);
     write(QUIZ, {
       day: today(), repo: repo.name, path: repo.path, source,
@@ -107,8 +107,14 @@ function pick(history) {
     ...(read(join(space.data, "activity-github.json"), {}).approvals ?? []),
   ];
   const reviewedSince = (r, seconds) => approvals.some((a) => a.repo === r.name && a.at >= Date.now() / 1000 - seconds);
-  const committedSince = (r, seconds) =>
-    Boolean(git(r, "log", "--all", `--author=${me(r)}`, `--since=${Math.round(seconds / DAY)} days ago`, "-1", "--format=%h").trim());
+  // when you last committed to it, or approved in it
+  const last = new Map();
+  const committedAt = (r) => {
+    if (!last.has(r)) last.set(r, Number(git(r, "log", "--all", `--author=${me(r)}`, "-1", "--format=%ct").trim()) || 0);
+    return last.get(r);
+  };
+  const reviewedAt = (r) => Math.max(0, ...approvals.filter((a) => a.repo === r.name).map((a) => a.at));
+  const committedSince = (r, seconds) => committedAt(r) >= Date.now() / 1000 - seconds;
 
   // Recent first; wider windows when nothing is; any repo of yours as a last resort.
   // Repos you commit to, with one you only reviewed every few quizzes.
@@ -118,16 +124,17 @@ function pick(history) {
     const reviewTurn = reviewed.length && (!committed.length || (history.sinceReview ?? 0) >= REVIEW_EVERY - 1);
     const active = reviewTurn ? reviewed : committed;
     if (!active.length) continue;
-    // in turn: the repo quizzed longest ago
-    active.sort((a, b) => (history.repoAt?.[a.name] ?? 0) - (history.repoAt?.[b.name] ?? 0));
+    // the one you were in last, unless everything recent there has been asked about
+    const at = reviewTurn ? reviewedAt : committedAt;
+    active.sort((a, b) => at(b) - at(a));
     for (const repo of active) {
-      const diff = changes(repo, window, git, me(repo));
-      if (diff) return { repo, source: "changes", diff, reviewed: reviewTurn };
+      const { diff, shas } = changes(repo, window, git, me(repo), new Set(history.quizzed?.[repo.name]));
+      if (diff) return { repo, source: "changes", diff, shas, reviewed: reviewTurn };
     }
-    return { repo: active[0], source: "code", diff: code(active[0], git), reviewed: reviewTurn };
+    return { repo: active[0], source: "code", diff: code(active[0], git), shas: [], reviewed: reviewTurn };
   }
   if (!repos.length) throw new Error("This space has no repos to ask about.");
-  return { repo: repos[0], source: "code", diff: code(repos[0], git) };
+  return { repo: repos[0], source: "code", diff: code(repos[0], git), shas: [] };
 }
 
 const REVIEW_EVERY = 4;
@@ -135,24 +142,30 @@ const BUDGET = 40_000;
 const SKIP = [":!*.lock", ":!*lock.json", ":!*.snap", ":!*.min.*", ":!dist/*", ":!build/*"];
 
 // Your commits on any branch, and everyone's on the default branch (what you
-// reviewed lands there), newest first, until the budget is spent.
-function changes(repo, window, git, me) {
+// reviewed lands there), newest first, until the budget is spent -- leaving out
+// those already quizzed on.
+function changes(repo, window, git, me, quizzed) {
   const since = `--since=${Math.round(window / DAY)} days ago`;
   const head = git(repo, "symbolic-ref", "--short", "refs/remotes/origin/HEAD").trim() || "HEAD";
   const shas = [
-    ...git(repo, "log", "--all", `--author=${me}`, since, "--no-merges", "--format=%h").split("\n"),
-    ...git(repo, "log", head, since, "--no-merges", "--format=%h").split("\n"),
-  ].filter(Boolean);
+    ...git(repo, "log", "--all", `--author=${me}`, since, "--no-merges", "--format=%H").split("\n"),
+    ...git(repo, "log", head, since, "--no-merges", "--format=%H").split("\n"),
+  ].filter((sha) => sha && !quizzed.has(sha));
   let diff = "";
+  const used = [];
   for (const sha of [...new Set(shas)]) {
     const one = git(repo, "show", "--stat", "--patch", "--unified=3", "--format=commit %h %an: %s", sha, "--", ".", ...SKIP);
     if (diff.length + one.length > BUDGET) {
-      if (!diff) diff = one.slice(0, BUDGET);
+      // too big to add: smaller ones may still fit, and it leads a later quiz
+      if (diff) continue;
+      diff = one.slice(0, BUDGET);
+      used.push(sha);
       break;
     }
     diff += `${one}\n`;
+    used.push(sha);
   }
-  return diff;
+  return { diff, shas: used };
 }
 
 // Nothing recent: some of the repo's source files, the most recently changed first.

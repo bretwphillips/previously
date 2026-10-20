@@ -432,9 +432,10 @@ companion measures momentum rather than reportable output.
 
 With AI writing much of the code, it is easy to lose track of how your projects
 actually work. **Quiz**, beside Standup, asks a few multiple-choice questions on code
-you've been near: a repo you've committed to lately, with one you only reviewed every
-fourth quiz, from its latest changes, or its older code when nothing is recent,
-taking repos in turn and never repeating a question.
+you've been near: the repo you've committed to most recently (every fourth quiz, the
+one you last reviewed), from changes it hasn't quizzed you on yet. When a repo has
+none left it moves to the next most active, and to older code when nothing is
+recent. It never repeats a question.
 
 - **Made when you click**, one Claude Code call (Sonnet), never in the background:
   about ten cents, or that much of your plan's usage. Showing it costs nothing, and
