@@ -246,15 +246,16 @@ sh previously/show.sh api   # one project in full, from whichever space has it
 Settings → General → **Terminal** turns it on: *In app*, or one of your terminal apps. It adds a **Terminal** button
 (`` ⌃` ``) and a small terminal icon beside the ticket line on every repo's pane.
 
-A review request also gets **Review locally**: the merge request is fetched into the
+A review request, and every open merge request on a repo's pane (bar the one you have
+checked out), also gets **Review locally**: the merge request is fetched into the
 repo's **review copy**, a git worktree under `reviews/` (detached at the MR's head, forks
 included), and a terminal opens there. Your branch, uncommitted files and stashes stay as
 they are. There is one copy per repo, reused from review to review, so dependencies you
 install there carry over: the first time it has none, so run your install (and again when
 a lockfile changes). A dev server started there may clash on its port with one already
 running. Reviewing another MR switches the copy to it, unless the copy has changes of its
-own -- then it stops and says so. Once the review it's on is over (approved, merged or
-closed), the repo's pane offers **Remove**; a copy with changes is kept.
+own -- then it stops and says so. Once the MR it's on is over (merged, closed, or no longer
+waiting on your review), the repo's pane offers **Remove**; a copy with changes is kept.
 
 **In app** opens a drawer along the bottom of the window, to the right of the
 sidebar, which stays full height beside it. Each shell is a tab:

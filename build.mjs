@@ -238,7 +238,11 @@ const repos = await Promise.all(
     const mark = join(CODE, "reviews", `${folder}.mr`);
     const onMr = reviewCopies.includes(folder) && existsSync(mark) ? Number(readFileSync(mark, "utf8").trim()) || null : null;
     for (const r of reviews) r.copy = r.number === onMr;
-    const doneCopies = onMr && !reviews.some((r) => r.number === onMr) ? [onMr] : [];
+    // still open somewhere the page shows it: a review request, or one of the threads' MRs
+    const stillOpen = (n) =>
+      reviews.some((r) => r.number === n) ||
+      threads.some((t) => (t.mrs ?? []).some((m) => m.number === n && m.state !== "merged" && m.state !== "closed"));
+    const doneCopies = onMr && !stillOpen(onMr) ? [onMr] : [];
     const problems = (activity.problems ?? []).filter((p) => p.repo === name);
     const messages = [
       ...(activity.messages ?? []).filter((m) => m.repo === name && m.kind !== "review"),
@@ -259,6 +263,7 @@ const repos = await Promise.all(
       messages,
       reviews,
       doneCopies,
+      reviewCopyOn: onMr,
       problems,
       alerts,
       scopeDone: Object.values(progress.done),

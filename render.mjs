@@ -242,9 +242,13 @@ function mrLine(r, thread) {
     .map((m) => {
       const label = `!${m.number}`;
       const href = mrUrl(r.web, m.number);
+      // any open MR can go in the review copy, bar the one already checked out here
+      const review = !finished(m) && thread.ticket !== r.ticket
+        ? reviewButton({ repo: r.name, number: m.number, copy: r.reviewCopyOn === m.number })
+        : "";
       return `<span${finished(m) ? ' class="done"' : ""}>${link(href, label)} ${esc(
         MR_STATE[m.state] ?? m.state,
-      )}${m.seenAt ? ` <span class="seen">seen ${esc(m.seenAt)}</span>` : ""}</span>`;
+      )}${m.seenAt ? ` <span class="seen">seen ${esc(m.seenAt)}</span>` : ""}${review}</span>`;
     })
     .join(" · ");
 }
