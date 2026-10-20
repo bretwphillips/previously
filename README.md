@@ -476,8 +476,8 @@ recent. A new question is never one it has asked before.
   the code: if its quote is no longer in the file it's never tried again.
 - Don't want it? Settings → A.I. → Code quiz → Quiz button: Off hides it.
 - How many questions: Settings → A.I. → Code quiz, 3 by default. Questions asked,
-  answers, and a streak (weekends don't break it) are kept in the space's
-  `quiz-history.json`; right answers and runs of them unlock the companion's
+  answers, and a day streak (counted on your Streak days, Settings → Extras) are kept in the space's
+  `quiz-history.json`; right answers and the day streak unlock the companion's
   decorations (see *Fantasy mode*).
 
 ---
@@ -742,7 +742,7 @@ the rest sit beside the code. None of them are tracked by git.
 | `sync-cache.json`, `sync-cache-github.json` | What the last sync kept, one per host, so the next asks only for what changed. |
 | `feeds.json` | What fed the companion in this space, for a shared companion to eat from every space. |
 | `git-cache.json` | The last git walk. Task and notes saves rebuild from it (`refresh.sh --cached`) in a tenth of a second instead of re-reading every repo. |
-| `quiz.json`, `quiz-history.json` | Today's code quiz, and every question asked with your answers, right answers and runs of them. |
+| `quiz.json`, `quiz-history.json` | Today's code quiz, and every question asked with your answers, right answers, runs of them and the day streak. |
 | `unblocked.json` | Which blocker locks were seen open, so one that clears is told once. |
 
 **Source.**
@@ -991,10 +991,13 @@ for None; potions, a campfire, a sword in the stone, a spellbook for Fantasy; a
 jack-o'-lantern, a cauldron, a ghost, a coffin for Halloween; veladoras, pan de
 muerto, marigolds, copal for Día de los Muertos -- and a few move. The first of each is
 free; the rest unlock with right answers in the *Code quiz*, at 1, 3, 6, 12, 20 and
-30, and two specials, a gumball machine and a lava lamp, with 5 and 10 right in a
-row. The count under the decoration is your right answers. **Without Claude Code**
-there's no quiz, so commits unlock them instead -- 50, 100, 200, 300, 500 and 700,
-the specials at 200 and 300 -- and the count under the hoard is the one that counts. In Settings a
+30, and two specials, a gumball machine and a lava lamp, with a 5- and a 10-day
+quiz streak -- days in a row with a quiz finished, right or wrong. The count under the decoration is your right answers. **Without Claude Code**
+there's no quiz, so commits unlock them instead -- 50, 100, 200, 300, 500 and 700 --
+and the specials a 5- and a 10-day streak of days with a commit; the count under
+the hoard is the one that counts. **Streak days** (beside Decoration) sets which
+days a streak counts, Monday to Friday by default: miss one and it starts over;
+the other days neither count nor break it. It goes for the quiz's day streak too. In Settings a
 locked one is chained like a blocked ticket, says what it takes when you hover it,
 and its chain falls off the first time you see it after reaching that.
 `"unlockAllDecorations": true` in `settings.json` unlocks them all, to look them over.
