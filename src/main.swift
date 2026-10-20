@@ -510,7 +510,7 @@ final class Shell {
 }
 
 /// The drawer's web view, taking files dropped on it as Terminal does: their
-/// paths, typed where you dropped them. The page itself only ever sees text.
+/// paths, pasted where you dropped them. The page itself only ever sees text.
 final class DropWebView: WKWebView {
     var onDropFiles: (([URL], NSPoint) -> Void)?
 
@@ -762,8 +762,9 @@ final class TerminalDrawer: NSObject, WKScriptMessageHandler, WKNavigationDelega
 
     // MARK: Dropped files
 
-    /// Each path shell-quoted the way Terminal does it, then typed into the shell
-    /// under the pointer -- as if you had typed them yourself, so nothing runs.
+    /// Each path shell-quoted the way Terminal does it, then pasted into the shell
+    /// under the pointer by the page, as a paste -- so nothing runs, and a program
+    /// listening for pastes (Claude Code taking an image) sees one.
     private func dropFiles(_ urls: [URL], at point: NSPoint) {
         let quoted = urls.map { url -> String in
             var out = ""
@@ -773,10 +774,7 @@ final class TerminalDrawer: NSObject, WKScriptMessageHandler, WKNavigationDelega
             }
             return out
         }.joined(separator: " ") + " "
-        web.evaluateJavaScript("window.termAt(\(point.x), \(point.y))") { [weak self] id, _ in
-            guard let self, let id = id as? Int, let shell = self.shells[id] else { return }
-            self.send(Data(quoted.utf8), to: shell)
-        }
+        call("window.termDrop(\(point.x), \(point.y), \(jsString(quoted)))")
     }
 
     // MARK: Auto-resume

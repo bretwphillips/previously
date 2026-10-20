@@ -639,11 +639,16 @@ window.termTheme = function (c) {
   for (var id in shells) shells[id].term.options.theme = xtermTheme(c);
 };
 
-// A file dropped on the drawer: the shell under the pointer, focused, else the focused one.
-window.termAt = function (x, y) {
-  var el = document.elementFromPoint(x, y);
-  for (var id in shells) if (el && shells[id].pane.contains(el)) { focusShell(+id); return +id; }
-  return current ? current.focused : null;
+// Files dropped on the drawer: pasted -- as iTerm does, so a program in bracketed-paste
+// mode (Claude Code) sees a paste and can take an image -- into the shell under the
+// pointer, else the focused one.
+window.termDrop = function (x, y, text) {
+  var el = document.elementFromPoint(x, y), id = null;
+  for (var k in shells) if (el && shells[k].pane.contains(el)) id = +k;
+  if (id === null && current) id = current.focused;
+  if (id === null || !shells[id]) return;
+  focusShell(id);
+  shells[id].term.paste(text);
 };
 
 window.termFocus = function () {
