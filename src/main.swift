@@ -1492,7 +1492,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, WKN
                   let number = body["number"] as? Int
             else { return }
             let adding = message.name == "reviewLocally"
-            var args = [adding ? "add" : "remove", path, String(number)]
+            var args = adding ? ["add", path, String(number)] : ["remove", path]
             if adding, body["host"] as? String == "github" { args.append("github") }
             let task = script("review.sh", args: args)
             let out = Pipe(), err = Pipe()
@@ -1507,7 +1507,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, WKN
                     guard let self else { return }
                     if done.terminationStatus != 0 {
                         let alert = NSAlert()
-                        alert.messageText = adding ? "Couldn't check out !\(number)" : "Kept the review copy of !\(number)"
+                        alert.messageText = adding ? "Couldn't check out !\(number)" : "Kept the review copy"
                         alert.informativeText = why
                         alert.runModal()
                     } else if adding, !dir.isEmpty {

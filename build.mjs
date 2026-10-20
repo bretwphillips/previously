@@ -232,15 +232,13 @@ const repos = await Promise.all(
     // from the sync, and their commits on your branches from git.
     // Review requests are listed apart: they stay until you approve.
     const reviews = (activity.reviews ?? []).filter((r) => r.repo === name);
-    // Review copies checked out beside this repo (review.sh); one whose review is
-    // over -- approved, merged or closed -- is offered for removal.
+    // This repo's review copy (review.sh) and the MR it's on; once that review is
+    // over -- approved, merged or closed -- it's offered for removal.
     const folder = basename(repoList.find((r) => r.name === name)?.path ?? name);
-    const copies = reviewCopies
-      .map((d) => new RegExp(`^${folder.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}-(\\d+)$`).exec(d)?.[1])
-      .filter(Boolean)
-      .map(Number);
-    for (const r of reviews) r.copy = copies.includes(r.number);
-    const doneCopies = copies.filter((n) => !reviews.some((r) => r.number === n));
+    const mark = join(CODE, "reviews", `${folder}.mr`);
+    const onMr = reviewCopies.includes(folder) && existsSync(mark) ? Number(readFileSync(mark, "utf8").trim()) || null : null;
+    for (const r of reviews) r.copy = r.number === onMr;
+    const doneCopies = onMr && !reviews.some((r) => r.number === onMr) ? [onMr] : [];
     const problems = (activity.problems ?? []).filter((p) => p.repo === name);
     const messages = [
       ...(activity.messages ?? []).filter((m) => m.repo === name && m.kind !== "review"),

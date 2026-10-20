@@ -333,9 +333,10 @@ function reviewLine(r, withRepo) {
 // Checks the merge request out beside your work (review.sh) and opens a terminal
 // there. Shown only in the app with a terminal chosen, like the terminal icons.
 const REVIEW_TIP =
-  "Checks this merge request out into a separate worktree and opens a terminal there. " +
-  "Your branch, uncommitted files and stashes stay as they are.\n\n" +
-  "A new worktree has no dependencies installed: run your install there first. " +
+  "Checks this merge request out into the repo's review copy, a separate worktree, and opens a terminal there. " +
+  "Your branch, uncommitted files and stashes stay as they are. The copy is reused for each review, " +
+  "so it switches to this MR unless it has changes of its own.\n\n" +
+  "The first time, it has no dependencies installed: run your install there (again if the lockfile changed). " +
   "A dev server started there may clash on its port with one already running.";
 function reviewButton(r) {
   const host = isGitHub(REPO_WEB.get(r.repo)) ? "github" : "gitlab";
@@ -345,7 +346,7 @@ function reviewButton(r) {
 }
 // A review copy whose review is over: offered for removal, never removed unasked.
 function doneCopyLine(repo, number) {
-  return `<li data-key="${esc(`c:!${number}`)}" data-sev="info"><span class="dot"></span><span class="what">Review copy of !${number} \u00b7 the review is over</span><button class="review-remove" data-review-repo="${esc(repo)}" data-review-number="${number}" title="Removes the worktree. One with changes of its own is kept." hidden>Remove</button></li>`;
+  return `<li data-key="${esc(`c:!${number}`)}" data-sev="info"><span class="dot"></span><span class="what">The review copy is on !${number}, whose review is over</span><button class="review-remove" data-review-repo="${esc(repo)}" data-review-number="${number}" title="Removes the review copy; the next Review locally makes it again. One with changes of its own is kept." hidden>Remove</button></li>`;
 }
 // Something wrong with a merge request of yours, until it's fixed. Threads are
 // other people's (red); a conflict or a failed pipeline is yours to finish
