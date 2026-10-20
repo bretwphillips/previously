@@ -21,6 +21,10 @@ body.quest .pet-line .questy { display: inline; }
    box sits inside .pet's 22px padding, so in its own terms that centre is 25%
    less 26px. */
 .wizard svg.decoration { position: absolute; bottom: 0; left: calc(25% - 26px); transform: translateX(-50%); }
+/* A moving decoration's frames, each shown for its share of the loop (2 or 3 of them). */
+@keyframes deco-2 { 0% { opacity: 1; } 50%, 100% { opacity: 0; } }
+@keyframes deco-3 { 0% { opacity: 1; } 33.333%, 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .decoration .df { animation: none !important; opacity: 0; } .decoration .df0 { opacity: 1; } }
 .wizard svg { display: block; shape-rendering: crispEdges; overflow: visible; }
 .spk { transform-box: fill-box; transform-origin: center; animation: twinkle 1.8s steps(3, end) infinite; opacity: 0; }
 @keyframes twinkle { 0% { opacity: 0; transform: scale(.34) } 25% { opacity: 1; transform: scale(.67) } 50% { opacity: 1; transform: scale(1) } 75% { opacity: .8; transform: scale(.67) } 100% { opacity: 0; transform: scale(.34) } }

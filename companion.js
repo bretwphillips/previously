@@ -658,6 +658,31 @@ const DECORATIONS = {
       ".occccccccccco.",
       ".ooooooooooooo.",
     ],
+    // the invader shuffles and fires, the score ticks, the marquee lights chase
+    anim: { at: 1, ms: 420, frames: [
+      [
+        ".oYmMmMmMmMmYo.",
+        "ooooooooooooooo",
+        "oCcooooooooocCo",
+        "oCcoSdSdSSdocCo",
+        "oCcoSGGGSSSocCo",
+        "oCcoGSGSGSSocCo",
+        "oCcoGGGGGSSocCo",
+        "oCcoSGSGSSSocCo",
+        "oCcoSSdSSSSocCo",
+      ],
+      [
+        ".oYMmMmMmMmMYo.",
+        "ooooooooooooooo",
+        "oCcooooooooocCo",
+        "oCcoSdSSdSdocCo",
+        "oCcoSSSGGGSocCo",
+        "oCcoSSGSGSGocCo",
+        "oCcoSSGGGGGocCo",
+        "oCcoSSSGSGSocCo",
+        "oCcoSSSSSSSocCo",
+      ],
+    ] },
   },
   // ---------- Fantasy's: a treasure chest (B wood, G gilt bands, Y lock), a campfire
   // (flames hottest inside, L logs, S stones), a sword in the stone (Y gold, H grip,
@@ -690,6 +715,25 @@ const DECORATIONS = {
       ".oLlLLLlLLLlo",
       "SsSoooooooSsS",
     ],
+    // the flames, flickering: frames that replace rows from `at`, after the drawing's own
+    anim: { at: 0, ms: 180, frames: [
+      [
+        "....y........",
+        "....yY....y..",
+        "...yYYy..yY..",
+        "...yYFFYYY...",
+        "...YFRRFFy...",
+        "...YFRRRFY...",
+      ],
+      [
+        ".......y.....",
+        "..y...yY.....",
+        "..Y..yYFy....",
+        "...yYFFFYy...",
+        "...yFRRRFY...",
+        "...YFRRRFY...",
+      ],
+    ] },
   },
   sword: {
     pal: { o: "#3a2a1a", Y: "#e8b021", H: "#6b3a10", M: "#e6eaee", S: "#9aa3ad", s: "#6b7280", G: "#5c8a3a" },
@@ -765,6 +809,19 @@ const DECORATIONS = {
       "...FfYFYfF...",
       "..oLLLLLLo...",
     ],
+    // bubbles rising
+    anim: { at: 0, ms: 300, frames: [
+      [
+        "......b.b....",
+        "..b.B.....b..",
+        "....BB.b.b...",
+      ],
+      [
+        ".b......b....",
+        "...b..B....b.",
+        "..b..BB..b...",
+      ],
+    ] },
   },
   tombstone: {
     pal: { o: "#2a2630", S: "#b8bcc4", s: "#8a8f98", d: "#5b5f66", M: "#5c8a3a", G: "#6fbf4a", g: "#3f8a3a" },
@@ -800,6 +857,16 @@ const DECORATIONS = {
       "o1Vo.o3Voo25o",
       "oooo.oooooooo",
     ],
+    // the flames, flickering
+    anim: { at: 0, ms: 260, frames: [
+      [
+        ".y...........",
+        ".Yy.......y..",
+        "oooo......Yy.",
+        "o1Vo..y..oooo",
+        "oQQo..Yy.o25o",
+      ],
+    ] },
   },
   marigolds: {
     pal: { o: "#3a2418", F: "#f08a1c", f: "#ffc23a", c: "#c4641a", L: "#3f8a3a", l: "#6fbf4a", T: "#c0563a", t: "#9a3f28", Y: "#e6c79c" },

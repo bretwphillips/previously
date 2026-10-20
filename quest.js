@@ -684,8 +684,21 @@ function decoration(d, px) {
   if (!d) return null;
   var w = d.rows[0].length, h = d.rows.length;
   var svg = el('svg', { class: 'decoration', width: w * px, height: h * px, viewBox: '0 0 ' + w + ' ' + h });
-  d.rows.forEach(function (row, y) { for (var x = 0; x < w; x++) { var c = row[x];
-    if (c !== '.' && d.pal[c]) svg.appendChild(el('rect', { x: x, y: y, width: 1, height: 1, fill: d.pal[c] })); } });
+  var paint = function (into, rows, y0) {
+    rows.forEach(function (row, y) { for (var x = 0; x < w; x++) { var c = row[x];
+      if (c !== '.' && d.pal[c]) into.appendChild(el('rect', { x: x, y: y0 + y, width: 1, height: 1, fill: d.pal[c] })); } });
+  };
+  // A moving one (a fire, a game) has frames for some of its rows: the drawing's own
+  // rows there are the first, and each frame is a group shown in turn.
+  var a = d.anim, n = a ? a.frames.length + 1 : 0, span = a ? a.frames[0].length : 0;
+  paint(svg, a ? d.rows.map(function (r, y) { return y >= a.at && y < a.at + span ? '' : r; }) : d.rows, 0);
+  if (a) [d.rows.slice(a.at, a.at + span)].concat(a.frames).forEach(function (rows, i) {
+    var g = el('g', { class: 'df df' + i });
+    // started (n - i) frames back, so frame i has the i-th turn
+    g.style.animation = 'deco-' + n + ' ' + n * a.ms + 'ms step-end ' + -((n - i) % n) * a.ms + 'ms infinite';
+    paint(g, rows, a.at);
+    svg.appendChild(g);
+  });
   return svg;
 }
 
