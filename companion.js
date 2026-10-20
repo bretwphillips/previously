@@ -391,7 +391,7 @@ const LOOK_HEADS = {
 };
 const LOOK_OUTFITS = {
   dress: ["..UUUUUUUUUUUUU..", ".E3U3U3U3U3U3U3E.", "E333333333333333E", "E333333383333333E", "E131313131313131E"],
-  suit: ["...E000898000E...", "..E000UUUUU000E..", "..E0600UUU0000E..", "..E00000U00000E.."],
+  suit: ["...E000898000E...", "..E060UUUUU000E..", "..E6760UUU0000E..", "..E06000U00000E.."],
   rebozo: [".E3333333333333E.", "E3333E.....E3333E", "E31E.........E13E", "E33E.........E33E", ".1.1.........1.1."],
   waistcoat: ["...EV6UUUUUVVE...", "...E676UUUVVVE...", "...EV6VV7VVVVE...", "....EVVVVVVVE...."],
 };
