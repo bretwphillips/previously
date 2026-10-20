@@ -1,4 +1,5 @@
 import AppKit
+import UniformTypeIdentifiers
 import Combine
 import SwiftUI
 import WebKit
@@ -850,17 +851,28 @@ final class TerminalDrawer: NSObject, WKScriptMessageHandler, WKNavigationDelega
         return newest.map { $0.deletingPathExtension().lastPathComponent }
     }
 
-    /// A folder opens in Finder, a file in its app -- but anything that would run
-    /// (an app, a script, an installer) is only shown in Finder.
+    /// A folder opens in Finder, and a plain document -- image, PDF, text, audio,
+    /// video -- in its own app. Anything else is only shown in Finder: a list of
+    /// what's safe, not of what isn't, as a script, a page with scripts in it, a web
+    /// shortcut or an installer can each look like an ordinary file.
     private func openPath(_ path: String) {
-        var isDir: ObjCBool = false
-        guard FileManager.default.fileExists(atPath: path, isDirectory: &isDir) else { return }
         let url = URL(fileURLWithPath: path)
-        let runs = ["app", "command", "sh", "tool", "terminal", "pkg", "mpkg", "workflow", "scpt", "applescript"]
-            .contains(url.pathExtension.lowercased())
-            || (!isDir.boolValue && FileManager.default.isExecutableFile(atPath: path))
-        if runs { NSWorkspace.shared.activateFileViewerSelecting([url]) }
-        else { NSWorkspace.shared.open(url) }
+        guard let values = try? url.resourceValues(forKeys: [.isDirectoryKey, .isPackageKey, .contentTypeKey])
+        else { return }
+        if values.isDirectory == true, values.isPackage != true {
+            NSWorkspace.shared.open(url)
+            return
+        }
+        let type = values.contentType
+        let document = [UTType.image, .pdf, .text, .audiovisualContent].contains { type?.conforms(to: $0) == true }
+        let runs = [UTType.script, .executable, .html, .svg, .webArchive, UTType("com.apple.mobileconfig")].contains {
+            $0.map { type?.conforms(to: $0) == true } ?? false
+        }
+        if document, !runs, values.isDirectory != true, !FileManager.default.isExecutableFile(atPath: path) {
+            NSWorkspace.shared.open(url)
+        } else {
+            NSWorkspace.shared.activateFileViewerSelecting([url])
+        }
     }
 
     /// A line in a tab's view, from Previously -- shown, never sent to the shell.
