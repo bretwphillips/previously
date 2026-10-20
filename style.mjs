@@ -596,6 +596,8 @@ body.quest .tally-hoard { display: flex; flex-direction: column; align-items: ce
 .tally-hoard .tally-n { font-weight: 600; font-size: 11px; line-height: 1.3; color: #8a5a00; }
 .hoard { display: block; }
 body:not(.halloween) .hoard.sweets, body.halloween .hoard:not(.sweets) { display: none; }
+/* quest theme None: toys for the gold, and no banner */
+body:not(.quest-none) .hoard.toys, body.quest-none .hoard:not(.toys) { display: none; }
 body.halloween .tally-hoard .tally-n { color: #c4641a; }
 /* Just enough to catch the eye when you are already looking. */
 .hoard .spark { animation: twinkle 3.2s ease-in-out infinite; }

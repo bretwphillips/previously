@@ -126,9 +126,11 @@ function applyHalloween() {
   var muertos = !on && store.get('worklog.muertos', 'off') === 'on';
   document.body.classList.toggle('halloween', on);
   document.body.classList.toggle('muertos', muertos);
+  var plain = !on && !muertos && store.get('worklog.questTheme', 'quest') === 'none';
+  document.body.classList.toggle('quest-none', plain);
   var tally = document.querySelector('.tally');
   if (tally && tally.dataset.titleGold) {
-    tally.title = on ? tally.dataset.titleCandy : muertos ? tally.dataset.titleOfrenda : tally.dataset.titleGold;
+    tally.title = on ? tally.dataset.titleCandy : muertos ? tally.dataset.titleOfrenda : plain ? tally.dataset.titleToys : tally.dataset.titleGold;
   }
   document.dispatchEvent(new Event('halloweenchange'));
 }
