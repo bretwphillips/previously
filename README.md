@@ -213,6 +213,13 @@ tasks go with it.
   not relevant any more: it empties and stops counting, click again to undo. The
   acknowledgement is forgotten once the line goes away, so the same thing
   coming back shows again.
+- **Clearing a line.** Every line in the Overview's *Needs you* and *Good to
+  know* has an × on hover: read it, it's yours to deal with on your own time, or
+  it doesn't matter -- it leaves the Overview and stops counting, and stays on
+  its repo's pane. It's back if it changes or goes away and returns. *N cleared --
+  show* under a list brings them back to see, each with **Restore**. A stash or
+  an unpushed side branch untouched for two weeks leaves *Good to know* on its
+  own, also staying on its repo's pane.
 - The menu-bar item keeps working when the window is closed. Click any row to jump
   to that repo.
 - The window keeps itself current: a rebuild from anywhere else (a session

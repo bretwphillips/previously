@@ -233,6 +233,10 @@ document.addEventListener('DOMContentLoaded', function () {
     try { return JSON.parse(store.get('worklog.acked', '{}')) || {}; } catch (e) { return {}; }
   }
   var ACKED = acked();
+  // Lines you cleared from the Overview's Needs you and Good to know.
+  var CLEARED = (function () {
+    try { return JSON.parse(store.get('worklog.cleared', '{}')) || {}; } catch (e) { return {}; }
+  })();
   // Lines you marked unread yourself: bold until you open the repo, like
   // anything new; their colour stays until you click them again or they go.
   var PINNED = (function () {
@@ -421,6 +425,9 @@ document.addEventListener('DOMContentLoaded', function () {
     var pruned = false, unpinned = false;
     for (var key in ACKED) if (!present[key]) { delete ACKED[key]; pruned = true; }
     if (pruned) store.set('worklog.acked', JSON.stringify(ACKED));
+    var uncleared = false;
+    for (var gone in CLEARED) if (!present[gone]) { delete CLEARED[gone]; uncleared = true; }
+    if (uncleared) store.set('worklog.cleared', JSON.stringify(CLEARED));
     for (var pin in PINNED) if (!present[pin]) { delete PINNED[pin]; unpinned = true; }
     if (unpinned) store.set('worklog.pinned', JSON.stringify(PINNED));
     if (!quiet) ghostDrains();
@@ -1856,6 +1863,63 @@ document.addEventListener('DOMContentLoaded', function () {
       } else paintNews(true);
     }
   }, true);
+
+  /* Any line in the Overview's Needs you and Good to know can be cleared: you've
+     read it and it's yours to deal with, or it doesn't matter. It leaves the
+     Overview and stops counting (acknowledged) but stays on its repo's pane, until
+     it changes or goes away -- the same thing coming back shows again. "N cleared"
+     under a list shows them, to bring one back. */
+  function paintCleared() {
+    var pane = document.getElementById('pane-overview');
+    if (!pane) return;
+    pane.querySelectorAll('ul.alerts').forEach(function (ul) {
+      var n = 0;
+      ul.querySelectorAll(':scope > li[data-key]').forEach(function (li) {
+        var b = li.querySelector(':scope > button.clear');
+        if (!b) {
+          b = document.createElement('button');
+          b.type = 'button';
+          b.className = 'clear';
+          li.appendChild(b);
+        }
+        var gone = Boolean(CLEARED[markId(li)]);
+        if (gone) n++;
+        li.classList.toggle('cleared', gone);
+        b.textContent = gone ? 'Restore' : '\u00d7';
+        b.title = gone ? 'Bring it back to the Overview' : 'Clear it from the Overview';
+      });
+      var note = ul.nextElementSibling && ul.nextElementSibling.classList.contains('cleared-note') ? ul.nextElementSibling : null;
+      if (!note) {
+        note = document.createElement('button');
+        note.type = 'button';
+        note.className = 'cleared-note';
+        ul.parentNode.insertBefore(note, ul.nextSibling);
+        note.addEventListener('click', function () { ul.classList.toggle('show-cleared'); paintCleared(); });
+      }
+      note.hidden = !n;
+      note.textContent = ul.classList.contains('show-cleared') ? 'Hide cleared' : n + ' cleared \u2014 show';
+      var head = ul.previousElementSibling, count = head && head.querySelector('.fold-count');
+      if (count) {
+        var left = ul.querySelectorAll(':scope > li:not(.cleared)').length;
+        count.textContent = left;
+        count.hidden = !left;
+      }
+    });
+  }
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest ? e.target.closest('#pane-overview .alerts li > button.clear') : null;
+    if (!b) return;
+    e.stopPropagation();
+    e.preventDefault();
+    var key = markId(b.parentNode);
+    if (CLEARED[key]) { delete CLEARED[key]; delete ACKED[key]; }
+    else { CLEARED[key] = ACKED[key] = Math.floor(Date.now() / 1000); }
+    store.set('worklog.cleared', JSON.stringify(CLEARED));
+    store.set('worklog.acked', JSON.stringify(ACKED));
+    paintNews(true);
+    paintCleared();
+  }, true);
+  paintCleared();
 
   /* An Overview alert opens its repo, at that alert. */
   document.addEventListener('click', function (e) {

@@ -524,6 +524,16 @@ p { margin: 8px 0; }
 .alerts li { display: flex; gap: 10px; align-items: baseline; padding: 6px 0;
              border-bottom: 1px solid var(--line-soft); }
 .alerts li:last-child { border-bottom: 0; }
+/* Clearing a line from the Overview: an x on hover; cleared ones hidden unless shown. */
+.alerts li > button.clear { margin-left: auto; align-self: center; font: inherit; font-size: 12px; line-height: 1; padding: 3px 7px;
+  border: 0; border-radius: 5px; background: none; color: var(--muted); cursor: pointer; opacity: 0; }
+.alerts li:hover > button.clear, .alerts li > button.clear:focus-visible, .alerts li.cleared > button.clear { opacity: 1; }
+.alerts li > button.clear:hover { background: var(--sel); color: var(--ink); }
+.alerts li.cleared { display: none; }
+.alerts.show-cleared li.cleared { display: flex; opacity: .55; }
+.cleared-note { font: inherit; font-size: 12px; color: var(--muted); background: none; border: 0; padding: 4px 0; cursor: pointer; }
+.cleared-note:hover { color: var(--ink); text-decoration: underline; }
+.cleared-note[hidden] { display: none; }
 /* The marker sits on the middle of the first line of text, whatever its size. */
 .alerts .dot { position: relative; top: 0; align-self: flex-start; margin-top: calc(0.65em - 2px); }
 body.quest:not(.quest-none) .alerts .dot { margin-top: calc(0.65em - 3.5px); }

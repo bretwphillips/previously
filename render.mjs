@@ -382,6 +382,8 @@ function linkEpics(html, links = {}) {
 // The Overview shows the last couple of days of them; a repo's pane, two weeks.
 const RECENT_MESSAGES = 2 * 86400;
 
+const STALE_AFTER = 14 * 86400;
+
 function overview(data) {
   CURRENT_WEB = null;
   const all = data.repos.flatMap((r) => r.alerts);
@@ -390,7 +392,10 @@ function overview(data) {
   const heard = data.repos.flatMap((r) => (r.messages ?? []).filter((m) => m.at >= nowSeconds - RECENT_MESSAGES));
   const reviews = data.repos.flatMap((r) => r.reviews ?? []);
   const problems = data.repos.flatMap((r) => r.problems ?? []);
-  const news = all.filter((a) => a.severity === "news" || a.severity === "info");
+  // A stash or an unpushed side branch untouched for two weeks has made its point:
+  // it leaves the Overview, and stays on its repo's pane.
+  const fresh = (a) => !a.at || nowSeconds - a.at < STALE_AFTER;
+  const news = all.filter((a) => (a.severity === "news" || a.severity === "info") && fresh(a));
 
   return `<section id="pane-overview">
     <h2 class="pane">Overview</h2>
