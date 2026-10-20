@@ -1,8 +1,6 @@
 /* Quest mode. Everything here only shows with body.quest. */
 :root { --iron-hi:#9b9086; --iron:#625950; --iron-lo:#38322d; --rust:#9a5a33; }
 .thread-tabs button { position: relative; overflow: visible; }
-/* a monster leans out past its tab's corner, so that tab sits above the next */
-.thread-tabs button:has(.monster) { z-index: 1; }
 canvas.pix { position: absolute; left: 0; top: 0; image-rendering: pixelated; pointer-events: none; }
 /* The wizard's HP bar says what the feed count did. */
 body.quest .pet-status { display: none; }

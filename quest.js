@@ -278,6 +278,10 @@ function tierFor(w) {
 
 function monsterOn(host, weight) {
   var old = host.querySelector('.monster'); if (old) old.remove();
+  // it leans out past the tab's right corner, over the next tab -- which may have
+  // a monster too -- so earlier tabs stack above later ones
+  var tabs = host.parentNode ? [].indexOf.call(host.parentNode.children, host) : 0;
+  host.style.zIndex = String(1000 - tabs);
   var tier = tierFor(weight), spooky = document.body.classList.contains('halloween');
   var muertos = document.body.classList.contains('muertos');
   var m = (muertos && ALEBRIJES[tier]) || (spooky && HALLOWEEN_MONSTERS[tier]) || MONSTERS[tier], rows = m.rows, w = rows[0].length, h = rows.length;
