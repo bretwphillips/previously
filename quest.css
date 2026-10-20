@@ -15,7 +15,32 @@ body.quest .pet-status { display: none; }
 @keyframes hp-spark { 0% { opacity: 0; transform: translate(0, 0); } 20% { opacity: 1; } 100% { opacity: 0; transform: translate(1.5px, -1.5px); } }
 @media (prefers-reduced-motion: reduce) { .wizard .swell, .wizard .surge, .wizard .spark { animation: none; } .wizard .spark { opacity: .8; } }
 body.quest .pet-line .questy { display: inline; }
-.wizard { display: flex; justify-content: center; margin-bottom: 4px; }
+.wizard { display: flex; justify-content: center; margin-bottom: 4px; position: relative; }
+/* Decoration, companion and hoard side by side, their pictures standing on one line
+   and their labels on the next -- however tall each picture is. */
+/* The side columns keep their share however wide a decoration is, so a big one
+   spills off the left edge rather than shoving the companion over. */
+body.quest .pet.pixel { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); column-gap: 6px; row-gap: 4px;
+  grid-template-areas: "deco wiz hoard" "dnum line hnum"; align-items: end; }
+body.quest .pet.pixel .wizard { grid-area: wiz; margin: 0; }
+body.quest .pet.pixel .pet-line { grid-area: line; align-self: start; text-align: center; }
+body.quest .pet.pixel .tally, body.quest .pet.pixel .tally-hoard { display: contents; }
+body.quest .pet.pixel .tally-hoard > svg { grid-area: hoard; justify-self: center; }
+body.quest .pet.pixel .tally-hoard .tally-n { grid-area: hnum; align-self: start; justify-self: center; }
+body.quest .pet.pixel .deco { grid-area: deco; justify-self: center; display: block; shape-rendering: crispEdges; }
+body.quest .pet.pixel .deco-n { grid-area: dnum; align-self: start; justify-self: center;
+  font-family: var(--mono); font-weight: 600; font-size: 11px; line-height: 1.3; color: #8a5a00; }
+body.halloween.quest .pet.pixel .deco-n { color: #c4641a; }
+/* A moving decoration's frames, each shown for its share of the loop -- a keyframe
+   for every count of frames a decoration can have (2 to 8). */
+@keyframes deco-2 { 0% { opacity: 1; } 50.000%, 100% { opacity: 0; } }
+@keyframes deco-3 { 0% { opacity: 1; } 33.333%, 100% { opacity: 0; } }
+@keyframes deco-4 { 0% { opacity: 1; } 25.000%, 100% { opacity: 0; } }
+@keyframes deco-5 { 0% { opacity: 1; } 20.000%, 100% { opacity: 0; } }
+@keyframes deco-6 { 0% { opacity: 1; } 16.667%, 100% { opacity: 0; } }
+@keyframes deco-7 { 0% { opacity: 1; } 14.286%, 100% { opacity: 0; } }
+@keyframes deco-8 { 0% { opacity: 1; } 12.500%, 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .decoration .df { animation: none !important; opacity: 0; } .decoration .df0 { opacity: 1; } }
 .wizard svg { display: block; shape-rendering: crispEdges; overflow: visible; }
 .spk { transform-box: fill-box; transform-origin: center; animation: twinkle 1.8s steps(3, end) infinite; opacity: 0; }
 @keyframes twinkle { 0% { opacity: 0; transform: scale(.34) } 25% { opacity: 1; transform: scale(.67) } 50% { opacity: 1; transform: scale(1) } 75% { opacity: .8; transform: scale(.67) } 100% { opacity: 0; transform: scale(.34) } }

@@ -46,6 +46,9 @@ function answer(id, choice) {
   const s = history.stats;
   s.answered = (s.answered ?? 0) + 1;
   s.correct = (s.correct ?? 0) + (choice === q.answer ? 1 : 0);
+  // a run: right answers in a row, any quiz to the next; a miss ends it
+  s.run = choice === q.answer ? (s.run ?? 0) + 1 : 0;
+  s.bestRun = Math.max(s.bestRun ?? 0, s.run);
   const asked = history.asked.find((a) => a.key === (q.ref ?? q.id));
   if (asked) {
     asked.right = choice === q.answer;

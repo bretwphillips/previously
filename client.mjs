@@ -95,7 +95,26 @@ function companionPick() {
   var muertos = !halloween && store.get('worklog.muertos', 'off') === 'on';
   var look = store.get('worklog.pet.look', 'catrina');
   if (C.LOOKS.indexOf(look) < 0) look = 'catrina';
-  return { race: race, coat: coat, cls: cls, colour: colour, halloween: halloween, costume: costume, muertos: muertos, look: look };
+  // Each quest theme has its own decorations, and remembers its own pick. With no
+  // theme the companion is just itself: no class to wear.
+  var theme = halloween ? 'halloween' : muertos ? 'muertos' : store.get('worklog.questTheme', 'quest') === 'none' ? 'none' : 'quest';
+  if (theme === 'none') cls = 'none';
+  var decoration = store.get(decorationKey(theme), 'none');
+  var have = C.decorationsFor(theme, quizRight(), quizRun()).filter(function (d) { return d.unlocked; })
+    .map(function (d) { return d.name; });
+  if (have.indexOf(decoration) < 0) decoration = 'none';
+  return { race: race, coat: coat, cls: cls, colour: colour, halloween: halloween, costume: costume, muertos: muertos, look: look,
+    theme: theme, decoration: decoration };
+}
+// Right quiz answers, and the best run of them, as the page was built with.
+// With everything unlocked for a look (settings.json), they count as reached.
+function unlockAll() { var p = document.getElementById('pet'); return Boolean(p && p.hasAttribute('data-unlock-all')); }
+function quizRight() { var p = document.getElementById('pet'); return unlockAll() ? Infinity : p ? Number(p.dataset.quizRight) || 0 : 0; }
+function quizStreak() { var p = document.getElementById('pet'); return p ? Number(p.dataset.quizStreak) || 0 : 0; }
+function quizRun() { var p = document.getElementById('pet'); return unlockAll() ? Infinity : p ? Number(p.dataset.quizRun) || 0 : 0; }
+// The plain decorations were once the only ones, so their pick keeps the old key.
+function decorationKey(theme) {
+  return theme === 'none' ? 'worklog.pet.decoration' : 'worklog.pet.decoration.' + theme;
 }
 window.companionPick = companionPick;
 
@@ -952,8 +971,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
   /* The character builder. Every choice repaints the preview, the sidebar's text
      animal and, in fantasy mode, its sprite. */
-  function builderSvg(v, px) {
-    var rows = v.rows.slice(0, -4), w = rows[0].length, h = rows.length, out = '<g class="body">';
+  function builderSvg(v, px, bar) {
+    var rows = bar === false ? v.rows : v.rows.slice(0, -4), w = rows[0].length, h = rows.length, out = '<g class="body">';
     rows.forEach(function (row, y) {
       for (var x = 0; x < w; x++) if (row[x] !== '.' && v.pal[row[x]]) {
         out += '<rect x="' + x + '" y="' + y + '" width="1" height="1" fill="' + v.pal[row[x]] + '"/>';
@@ -985,6 +1004,7 @@ document.addEventListener('DOMContentLoaded', function () {
     mark('#class-choice', 'cls', pick.cls);
     mark('#costume-choice', 'costume', pick.costume);
     mark('#look-choice', 'look', pick.look);
+    paintDecorations(pick);
     mark('#halloween-toggle', 'halloween', pick.halloween ? 'on' : 'off');
     swatches(document.getElementById('coat-choice'), Object.keys(C.COATS[pick.race]).map(function (n) {
       return { name: n, colour: C.COATS[pick.race][n].C };
@@ -1002,9 +1022,10 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('text-colour-choice').closest('.srow').hidden = !petOn || questOn;
     var dressed = pick.halloween || pick.muertos;
     if (colourRow) colourRow.hidden = !petOn || !questOn || dressed || pick.cls === 'none';
-    document.getElementById('class-choice').closest('.srow').hidden = !petOn || !questOn || dressed;
+    document.getElementById('class-choice').closest('.srow').hidden = !petOn || !questOn || dressed || pick.theme === 'none';
     document.getElementById('costume-choice').closest('.srow').hidden = !petOn || !questOn || !pick.halloween;
     document.getElementById('look-choice').closest('.srow').hidden = !petOn || !questOn || !pick.muertos;
+    document.getElementById('decoration-choice').closest('.srow').hidden = !petOn || !questOn;
     document.getElementById('builder-preview').hidden = !petOn;
     // Shown happy: the preview is for choosing a look, not reading the mood.
     // The text companion's colour, kept per animal like its coat; "text" is the
@@ -1024,7 +1045,8 @@ document.addEventListener('DOMContentLoaded', function () {
     // With no overlay the companion is text, so the preview is too.
     var preview = document.getElementById('builder-preview');
     if (store.get('worklog.quest', 'off') === 'on') {
-      preview.innerHTML = builderSvg(C.companion(pick, 'happy'), 4);
+      var deco = C.DECORATIONS[pick.decoration];
+      preview.innerHTML = (deco ? builderSvg(deco, C.decorationPx(window.devicePixelRatio, deco), false) : '') + builderSvg(C.companion(pick, 'happy'), deco ? 3 : 4);
     } else {
       var texts = JSON.parse(document.getElementById('text-companions').textContent);
       preview.innerHTML = '<pre class="text-companion"></pre>';
@@ -1053,6 +1075,51 @@ document.addEventListener('DOMContentLoaded', function () {
   for (var lb = 0; lb < lookButtons.length; lb++) lookButtons[lb].addEventListener('click', function () {
     store.set('worklog.pet.look', this.dataset.look);
     paintBuilder();
+  });
+  /* Decorations: this theme's, then the streak specials on a row of their own as
+     they're not the theme's; the locked ones saying what they take, and a line
+     saying what comes next. Built here, as what's unlocked depends on the quiz. */
+  function paintDecorations(pick) {
+    var holder = document.getElementById('decoration-choice'), specials = document.getElementById('decoration-specials');
+    if (!holder || !specials) return;
+    var right = quizRight(), run = quizRun(), streak = quizStreak();
+    var list = window.COMPANION.decorationsFor(pick.theme, right, run);
+    holder.textContent = '';
+    specials.textContent = '';
+    var tag = document.createElement('span'); tag.className = 'deco-specials-label'; tag.textContent = 'Streak specials';
+    specials.appendChild(tag);
+    [{ name: 'none', label: 'None', unlocked: true }].concat(list).forEach(function (d) {
+      var b = document.createElement('button');
+      b.dataset.deco = d.name;
+      b.textContent = d.label;
+      if (d.need) b.dataset.decoLock = d.unlocked ? 'open' : 'shut';
+      if (!d.unlocked) {
+        b.disabled = true;
+        b.className = 'locked';
+        b.title = d.kind === 'run' ? 'Unlocks after ' + d.need + ' right answers in a row' : 'Unlocks at ' + d.need + ' right quiz answers';
+      }
+      b.setAttribute('aria-pressed', String(d.name === pick.decoration));
+      (d.kind === 'run' ? specials : holder).appendChild(b);
+    });
+    var next = list.filter(function (d) { return !d.unlocked; });
+    var nextRight = next.filter(function (d) { return d.kind === 'right'; })[0];
+    var nextRun = next.filter(function (d) { return d.kind === 'run'; })[0];
+    if (unlockAll()) { document.getElementById('decoration-progress').textContent = 'All unlocked for a look (unlockAllDecorations in settings.json).'; return; }
+    var line = right + ' right answer' + (right === 1 ? '' : 's') + ' \u00b7 streak ' + streak + ' in a row, best ' + run + '.';
+    if (nextRight) line += ' Next: ' + nextRight.label + ' at ' + nextRight.need + ' right' + (nextRun ? ', ' + nextRun.label + ' at ' + nextRun.need + ' in a row.' : '.');
+    else if (nextRun) line += ' Next: ' + nextRun.label + ' at ' + nextRun.need + ' in a row.';
+    else line += ' Everything here is unlocked.';
+    document.getElementById('decoration-progress').textContent = line;
+    if (window.questDecorate) window.questDecorate();
+  }
+  ['decoration-choice', 'decoration-specials'].forEach(function (id) {
+    var decoHolder = document.getElementById(id);
+    if (decoHolder) decoHolder.addEventListener('click', function (e) {
+      var b = e.target.closest('button');
+      if (!b || b.disabled) return;
+      store.set(decorationKey(companionPick().theme), b.dataset.deco);
+      paintBuilder();
+    });
   });
   var muertosButtons = document.querySelectorAll('#muertos-toggle button');
   for (var mb = 0; mb < muertosButtons.length; mb++) muertosButtons[mb].addEventListener('click', function () {

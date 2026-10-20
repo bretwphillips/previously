@@ -278,6 +278,10 @@ function tierFor(w) {
 
 function monsterOn(host, weight) {
   var old = host.querySelector('.monster'); if (old) old.remove();
+  // it leans out past the tab's right corner, over the next tab -- which may have
+  // a monster too -- so earlier tabs stack above later ones
+  var tabs = host.parentNode ? [].indexOf.call(host.parentNode.children, host) : 0;
+  host.style.zIndex = String(1000 - tabs);
   var tier = tierFor(weight), spooky = document.body.classList.contains('halloween');
   var muertos = document.body.classList.contains('muertos');
   var m = (muertos && ALEBRIJES[tier]) || (spooky && HALLOWEEN_MONSTERS[tier]) || MONSTERS[tier], rows = m.rows, w = rows[0].length, h = rows.length;
@@ -594,7 +598,7 @@ function sprite(v, px) {
 function questOn() { return store.get('worklog.quest', 'off') === 'on'; }
 function seen() {
   try { var s = JSON.parse(store.get('worklog.quest.seen', '{}')); } catch (e) { s = {}; }
-  s.locks = s.locks || {}; s.keys = s.keys || {}; s.mon = s.mon || {};
+  s.locks = s.locks || {}; s.keys = s.keys || {}; s.mon = s.mon || {}; s.decos = s.decos || {};
   return s;
 }
 function remember(fn) { var s = seen(); fn(s); store.set('worklog.quest.seen', JSON.stringify(s)); }
@@ -620,11 +624,11 @@ function playVisible() {
 window.addEventListener('focus', function () { setTimeout(playVisible, 250); });
 document.addEventListener('visibilitychange', function () { setTimeout(playVisible, 250); });
 
-function unlock(tab, pair) {
+function unlock(tab, pair, kind) {
   var b = tab.querySelector('.bound'); if (!b) return;
   unpixelate(b); b.classList.add('unlocking');
   setTimeout(function () { b.remove(); }, 1450);
-  remember(function (s) { delete s.locks[pair]; });
+  remember(function (s) { delete s[kind || 'locks'][pair]; });
 }
 function turnKey(tab, pair) {
   var k = tab.querySelector('.keyed'); if (!k) return;
@@ -663,6 +667,15 @@ function decorate() {
       else if (s.mon[q.id]) { monsterOn(tab, q.weight); later(tab, 0, function () { defeat(tab, q.id); }); }
     }
   });
+  // Settings' locked decorations are chained the same way, and the chain falls
+  // off the first time you see one after reaching what it takes.
+  document.querySelectorAll('button[data-deco-lock]').forEach(function (b) {
+    if (b.dataset.questDone || !b.offsetWidth) return;
+    b.dataset.questDone = '1';
+    var name = b.dataset.deco, set = setFor('deco:' + name);
+    if (b.dataset.decoLock === 'shut') { bind(b, set); s.decos[name] = 1; }
+    else if (s.decos[name]) { bind(b, set); later(b, 550, function () { unlock(b, name, 'decos'); }); }
+  });
   store.set('worklog.quest.seen', JSON.stringify(s));
   document.querySelectorAll('.bound > svg, .keyed > svg').forEach(function (svg) {
     if (!svg.dataset.pix) { svg.dataset.pix = '1'; pixelate(svg); }
@@ -673,9 +686,58 @@ function decorate() {
 
 function undecorate() {
   pending = [];
-  document.querySelectorAll('.bound, .keyed, .monster, .wizard').forEach(function (n) { n.remove(); });
-  document.querySelectorAll('[data-quest-done]').forEach(function (t) { delete t.dataset.questDone; t.removeAttribute('title'); });
+  document.querySelectorAll('.bound, .keyed, .monster, .wizard, .deco, .deco-n').forEach(function (n) { n.remove(); });
+  document.querySelectorAll('[data-quest-done]').forEach(function (t) { delete t.dataset.questDone; if (t.dataset.quest) t.removeAttribute('title'); });
   var pet = document.getElementById('pet'); if (pet) pet.classList.remove('pixel');
+}
+
+/* Centring can leave a picture half a screen pixel over, and then its pixels round
+   unevenly -- some a screen pixel wider than the rest. Nudge it onto the grid. */
+function snap(svg) {
+  requestAnimationFrame(function () {
+    var r = window.devicePixelRatio || 1;
+    svg.style.transform = '';
+    var box = svg.getBoundingClientRect();
+    var dx = Math.round(box.left * r) / r - box.left, dy = Math.round(box.top * r) / r - box.top;
+    if (dx || dy) svg.style.transform = 'translate(' + dx + 'px,' + dy + 'px)';
+  });
+}
+/* A decoration wider than the space left of the companion sits up against it
+   instead, and runs off the sidebar's left edge -- a big one shows its best end. */
+function fitDeco(svg) {
+  requestAnimationFrame(function () {
+    var pet = document.getElementById('pet'); if (!pet) return;
+    svg.style.justifySelf = '';
+    var room = pet.getBoundingClientRect().left + parseFloat(getComputedStyle(pet).paddingLeft);
+    if (svg.getBoundingClientRect().left < room) svg.style.justifySelf = 'end';
+  });
+}
+
+// all three: the decoration, the companion and the hoard
+function snapPet() { document.querySelectorAll('#pet .deco, #pet .wizard > svg, #pet .tally-hoard > svg').forEach(snap); }
+window.addEventListener('resize', function () { document.querySelectorAll('#pet .deco').forEach(fitDeco); snapPet(); });
+
+/* A decoration, drawn finer than the companion, as the hoard is. */
+function decoration(d, px) {
+  if (!d) return null;
+  var w = d.rows[0].length, h = d.rows.length;
+  var svg = el('svg', { class: 'decoration deco', width: w * px, height: h * px, viewBox: '0 0 ' + w + ' ' + h });
+  var paint = function (into, rows, y0) {
+    rows.forEach(function (row, y) { for (var x = 0; x < w; x++) { var c = row[x];
+      if (c !== '.' && d.pal[c]) into.appendChild(el('rect', { x: x, y: y0 + y, width: 1, height: 1, fill: d.pal[c] })); } });
+  };
+  // A moving one (a fire, a game) has frames for some of its rows: the drawing's own
+  // rows there are the first, and each frame is a group shown in turn.
+  var a = d.anim, n = a ? a.frames.length + 1 : 0, span = a ? a.frames[0].length : 0;
+  paint(svg, a ? d.rows.map(function (r, y) { return y >= a.at && y < a.at + span ? '' : r; }) : d.rows, 0);
+  if (a) [d.rows.slice(a.at, a.at + span)].concat(a.frames).forEach(function (rows, i) {
+    var g = el('g', { class: 'df df' + i });
+    // started (n - i) frames back, so frame i has the i-th turn
+    g.style.animation = 'deco-' + n + ' ' + n * a.ms + 'ms step-end ' + -((n - i) % n) * a.ms + 'ms infinite';
+    paint(g, rows, a.at);
+    svg.appendChild(g);
+  });
+  return svg;
 }
 
 /* With the companion on too, the text animal becomes its pixel self, dressed as
@@ -688,6 +750,18 @@ function wizardCat() {
   var first = pet.querySelector('.art');
   pet.insertBefore(box, first);
   pet.classList.add('pixel');
+  // A decoration stands left of it, as the hoard does right, with the quiz's right
+  // answers under it as the commits are under the hoard.
+  pet.querySelectorAll('.deco, .deco-n').forEach(function (n) { n.remove(); });
+  var pickedDeco = COMPANION.DECORATIONS[companionPick().decoration];
+  var deco = decoration(pickedDeco, COMPANION.decorationPx(window.devicePixelRatio, pickedDeco));
+  if (deco) {
+    var right = Number(pet.dataset.quizRight) || 0, n = document.createElement('span');
+    n.className = 'deco-n'; n.textContent = right; n.title = right + ' quiz answer' + (right === 1 ? '' : 's') + ' right';
+    pet.insertBefore(deco, first); pet.insertBefore(n, first);
+    fitDeco(deco);
+  }
+  snapPet();
 }
 document.addEventListener('companionchange', function () { if (questOn()) wizardCat(); });
 
@@ -751,5 +825,8 @@ document.querySelectorAll('#quest-toggle button').forEach(function (b) {
 new MutationObserver(function () { if (questOn()) decorate(); drawRoad(); playVisible(); }).observe(document.body, { attributes: true, subtree: true, attributeFilter: ['hidden'] });
 document.addEventListener('halloweenchange', applyQuest);
 applyQuest();
+
+/* Settings repaints its decoration buttons; chain the new ones. */
+window.questDecorate = function () { if (questOn()) decorate(); };
 
 })();

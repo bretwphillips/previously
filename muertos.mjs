@@ -234,7 +234,7 @@ body.quest.muertos nav .road { opacity: 1; }
 body:not(.muertos) .hoard.ofrenda, body.muertos .hoard:not(.ofrenda) { display: none; }
 /* the widest hoard, so it and its count sit a little further right, clear of the companion */
 body.quest.muertos .tally-hoard { position: relative; left: 5px; }
-body.muertos .tally-hoard .tally-n { color: #c4641a; }
+body.muertos .tally-hoard .tally-n, body.muertos.quest .pet.pixel .deco-n { color: #c4641a; }
 body.quest.muertos .tally { left: calc(50% + 14px); }
 
 /* an alebrije befriended: it brightens and rises into a warm light, which lets the confetti go */
