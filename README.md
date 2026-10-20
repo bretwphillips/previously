@@ -17,7 +17,8 @@ stash from five months ago. Neither is visible from GitLab, your editor, or any 
 something looking at all of them at once.
 
 It is a Mac app with a window and a menu-bar item. Everything it shows comes from
-the clones on your disk; it only touches the network when you sync (see *Sync*).
+the clones on your disk; it only touches the network when you sync (see *Sync*),
+checks for an update (once a day, see *Updating*) or make a quiz.
 
 What it is not: a tracker — GitLab owns tickets. A metric — the companion is capped
 precisely so it cannot become a number to chase. A service — no daemon, no server,
@@ -54,7 +55,7 @@ anywhere and run its installer:
 sh previously/install.sh
 ```
 
-It asks which folder holds your repos (`~/Projects` by default) -- that folder
+Unless it is already beside your repos, it asks which folder holds them (`~/Projects` by default) -- that folder
 becomes your first space, *Work projects* -- and puts itself there as `previously`; checks for `git`, `node` and Xcode's command-line tools,
 and says how to get any that are missing; builds `Previously.app` into your own
 Applications folder (`~/Applications`) -- building it on your own Mac is what
@@ -69,10 +70,11 @@ there's a newer release. When there is, a dot appears on the gear and
 **Settings → General** shows what's new, with **Update** and **Skip this version**.
 Update moves the folder to the new release with git, rebuilds the app and opens
 it again; each space's worklog, tasks and notes and your settings are never
-touched. If you changed a file the release changes too, or your own commits clash
-with it, nothing is changed and Settings says which file. A copy installed from a
-zip becomes a git clone on its first update. A clone on a branch other than
-`main` is left for you to update with git. **Check daily / Off** is beside it,
+touched. If you changed a file the release changes too, nothing is changed and
+Settings says which file; if you made commits of your own on the default branch,
+it is left for you to merge with git. A copy installed from a zip becomes a git
+clone on its first update. A clone on a branch other than its default one is
+left for you to update with git. **Check daily / Off** is beside it,
 and `sh update.sh check` or `sh update.sh install` does the same from a terminal.
 
 Running `install.sh` from a newer copy still works too: it replaces the code and
@@ -80,8 +82,9 @@ keeps your own files.
 
 Optional, for Sync: `glab` (`glab auth login`) for repos on GitLab, `gh`
 (`gh auth login`) for repos on GitHub -- whichever your repos use. Each repo is
-asked through its own host, worked out from its remote; nothing is configured.
-Repos hosted anywhere else still get `git fetch`, just not comments, reviews or
+asked through its host, worked out from its remote; nothing is configured. A
+space talks to one GitLab -- the one most of its clones use -- and to github.com;
+repos on any other host still get `git fetch`, just not comments, reviews or
 merge-request state.
 
 Branches named `<ticket>-<title>` (GitLab's default) are what tie a branch to a
@@ -103,9 +106,10 @@ and so on.
 
 An edit is applied to `worklog.json` as one change to one field of one ticket,
 not by sending the whole file back, so a session writing about another ticket at
-the same moment is not overwritten. What you write is tagged **you**; a line you
-leave unchanged keeps its original tag, and a scope line you only reword or move
-keeps its id, so a commit's tick on it stays.
+the same moment is not overwritten. What you write in *Now*, *Next* and Notes is
+tagged **you**, and a line you leave unchanged keeps its original tag. A scope line
+you move keeps its id, so a commit's tick on it stays; rewording one makes it a
+new line, unticked.
 
 ---
 
@@ -122,7 +126,7 @@ Nothing here needs a model to run, and nearly all of it works with no AI:
   instead.
 - **Where threads come from:** every ticket branch in play -- the one you are on,
   any touched in the last two weeks that has not merged, and anything you
-  committed to in the last three days -- gets a thread, titled with the ticket's
+  committed to in the last three working days -- gets a thread, titled with the ticket's
   own title once Sync has seen it, the branch name until then. A written thread
   for the same ticket takes its place.
 - **Written by whoever wants to:** *Now*, *Next*, scope lines and goals -- with
@@ -130,7 +134,7 @@ Nothing here needs a model to run, and nearly all of it works with no AI:
   Epics come from the tickets themselves once synced (paid GitLab tiers): they
   group the standup and add a line to *Goals* for each epic your unfinished
   tickets belong to, tagged GitLab, unless a written goal already names it.
-  Each epic is looked up once per sync, so a closed one drops out, and every
+  Each epic is looked up at most once a day, so a closed one drops out, and every
   `&12` in Goals links to its epic. A pane
   with nothing written shows recent commits and branches.
 
@@ -145,7 +149,8 @@ a dashboard. Each space is its own: its own repos, narrative, notes, tasks,
 standup and sync schedule. Settings → Projects shows them as columns: add the
 folders a space tracks (a folder of projects or a single project, anywhere on
 the Mac), drag a folder from one to another, set how often each syncs, and add
-more spaces. The select at the top of the sidebar switches between them. Two
+more spaces. Once more than one space has folders, a select at the top of the
+sidebar switches between them. Two
 choices sit under the columns: whether the companion and its hoard are shared or
 one per space, and whether the menu bar lists what needs you in every space or
 only the one you're viewing. Each space keeps its data in `spaces/<id>/`; your
@@ -155,8 +160,9 @@ the one whose folder is nearer it: with all of `~/Projects` in Work, adding
 `~/Projects/side-thing` to Personal moves it to Personal, and its narrative and
 tasks go with it.
 
-- Sidebar groups repos into **Active** (ticket branch, touched within 14 days),
-  **Parked** (ticket branch, gone quiet), **Clean** (on the default branch). Click a
+- Sidebar groups repos into **Active** (on a branch, touched within 14 days, or
+  with something unfinished), **Parked** (on a branch, gone quiet), **Clean** (on
+  the default branch with nothing unfinished). Click a
   section heading to collapse it — Clean starts collapsed. A collapsed section shows
   its total needing attention, so nothing hides.
 - Footprints 👣 mark where your last three commits went (any branch), fainter for
@@ -225,11 +231,11 @@ tasks go with it.
   [Tokyo Night](https://github.com/enkia/tokyo-night-vscode-theme) by enkia
   (all MIT), with a few colours adjusted for readability.
 - ⚙ or `⌘,` opens **Settings** as a pane of its own, in tabs: *General* (theme,
-  title card name, terminal, standup weight), *Projects* (spaces, their folders
-  and sync), *Markers*, *Shortcuts* and *Extras* (quote of the day, the overlay,
-  the companion). Hover a setting's name for what it does; **Done** or `Esc` goes back to
+  title card name, terminal, editor, standup weight, updates), *Projects* (spaces,
+  their folders and sync), *Markers*, *Shortcuts*, *Extras* (quote of the day, quest
+  mode, the companion) and *A.I.* (notes for the AI, the code quiz, auto-resume). Hover a setting's name for what it does; **Done** or `Esc` goes back to
   the pane you came from. `⌘R` refresh, `⌘0` Overview, `⌘E` open `notes.md` in
-  your editor, `` ⌃` `` terminal, `⌘Q` quit.
+  the app macOS opens `.md` files with, `` ⌃` `` terminal, `⌘Q` quit.
 - The **edit** button beside Notes writes `notes.md` from inside the window. It only
   appears in the app — a browser cannot write the file, so there the page is
   read-only.
@@ -304,8 +310,10 @@ git state -- a commit, checkout, stash, fetch or staging -- the page rebuilds.
   `terminal/terminal.html` and read only `terminal/`.
 - Only that view has handlers that reach a shell. The page you read can show or
   hide the drawer, ask for a terminal in a repo by name (checked against the
-  current space's repos), say that its theme changed and say whether a sheet is
-  open. None of those carries input.
+  current space's repos), say that its theme changed, say whether a sheet is
+  open, and ask for a review tree (see *Review threads*: a known repo and an MR
+  number, which `review.sh` fetches into `reviews/`, then a shell opened there).
+  None of those carries input.
 - The app starts shells, ends them and reads which folder each is in from macOS.
   It never writes to one, and nothing a shell prints reaches the page.
 - `xterm.js` is vendored in `terminal/vendor/`; nothing loads from the network.
@@ -347,7 +355,8 @@ to change something.
   work first, and nothing that has already merged. Filled in priority order until the tickets' GitLab weights
   reach a limit (Settings → General, 5 by default); a ticket with no weight counts
   as 1, one too big for what is left is skipped so a smaller one can fit, and the
-  first always goes in.
+  first always goes in. Merge requests waiting on your review are added after,
+  whatever the limit.
 - **Blockers** — `blocked` entries from the narrative.
 - **Needs review** — merge requests recorded as `rfr`, and only those.
 
@@ -358,9 +367,11 @@ tagged the headings disappear entirely rather than printing a lone *Other* over
 everything. The `&12` links to the group's epic page when copied.
 
 The goal text comes from a thread's `title`, or `goal` when the ticket's own title
-is not how you would say it out loud, falling back to the branch name. Each line
-carries one reference — the open merge request if there is one, the ticket
-otherwise — written as a token like `!45`, not a URL. **Copy** puts both plain text and HTML on the clipboard. Slack takes the HTML, so
+is not how you would say it out loud; the thread you are checked out on falls back
+to the branch name. Each line carries one reference — the open merge request if
+there is one, else the last merged one, else the ticket — written in the draft as a
+full URL so it can be checked, and shortened to a token like `!45` in the preview.
+**Copy** puts both plain text and HTML on the clipboard. Slack takes the HTML, so
 the references arrive as short links; anything that takes the plain text gets full
 URLs, which is verbose but never lossy. A bare `!45` or `#24` typed by hand still
 resolves against the repo named earlier on the line.
@@ -382,7 +393,8 @@ if a paste ever falls back to plain text.
 Slack drops `<h2>` to plain text, so the title is bold rather than a heading. The
 epic line is italic alone — bold italic read as a second section heading.
 
-Lines are cut at the first full stop or dash, since standups are fragments. Monday
+Lines are cut at the first full stop or spaced dash ( — ), and at 96 characters,
+since standups are fragments. Monday
 looks back to Friday; every other day looks back to yesterday.
 
 **Sync** in the standup window fetches first (git and GitLab, as in
@@ -446,9 +458,9 @@ actually work. **Quiz**, beside Standup, asks a few multiple-choice questions on
 you've been near: the repo you've committed to most recently (every fourth quiz, the
 one you last reviewed), from changes it hasn't quizzed you on yet. When a repo has
 none left it moves to the next most active, and to older code when nothing is
-recent. It never repeats a question.
+recent. A new question is never one it has asked before.
 
-- **Made when you click**, one Claude Code call (Sonnet), never in the background:
+- **One a day, made when you click**, one Claude Code call (Sonnet), never in the background:
   about ten cents, or that much of your plan's usage. Showing it costs nothing, and
   without Claude Code installed there's no button.
 - **Only checkable facts**: where something lives, what calls what, what a change did.
@@ -480,23 +492,23 @@ first time after seven days), whether the app was just opened or left running,
 so the standup is current when you get in. "At the Mac" means the screen
 unlocked and awake, the keyboard or mouse used in the last 15 minutes, and the
 window showing. The standup says when it last synced, in purple when that was
-before today. Never on a timer, never while the
+before today. Never at a set time of day, never while the
 app is closed. That keeps ahead/behind and `[gone]` honest without a scheduler, and
 it staggers naturally: people open their laptops at different moments, so there is
 no 9am stampede at the server. A space's **Sync now** forces one; **Sync all**
 does every space in turn.
 
-**Hourly** adds a GitLab-only sync once an hour on top of the daily one (git
-fetch stays daily), and **Every 15 min** adds, between those, just what someone
+**Hourly** adds a sync of GitLab and GitHub (no git fetch) once an hour on top of
+the daily one, and **Every 15 min** adds, between those, just what someone
 may be waiting on you for -- your events (comments, approvals) and review
 requests, two small calls. They run only while you're there: the screen
 unlocked and awake, the keyboard or mouse used in the last 15 minutes, and the
 window showing. One that comes due while you're away waits for you, then a
 random 0-5 minutes more (up to one for the quick check) so people arriving
-together don't sync together; one that fails pushes the next back, doubling up
-to four times as long. Each kind keeps its own "since", so a quick check never
-makes the hourly one skip anything. No polling loops, nothing overnight. Spaces
-take turns, never two at once.
+together don't sync together; one of these that fails pushes the next back,
+doubling up to four times as long. Each kind keeps its own "since", so a quick check never
+makes the hourly one skip anything. Nothing overnight. Scheduled syncs take turns
+across spaces, never two at once.
 
 A sync does two things, on each repo's own host -- GitLab through `glab`, GitHub
 through `gh`, side by side when a space has both (GitHub's side is described
@@ -517,7 +529,7 @@ project, returning only those updated (a closed ticket is taken as final); links
 only for open tickets that changed or are already blocked, since a blocker
 closing doesn't touch its ticket; each epic at most once a day; each of your clones'
 projects once ever (its id never changes), and whether a project with an open
-merge request of yours is archived once a month -- archived ones are skipped. A typical sync is about five calls. **Full refresh**, beside
+merge request of yours is archived once a month -- archived ones are skipped. A typical sync is a handful of calls. **Full refresh**, beside
 each space's Sync now, fetches everything again (a few dozen calls) -- it also
 happens on its own only when there is no cache yet. It catches what an
 incremental sync can't see, like a deleted comment or a link removed without
@@ -570,11 +582,11 @@ Note the distinction: a repo is left out of the standup when you are sitting on
 repo** — reviewing someone's merge request is your work whoever owns the branch you
 happen to be standing on.
 
-Still nothing on a timer. If sync is Manual only, none of this happens until you
+Still nothing at a set time. If sync is Manual only, none of this happens until you
 press the button.
 
-The app checks whether a sync is due when it launches, and it can then sit in the
-menu bar for days. So when Daily or Weekly is overdue, the Overview says *Last
+The app only syncs while you're there, and it can sit in the menu bar for days
+unwatched. So when a sync is more than a day overdue, the Overview says *Last
 synced 3 days ago* with a **Sync now** button beside it. Manual only never shows
 it — you sync when you choose — and neither does a sync that is current.
 
@@ -654,12 +666,14 @@ Purely decorative. It changes nothing, reports nothing, and respects
 
 **Build it** in Settings → Extras: a **race** (cat, pug or frog), a **coat**
 for it, a **class** (none, wizard, ranger or knight) and a **colour** -- seven,
-black and white among them -- with a still preview, shown happy, beside the
-choices. The colour dresses the whole costume: the wizard's hat, the ranger's
+black and white among them; the companion in the sidebar shows each choice as you
+make it. The colour dresses the whole costume: the wizard's hat, the ranger's
 cap and cloak, the knight's helmet as tinted metal (white is plain steel). Plumes
 and the ranger's feather take an accent chosen to go with the colour rather than
 repeat it, so a red cap wears a gold feather. Each race remembers its coat and
-each class its colour. Kept per window, like the theme.
+each class its colour. Outside quest mode, where the companion is text, a second
+**Colour** tints that text instead, kept per race. These choices are kept by the
+app itself, like the theme, not in `settings.json`.
 
 **Halloween** (Settings → Extras → Quest mode on, Theme → Halloween) swaps the class and colour for a
 costume: a ghost sheet, a pumpkin head, a hockey mask, skeleton face paint, a
@@ -698,10 +712,12 @@ the rest sit beside the code. None of them are tracked by git.
 | | |
 |---|---|
 | `spaces.json` | The spaces: each one's name, title-card word and folders, which one is showing, and the companion and menu-bar choices. Written by Settings → Projects. |
-| `settings.json` | The app's settings -- theme, markers, terminal, standup weight. Each space has its own too, holding only when it syncs. |
+| `settings.json` | The app's settings -- markers, terminal, editor, standup weight, updates, the quiz and auto-resume (the theme and the companion are kept by the app itself). Each space has its own too, holding only when it syncs. |
 | `ai-notes.md` | Your notes for AI sessions, for every space (**Settings → A.I.**). Each space keeps its own beside its other data. |
 | `update.json` | The last update check: the latest release and its notes, and why the last update stopped, if it did. |
 | `ledger.json` | Every commit counted toward the hoard, by hash. One beside the code when the companion is shared, else one per space. |
+| `terminal-sessions/` | Auto-resume: which Claude Code session runs in which drawer tab. |
+| `reviews/` | Review trees: a worktree per repo for checking out a merge request you review (`review.sh`). |
 
 **Edit these.**
 
@@ -726,6 +742,8 @@ the rest sit beside the code. None of them are tracked by git.
 | `sync-cache.json`, `sync-cache-github.json` | What the last sync kept, one per host, so the next asks only for what changed. |
 | `feeds.json` | What fed the companion in this space, for a shared companion to eat from every space. |
 | `git-cache.json` | The last git walk. Task and notes saves rebuild from it (`refresh.sh --cached`) in a tenth of a second instead of re-reading every repo. |
+| `quiz.json`, `quiz-history.json` | Today's code quiz, and every question asked with your answers, right answers and runs of them. |
+| `unblocked.json` | Which blocker locks were seen open, so one that clears is told once. |
 
 **Source.**
 
@@ -747,6 +765,8 @@ the rest sit beside the code. None of them are tracked by git.
 | `blockers.mjs` | "Blocked by #12" and its kin, read from a ticket's description on either host. |
 | `gitlab-sync.mjs` | A sync's GitLab calls, asking only for what changed since the last one; keeps the rest in `sync-cache.json`. `gitlab.sh` finds the host and runs it. |
 | `halloween.mjs` | Halloween's candy hoard and haunted houses, drawn at build time; the monsters and their candy are in `quest.js`. |
+| `toys.mjs` | The None theme's hoard of pet toys, laid out at the gold's steps. |
+| `ivy.mjs`, `cobweb.mjs` | The banners along the top: Fantasy's ivy, Halloween's cobwebs. |
 | `spaces.mjs` | The spaces: which folders each tracks (`spaces.json`), each one's data folder, and a small CLI the scripts use to find them. |
 | `muertos.mjs` | Día de los Muertos' candles, ofrenda, trail stops and papel picado, drawn at build time; the alebrijes are in `quest.js`. |
 | `companion.js` | The companion's art: each animal, costume and colour as layers that change with mood. Inlined at build time. |
@@ -754,6 +774,8 @@ the rest sit beside the code. None of them are tracked by git.
 | `terminal/terminal.html` | The in-app terminal's page: tabs and one xterm.js per shell. It never sees the dashboard. |
 | `terminal/vendor/` | xterm.js 5.5.0 with its fit, WebGL and web-links addons, and their licences. Copied in, never fetched. WebGL is what draws block and box characters edge to edge. |
 | `quotes.mjs` | The quote of the day on the Overview (Settings turns it off). Picked by date, so it holds until midnight; add your own to the list. |
+| `quiz.mjs` | The code quiz: picks the code, asks Claude Code for questions, checks each quote against the file. |
+| `editors.mjs` | Which editors Settings offers for opening a file at a line, by what is installed. |
 | `standup.mjs` | Builds the morning post from threads, commits and activity. |
 | `activity.mjs` | Turns raw GitLab events and MRs into per-ticket comments, approvals and MR states. |
 | `src/Info.plist` | The app bundle's manifest; `make.sh` copies it in, so a first build makes a whole app. |
@@ -769,6 +791,8 @@ the rest sit beside the code. None of them are tracked by git.
 | `env.sh` | Puts back the PATH the app lacks (Homebrew, nvm, fnm, Volta, asdf). Sourced by the others. |
 | `show.sh` | The terminal view. |
 | `done.sh` | Record that HEAD finished one or more scope lines. |
+| `quiz.sh` | The app's way into `quiz.mjs`, with the PATH `env.sh` puts back. |
+| `review.sh` | Fetches a merge request into its review tree, or removes the tree. |
 | `install.sh` | One-time setup: checks what's needed, builds the app, opens it. |
 | `session-hook.sh`, `claude-hook.mjs` | Auto-resume: the Claude Code hook that notes which session runs in which terminal tab, and adding or removing it from `~/.claude/settings.json`. |
 | `holidays.mjs` | The holidays quest mode can dress up for: each one's theme and when it starts and ends. |
@@ -777,12 +801,12 @@ the rest sit beside the code. None of them are tracked by git.
 | `VERSION` | This copy's version, compared with the latest release. |
 | `claude-section.md` | The Claude Code conventions, ready to paste into your `CLAUDE.md`. |
 | `markers.mjs` | What lights a marker and in what colour: the triggers, defaults, and a saved layout. |
-| `make.sh` | Build the app into `~/Applications` after editing `src/main.swift`. |
+| `make.sh` | Build the app into `~/Applications` after editing `src/main.swift` (`PREVIOUSLY_APP` builds it somewhere else, for trying a copy). |
 | `sync.sh` | Everything a sync does. Run by the app, never on its own. |
 | `fetch.sh` | `git fetch --prune` across a space's repos. |
 | `hosts.sh` | A sync's host calls for one space: `gitlab.sh` and `github.sh` side by side. |
 | `github.sh` | Runs `github-sync.mjs` for a space's github.com repos, through `gh`. |
-| `gitlab.sh` | Finds a space's GitLab host and a clone to call it from, then runs `gitlab-sync.mjs` -- the only file here that talks to the GitLab API. |
+| `gitlab.sh` | Finds a space's GitLab host and a clone to call it from, then runs `gitlab-sync.mjs`, which makes the GitLab API calls. |
 | `tools/makeicon.swift` | Draws the app icon. |
 
 
@@ -846,7 +870,9 @@ It knows which session is which because turning it on adds a small hook to
 `~/.claude/settings.json` (`session-hook.sh`): each session started in a drawer
 tab tells Previously its ID. Turning it off takes the hook out again and leaves
 the rest of that file alone. Only IDs are kept (`terminal-sessions/`), never the
-conversation. A session since deleted opens a plain shell with a note instead.
+conversation. A tab with no ID on file -- a session already running when you
+turned it on, say -- resumes the newest session in its folder. A session since
+deleted opens a plain shell with a note instead.
 
 Nothing here needs a running Claude. The git half regenerates on its own, and the
 page, standup and companion all work with no model involved.
@@ -855,7 +881,7 @@ page, standup and companion all work with no model involved.
 
 ## Fantasy mode (optional, off by default)
 
-Settings → Extras → **Quest mode** turns the thread tabs into a small game, dressed by its **Theme**: Fantasy, Halloween or Día de los Muertos -- or **None**, which keeps the page as it is out of quest mode and only draws the companion (see *None* below).
+Settings → Extras → **Quest mode** turns the thread tabs into a small game, dressed by its **Theme**: Fantasy, Halloween or Día de los Muertos -- or **None**, which keeps the page as it is out of quest mode and only draws the companion, its decoration and its hoard (see *None* below).
 
 **Holidays** (under Theme) lets the theme follow the calendar. **Switch** changes
 it when a holiday is near and back afterwards; **Ask** asks first, with **Switch**,
@@ -912,7 +938,8 @@ don't celebrate. The list is `holidays.mjs`: a new holiday is one line once its 
   green to red, and a small effect floats beside it (sparkles when fed, a sweat
   drop when hungry, a skull when it has not eaten in days -- marigolds and a sugar
   skull during Día de los Muertos). The bar replaces
-  the *N feeds today* line.
+  the *N feeds today* line, and the mood reads as HP too: unstoppable, full
+  health, ready, worn, low HP, needs healing.
 
 `quest.js`, `quest.css` and `quest-defs.svg` are plain files read at build time.
 
@@ -935,7 +962,7 @@ lighter in dark mode. The monsters that aren't Halloween already become a
 jack-o'-lantern, a bat, a werewolf, Frankenstein's monster and a pumpkin king,
 and a defeat bursts into candy instead of squares: more the heavier the ticket,
 with a chocolate bar or two at the top. The orbs become little potion bottles,
-filled in the orb's colour, and drunk down when you open the repo. Kept per window, like the theme.
+filled in the orb's colour, and drunk down when you open the repo.
 
 **Día de los Muertos in fantasy mode.** Papel picado hangs across the top of the
 page. The hoard is an ofrenda that only ever adds: a marigold, a sugar skull and
@@ -949,18 +976,20 @@ smallest to most fearsome -- and one befriended brightens and rises into a warm
 light, letting go of marigold petals and papel picado. The markers are veladoras.
 
 **None.** The companion as pixel art, its decoration and a hoard of pet toys --
-and nothing else: no banner, round markers, the plain padlock and key on tabs,
-paw prints on the trail. The toys grow at the gold's steps: a ball, then a mouse
+and nothing else: no banner along the top (Fantasy hangs ivy there, Halloween
+cobwebs, Día de los Muertos papel picado), round markers, the plain padlock and
+key on tabs, and the trail as it is out of quest mode. The toys grow at the gold's steps: a ball, then a mouse
 beside it, a mixed pile (bones, fish, a plush carrot, a duck, a heart, yarn,
 tennis balls, a squeaky ring, a rope toy, a feather wand), a wicker basket from
 100 that fills and overflows, then a toy box from 700.
 
-**Decorations.** With the companion on, something stands on its other side, as
-the hoard does on this one: Settings → Companion → **Decoration**. Each theme has
+**Decorations.** With the companion and quest mode on, something can stand on its
+other side, as the hoard does on this one: Settings → Extras → **Decoration** (None
+until you pick one). Each theme has
 its own seven and remembers its pick -- a food bowl, yarn, a dog house, a fish tank
 for None; potions, a campfire, a sword in the stone, a spellbook for Fantasy; a
 jack-o'-lantern, a cauldron, a ghost, a coffin for Halloween; veladoras, pan de
-muerto, marigolds, copal for Día de los Muertos -- and a few move. The first is
+muerto, marigolds, copal for Día de los Muertos -- and a few move. The first of each is
 free; the rest unlock with right answers in the *Code quiz*, at 1, 3, 6, 12, 20 and
 30, and two specials, a gumball machine and a lava lamp, with 5 and 10 right in a
 row. The count under the decoration is your right answers. **Without Claude Code**
@@ -998,14 +1027,16 @@ branch that produces code are different work. `worklog.json` holds them as threa
 
 The thread matching the checked-out branch leads, since that is where your editor
 is. Finished threads -- every merge request merged or closed -- carry a ✓, sit
-dashed and faded after the open ones, so the solid tabs are what's left. Each thread has a tab above *Now* — a repo with one thread still shows its
-one tab, so every repo reads the same way — and the rest is one click away.
+dashed and faded after the open ones, so the solid tabs are what's left. Each ticket's
+thread has a tab above *Now* — a repo with one still shows its one tab, so every repo
+reads the same way — and the rest is one click away.
 Nothing stacks.
 
 Each thread claims the commits on its own branch (`31-…` for #31), wherever you
-are checked out, so a day spent across three branches reports three tickets. Every
-thread reports whatever scope it closed, and a review thread with no scope lines
-simply contributes nothing — which is right, not a gap.
+are checked out, so a day spent across three branches reports three tickets. Scope
+ticks are read from the branch you have checked out (see *How a scope line gets
+checked*), and a review thread with no scope lines simply contributes nothing —
+which is right, not a gap.
 
 **Finished threads retire three working days after they land** (merged on a Friday, still there on Wednesday), so the tab row does not accumulate a
 term's worth of tickets. A thread counts as finished when every merge request on it
@@ -1031,8 +1062,8 @@ branch-authorship alert is suppressed — the thread already says whose work it 
 
 Its `plan` holds the ticket's scope like any other thread, but as a plain list
 headed *the ticket's, not yours to tick*: no circles and no tally, since no commit
-of yours could ever claim those lines. It stays after the MRs merge, so the pane
-still says what the ticket was for.
+of yours could ever claim those lines. Once the MRs merge it retires like any other
+thread, three working days later.
 
 In the standup it contributes **what is left to review**, not what you built: an MR
 that is open, lists you as `reviewer`, and has no `approvedByYou` becomes
@@ -1071,8 +1102,8 @@ The difference is visible without reading anything:
   For work with no commit to prove it: testing in dev, tagging a release, chasing
   an answer from someone.
 
-Open tasks count toward a repo's sidebar badge, so one left on a parked repo still
-shows up when the section is collapsed.
+Open tasks are counted on the Tasks heading, so a folded list still says how many
+are left.
 
 ---
 
@@ -1103,8 +1134,9 @@ Two consequences worth knowing:
 
 - Notes attach to commit SHAs, so an amend or rebase orphans them. Set
   `notes.rewriteRef = refs/notes/worklog` in a repo's git config to make them follow.
-- Merging squashes the branch, so its commits — and their notes — leave `master`.
-  That's fine: once a branch merges, its scope is finished anyway.
+- A squash merge (if your project merges that way) leaves the branch's commits —
+  and their notes — off the default branch. That's fine: once a branch merges, its
+  scope is finished anyway.
 
 ---
 
@@ -1128,17 +1160,18 @@ forward.
 
 Set `VERSION` to the new number and commit it on `main`, tag that commit with the
 same number and a `v` (`v1.2.0`), push both, and publish a GitHub release from the
-tag; its description is what Settings shows as what's new. The tag has to match
+tag -- a full release, not a draft or a pre-release, which the update check skips; its description is what Settings shows as what's new. The tag has to match
 `VERSION`: a copy from a zip finds the release it came from by that tag.
 
 ## What it will never do
 
-- Contact GitLab or GitHub unless you ask it to, apart from asking GitHub once a
-  day for Previously's own latest release (off in **Settings → General**). Everything
+- Contact GitLab or GitHub unless you ask it to, apart from asking GitHub at
+  launch and about once a day for Previously's own latest release (off in **Settings → General**). Everything
   else comes from clones on disk; syncing is opt-in, per space, in
   **Settings → Projects** (see *Sync*).
 - Run in the background. No daemon, no cron; with the app closed, the laptop shut
-  or you away, nothing happens.
+  or you away, nothing happens. (With auto-resume on, Claude Code runs a small hook
+  as each session starts; it only notes the session's ID for a drawer tab.)
 - Cost tokens to display. The app is a Swift binary and a node script; no model is
   involved in showing you the page.
 

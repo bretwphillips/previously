@@ -16,7 +16,8 @@ const dir = process.argv[1];
 const only = process.argv[2];
 const state = JSON.parse(fs.readFileSync(dir + "/resolved.json", "utf8"));
 const sum = JSON.parse(fs.readFileSync(dir + "/summary.json", "utf8"));
-const tasks = JSON.parse(fs.readFileSync(dir + "/tasks.json", "utf8"));
+// a new space has no tasks.json until one is added
+const tasks = fs.existsSync(dir + "/tasks.json") ? JSON.parse(fs.readFileSync(dir + "/tasks.json", "utf8")) : {};
 const taskLines = (list) =>
   (list || []).map((t) => "    " + (t.done ? "[x] " : "[ ] ") + t.text);
 const text = (e) => (typeof e === "string" ? e : e.text);
