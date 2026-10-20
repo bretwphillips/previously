@@ -929,7 +929,7 @@ are checked out, so a day spent across three branches reports three tickets. Eve
 thread reports whatever scope it closed, and a review thread with no scope lines
 simply contributes nothing — which is right, not a gap.
 
-**Finished threads retire after three days**, so the tab row does not accumulate a
+**Finished threads retire three working days after they land** (merged on a Friday, still there on Wednesday), so the tab row does not accumulate a
 term's worth of tickets. A thread counts as finished when every merge request on it
 is merged or closed, or when it carries an explicit `"endedAt"`. Two exceptions: the
 thread on the branch you are checked out on always stays, and a repo never loses its

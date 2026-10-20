@@ -21,6 +21,18 @@ import { currentVersion, readUpdate, isNewer, ownBranch, defaultBranch } from ".
 // The space this build is for: its own data folder, and the repos in its folders.
 const space = spaceFor();
 const here = space.data;
+// Still within n working days of a moment (seconds): to the end of the nth weekday
+// after it, so Friday's work is still around on Wednesday, not gone by Monday.
+const withinWorkingDays = (at, n) => {
+  const until = new Date(at * 1000);
+  for (let added = 0; added < n; ) {
+    until.setDate(until.getDate() + 1);
+    if (until.getDay() !== 0 && until.getDay() !== 6) added += 1;
+  }
+  until.setHours(23, 59, 59, 999);
+  return Date.now() <= until.getTime();
+};
+
 const repoList = reposOf(space);
 adopt(space, repoList.map((r) => r.name));
 
@@ -144,9 +156,8 @@ const repos = await Promise.all(
     // Work you committed to in the last few days stays even once it lands --
     // yesterday's merge belongs in today's standup -- and retires as any
     // finished thread does. Older work whose MRs all landed or closed is gone.
-    const recentDays = 3 * 86400;
     const committedLately = (ticket) =>
-      (repo.ticketCommits?.[ticket] ?? []).some((at) => at >= Date.now() / 1000 - recentDays);
+      (repo.ticketCommits?.[ticket] ?? []).some((at) => withinWorkingDays(at, 3));
     const candidates = new Map((repo.activeTickets ?? []).map((b) => [b.ticket, b]));
     for (const [ticket, branch] of Object.entries(repo.ticketBranches ?? {}))
       if (!candidates.has(ticket) && committedLately(ticket))
@@ -184,11 +195,10 @@ const repos = await Promise.all(
       };
     });
 
-    // Finished threads fall away after a few days so the tab row does not
+    // Finished threads fall away three working days after they land, so the tab row does not
     // accumulate. The branch you are on always stays, and a repo never loses
     // its last thread -- a just-finished ticket with nothing started after it
     // is still the answer to 'where was I'.
-    const RETIRE_AFTER = 3 * 86400;
     const ended = (thread) => {
       if (thread.endedAt) return Date.parse(thread.endedAt) / 1000;
       const mrs = thread.mrs ?? [];
@@ -201,11 +211,10 @@ const repos = await Promise.all(
       return seen.length ? Math.max(...seen) : null;
     };
 
-    const nowSeconds = Date.now() / 1000;
     const live = threads.filter((t) => {
       if (t.ticket === repo.ticket) return true;
       const at = ended(t);
-      return at === null || nowSeconds - at <= RETIRE_AFTER;
+      return at === null || withinWorkingDays(at, 3);
     });
     const kept = live.length ? live : threads.slice(-1);
 
