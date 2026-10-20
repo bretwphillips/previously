@@ -1,6 +1,8 @@
 /* Quest mode. Everything here only shows with body.quest. */
 :root { --iron-hi:#9b9086; --iron:#625950; --iron-lo:#38322d; --rust:#9a5a33; }
 .thread-tabs button { position: relative; overflow: visible; }
+/* a monster leans out past its tab's corner, so that tab sits above the next */
+.thread-tabs button:has(.monster) { z-index: 1; }
 canvas.pix { position: absolute; left: 0; top: 0; image-rendering: pixelated; pointer-events: none; }
 /* The wizard's HP bar says what the feed count did. */
 body.quest .pet-status { display: none; }
@@ -29,7 +31,8 @@ body.quest .pet.pixel .tally-hoard > svg { grid-area: hoard; justify-self: cente
 body.quest .pet.pixel .tally-hoard .tally-n { grid-area: hnum; align-self: start; justify-self: center; }
 body.quest .pet.pixel .deco { grid-area: deco; justify-self: center; display: block; shape-rendering: crispEdges; }
 body.quest .pet.pixel .deco-n { grid-area: dnum; align-self: start; justify-self: center;
-  font-family: var(--mono); font-weight: 600; font-size: 11px; line-height: 1.3; color: #3f7fd9; }
+  font-family: var(--mono); font-weight: 600; font-size: 11px; line-height: 1.3; color: #8a5a00; }
+body.halloween.quest .pet.pixel .deco-n { color: #c4641a; }
 /* A moving decoration's frames, each shown for its share of the loop -- a keyframe
    for every count of frames a decoration can have (2 to 8). */
 @keyframes deco-2 { 0% { opacity: 1; } 50.000%, 100% { opacity: 0; } }
