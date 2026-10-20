@@ -639,6 +639,13 @@ window.termTheme = function (c) {
   for (var id in shells) shells[id].term.options.theme = xtermTheme(c);
 };
 
+// A file dropped on the drawer: the shell under the pointer, focused, else the focused one.
+window.termAt = function (x, y) {
+  var el = document.elementFromPoint(x, y);
+  for (var id in shells) if (el && shells[id].pane.contains(el)) { focusShell(+id); return +id; }
+  return current ? current.focused : null;
+};
+
 window.termFocus = function () {
   if (current) focusShell(current.focused);
 };
