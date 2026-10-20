@@ -654,14 +654,19 @@ function plainMarks(t) {
   return mark("lock", LOCK_SVG, locks, "Blocked by") + mark("key", KEY_SVG, keys, "Holds the key to");
 }
 
+// Finished threads (every MR merged or closed, or ended) go after the open ones,
+// ticked and faded, so the solid tabs are what's left.
 function threadTabs(r) {
   if (!r.threads.some((t) => t.ticket)) return "";
+  const done = (t) => Boolean(t.quest?.merged);
   return `<div class="thread-tabs">${r.threads
+    .map((t, i) => [t, i])
+    .sort(([a], [b]) => done(a) - done(b))
     .map(
-      (t, i) =>
-        `<button data-thread="${i}" aria-pressed="${i === r.currentIndex}"${
+      ([t, i]) =>
+        `<button data-thread="${i}" aria-pressed="${i === r.currentIndex}"${done(t) ? ' class="done" title="Done: every merge request merged or closed"' : ""}${
           t.quest ? ` data-quest="${esc(JSON.stringify(t.quest)).replace(/"/g, "&quot;")}"` : ""
-        }>${esc(t.ticket ?? "untracked")}<span class="tt">${esc(t.title ?? "")}</span>${plainMarks(t)}</button>`,
+        }>${done(t) ? '<span class="tick" aria-hidden="true">\u2713</span>' : ""}${esc(t.ticket ?? "untracked")}<span class="tt">${esc(t.title ?? "")}</span>${plainMarks(t)}</button>`,
     )
     .join("")}</div>`;
 }

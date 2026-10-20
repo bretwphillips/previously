@@ -663,6 +663,9 @@ body.quest .thread-tabs .mark { display: none; }
                                            color: var(--ink); font-weight: 600; }
 .thread-tabs .tt { font-family: var(--sans); font-size: 11.5px; font-weight: 400;
                    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; opacity: 0.8; }
+.thread-tabs button.done { border-style: dashed; background: transparent; opacity: 0.6; }
+.thread-tabs button.done:hover, .thread-tabs button.done[aria-pressed="true"] { opacity: 1; }
+.thread-tabs .tick { color: var(--mark-new); margin-right: -3px; }
 .thread[hidden] { display: none; }
 .thread-mrs { font-family: var(--mono); font-size: 11.5px; color: var(--muted);
               margin: 16px 0 0; }

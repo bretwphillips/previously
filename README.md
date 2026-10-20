@@ -919,7 +919,8 @@ branch that produces code are different work. `worklog.json` holds them as threa
 ```
 
 The thread matching the checked-out branch leads, since that is where your editor
-is. Each thread has a tab above *Now* — a repo with one thread still shows its
+is. Finished threads -- every merge request merged or closed -- carry a ✓, sit
+dashed and faded after the open ones, so the solid tabs are what's left. Each thread has a tab above *Now* — a repo with one thread still shows its
 one tab, so every repo reads the same way — and the rest is one click away.
 Nothing stacks.
 
