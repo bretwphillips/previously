@@ -1151,8 +1151,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, WKN
     }
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-        // A fresh page has no sheet open, and will not say so.
-        drawer.shade.isHidden = true
+        // A fresh page can come back with a sheet open (the quiz, reopened once it's
+        // made) and only reports changes after that, so ask it.
+        webView.evaluateJavaScript("Array.prototype.some.call(document.querySelectorAll('.scrim'), function (s) { return !s.hidden; })") { [weak self] open, _ in
+            self?.drawer.shade.isHidden = (open as? Bool) != true
+        }
         tellPageDrawerHeight()
         matchTheme()
         // Give the page a beat to restore its pane and scroll before showing it.
@@ -1509,6 +1512,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, WKN
             try? script("quiz.sh", args: ["answer", id, String(choice)]).run()
             return
         }
+        // An editor link (a quiz answer's file and line): WebKit doesn't always
+        // navigate to a scheme it can't load, so the page hands it over.
+        if message.name == "openLink" {
+            guard let text = message.body as? String, let url = URL(string: text),
+                  ["vscode", "cursor", "windsurf", "zed"].contains(url.scheme ?? "")
+            else { return }
+            NSWorkspace.shared.open(url)
+            return
+        }
         if message.name == "quizFlag" {
             guard let id = message.body as? String else { return }
             try? script("quiz.sh", args: ["flag", id]).run()
@@ -1745,6 +1757,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, WKN
         config.userContentController.add(self, name: "makeQuiz")
         config.userContentController.add(self, name: "quizAnswer")
         config.userContentController.add(self, name: "quizFlag")
+        config.userContentController.add(self, name: "openLink")
         config.userContentController.add(self, name: "reviewLocally")
         config.userContentController.add(self, name: "reviewRemove")
         config.userContentController.add(self, name: "themeChanged")

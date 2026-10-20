@@ -2099,6 +2099,13 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   };
 
+  /* Editor links go through the app: WebKit can drop a click on a scheme it can't load. */
+  document.addEventListener('click', function (e) {
+    var link = e.target.closest ? e.target.closest('a[href^="vscode:"], a[href^="cursor:"], a[href^="windsurf:"], a[href^="zed:"]') : null;
+    if (!link || !(handlers && handlers.openLink)) return;
+    e.preventDefault();
+    handlers.openLink.postMessage(link.getAttribute('href'));
+  });
   document.addEventListener('click', function (e) {
     var here = e.target.closest ? e.target.closest('[data-term-repo]') : null;
     if (here && handlers && handlers.openTerminal) handlers.openTerminal.postMessage(here.dataset.termRepo);
