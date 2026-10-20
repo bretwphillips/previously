@@ -562,7 +562,9 @@ const quiz = (() => {
     const remote = q.commit && web ? { href: fileUrl(web, q.commit, q.file, q.line), via: isGitHub(web) ? "GitHub" : "GitLab" } : null;
     return { ...q, link: local ?? remote ?? (web ? { href: fileUrl(web, "HEAD", q.file, q.line), via: "web" } : null) };
   });
-  return { claude, count: sync.quizCount ?? 3, today: today ? { ...today, questions } : null, stats };
+  // "unlockAllDecorations": true in settings.json -- every decoration, for looking them over
+  return { claude, count: sync.quizCount ?? 3, today: today ? { ...today, questions } : null, stats,
+    unlockAll: sync.unlockAllDecorations === true };
 })();
 
 const html = renderPage({

@@ -107,8 +107,10 @@ function companionPick() {
     theme: theme, decoration: decoration };
 }
 // Right quiz answers, and the best run of them, as the page was built with.
-function quizRight() { var p = document.getElementById('pet'); return p ? Number(p.dataset.quizRight) || 0 : 0; }
-function quizRun() { var p = document.getElementById('pet'); return p ? Number(p.dataset.quizRun) || 0 : 0; }
+// With everything unlocked for a look (settings.json), they count as reached.
+function unlockAll() { var p = document.getElementById('pet'); return Boolean(p && p.hasAttribute('data-unlock-all')); }
+function quizRight() { var p = document.getElementById('pet'); return unlockAll() ? Infinity : p ? Number(p.dataset.quizRight) || 0 : 0; }
+function quizRun() { var p = document.getElementById('pet'); return unlockAll() ? Infinity : p ? Number(p.dataset.quizRun) || 0 : 0; }
 // The plain decorations were once the only ones, so their pick keeps the old key.
 function decorationKey(theme) {
   return theme === 'none' ? 'worklog.pet.decoration' : 'worklog.pet.decoration.' + theme;
@@ -1097,6 +1099,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var next = list.filter(function (d) { return !d.unlocked; });
     var nextRight = next.filter(function (d) { return d.kind === 'right'; })[0];
     var nextRun = next.filter(function (d) { return d.kind === 'run'; })[0];
+    if (unlockAll()) { document.getElementById('decoration-progress').textContent = 'All unlocked for a look (unlockAllDecorations in settings.json).'; return; }
     var line = right + ' right answer' + (right === 1 ? '' : 's') + ' \u00b7 best streak ' + run + ' in a row.';
     if (nextRight) line += ' Next: ' + nextRight.label + ' at ' + nextRight.need + ' right' + (nextRun ? ', ' + nextRun.label + ' at ' + nextRun.need + ' in a row.' : '.');
     else if (nextRun) line += ' Next: ' + nextRun.label + ' at ' + nextRun.need + ' in a row.';

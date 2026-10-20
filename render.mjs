@@ -737,7 +737,7 @@ function companion(pet, tally, quiz) {
   if (!pet) return "";
   // the quiz's right answers (shown under a decoration) and best run of them: what unlocks decorations
   const right = quiz?.stats?.correct ?? 0, run = quiz?.stats?.bestRun ?? 0;
-  return `<div class="pet" id="pet" data-mood="${pet.mood}" data-quiz-right="${right}" data-quiz-run="${run}" hidden>
+  return `<div class="pet" id="pet" data-mood="${pet.mood}" data-quiz-right="${right}" data-quiz-run="${run}"${quiz?.unlockAll ? " data-unlock-all" : ""} hidden>
     ${Object.entries(pet.arts ?? { cat: pet.art })
       .map(([race, art]) => `<pre class="art" data-race="${race}"${race === "cat" ? "" : " hidden"}>${esc(art)}</pre>`)
       .join("")}
