@@ -549,6 +549,14 @@ document.addEventListener('DOMContentLoaded', function () {
   var settingsBridge =
     window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.saveSettings;
   var syncState = JSON.parse(document.getElementById('sync-data').textContent);
+  /* Only the setting that changed goes back: this page's copy of the rest can
+     be older than the file, and sending it would undo a change made since. */
+  function saveSetting(key, value) {
+    syncState[key] = value;
+    var change = {};
+    change[key] = value;
+    if (settingsBridge) settingsBridge.postMessage(JSON.stringify(change));
+  }
 
   function paintSync() {
     var buttons = document.querySelectorAll('#sync-choice button');
@@ -633,8 +641,7 @@ document.addEventListener('DOMContentLoaded', function () {
       if (settingsBridge) {
         clearTimeout(saveTimer);
         saveTimer = setTimeout(function () {
-          syncState.markers = CFG;
-          settingsBridge.postMessage(JSON.stringify(syncState));
+          saveSetting('markers', CFG);
         }, 700);
       }
     }
@@ -726,8 +733,7 @@ document.addEventListener('DOMContentLoaded', function () {
     weightField.addEventListener('change', function () {
       var n = Math.max(1, Math.min(40, Math.round(Number(this.value) || 5)));
       this.value = n;
-      syncState.weightLimit = n;
-      if (settingsBridge) settingsBridge.postMessage(JSON.stringify(syncState));
+      saveSetting('weightLimit', n);
     });
   }
 
@@ -749,9 +755,8 @@ document.addEventListener('DOMContentLoaded', function () {
   var terminalButtons = document.querySelectorAll('#terminal-choice button');
   for (var tb = 0; tb < terminalButtons.length; tb++) {
     terminalButtons[tb].addEventListener('click', function () {
-      syncState.terminal = this.dataset.terminal;
+      saveSetting('terminal', this.dataset.terminal);
       paintTerminal();
-      if (settingsBridge) settingsBridge.postMessage(JSON.stringify(syncState));
     });
   }
   if (!settingsBridge) {
@@ -777,9 +782,8 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!button) return;
     var app = window.webkit && window.webkit.messageHandlers;
     if (button.dataset.updates) {
-      syncState.updates = button.dataset.updates;
+      saveSetting('updates', button.dataset.updates);
       paintUpdates();
-      if (settingsBridge) settingsBridge.postMessage(JSON.stringify(syncState));
     } else if (button.id === 'update-check') {
       if (!app || !app.checkUpdate) return;
       button.textContent = 'Checking\u2026';
@@ -793,9 +797,8 @@ document.addEventListener('DOMContentLoaded', function () {
       if (skip) skip.disabled = true;
       app.updateNow.postMessage('');
     } else {
-      syncState.skipVersion = button.id === 'update-skip' ? button.dataset.version : null;
+      saveSetting('skipVersion', button.id === 'update-skip' ? button.dataset.version : null);
       button.disabled = true;
-      if (settingsBridge) settingsBridge.postMessage(JSON.stringify(syncState));
     }
   });
 
@@ -853,19 +856,17 @@ document.addEventListener('DOMContentLoaded', function () {
   var resumeButtons = document.querySelectorAll('#resume-choice button');
   for (var rb = 0; rb < resumeButtons.length; rb++) {
     resumeButtons[rb].addEventListener('click', function () {
-      syncState.autoResume = this.dataset.resume;
+      saveSetting('autoResume', this.dataset.resume);
       paintResume();
-      if (settingsBridge) settingsBridge.postMessage(JSON.stringify(syncState));
     });
   }
 
   var syncButtons = document.querySelectorAll('#sync-choice button');
   for (var sb = 0; sb < syncButtons.length; sb++) {
     syncButtons[sb].addEventListener('click', function () {
-      syncState.sync = this.dataset.sync;
+      saveSetting('sync', this.dataset.sync);
       paintSync();
       paintSyncDue();
-      if (settingsBridge) settingsBridge.postMessage(JSON.stringify(syncState));
     });
   }
 
@@ -1175,7 +1176,8 @@ document.addEventListener('DOMContentLoaded', function () {
         on = '';
       }
       if (!now || on || store.get('worklog.questTheme', 'quest') === now.h.theme) return;
-      if (mode() === 'auto') wear(now);
+      // A theme picked by hand during this holiday answered it, as Ask's prompt does.
+      if (mode() === 'auto' && store.get('worklog.holidayAnswered', '') !== now.key) wear(now);
       else if (mode() === 'ask' && store.get('worklog.holidayAnswered', '') !== now.key) prompt(now);
     }
     // A theme picked by hand is yours, holiday or not.
