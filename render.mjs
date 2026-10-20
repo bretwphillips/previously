@@ -1205,7 +1205,7 @@ function settingsPane(userName, weightLimit = 5, terminals = [], update = null, 
               `<div class="themes" id="streak-days">${[[1, "Mon"], [2, "Tue"], [3, "Wed"], [4, "Thu"], [5, "Fri"], [6, "Sat"], [0, "Sun"]]
                 .map(([d, label]) => `<button data-day="${d}">${label}</button>`)
                 .join("")}</div>`,
-              "The days a streak counts: the quiz's day streak, and without Claude Code the commit streak. Miss one of them and it starts over; the other days neither count nor break it.",
+              "The days a streak counts: the quiz's day streak, and without Claude Code the commit streak. Miss one of them and it starts over; the other days neither count nor break it. A change counts from today on, so it never breaks a streak you're on or lowers your best.",
             )}
           </div>
         </div>

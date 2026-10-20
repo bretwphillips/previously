@@ -12,7 +12,7 @@ import { readMarkers, triggerOf } from "./markers.mjs";
 import { alertsFor, groupOf, NEEDS_YOU } from "./alerts.mjs";
 import { markdown } from "./md.mjs";
 import { renderPage } from "./render.mjs";
-import { readLedger, updateLedger, commitStreak, nextStreakDay } from "./ledger.mjs";
+import { readLedger, updateLedger, commitStreak, nextStreakDay, streakSchedule } from "./ledger.mjs";
 import { petState } from "./pet.mjs";
 import { standup } from "./standup.mjs";
 import { quoteFor } from "./quotes.mjs";
@@ -498,7 +498,7 @@ const ledgerFile = shared ? join(CODE, "ledger.json") : join(here, "ledger.json"
 const ledger = cached
   ? readLedger(ledgerFile)
   : updateLedger(ledgerFile, repoList.map((r) => r.path), authorOf);
-const tally = ledger ? { count: ledger.seen.length, since: ledger.since, streak: commitStreak(ledger, sync.streakDays) } : null;
+const tally = ledger ? { count: ledger.seen.length, since: ledger.since, streak: commitStreak(ledger, streakSchedule(sync)) } : null;
 
 const now = new Date();
 // What fed the companion in this space, kept so a shared companion can eat from
@@ -557,7 +557,7 @@ const quiz = (() => {
   const stats = { ...(readJson(join(here, "quiz-history.json"), {}).stats ?? {}) };
   // the streak as of today: one whose next streak day has passed without a quiz is over
   const todayIs = new Date().toLocaleDateString("en-CA");
-  if (stats.lastDay && nextStreakDay(stats.lastDay, sync.streakDays) < todayIs) stats.streak = 0;
+  if (stats.lastDay && nextStreakDay(stats.lastDay, streakSchedule(sync)) < todayIs) stats.streak = 0;
   const editor = editors.find((e) => e.id === sync.editor) ?? editors[0] ?? null;
   const questions = (today?.questions ?? []).map((q) => {
     // a question brought back may be from another repo than today's
