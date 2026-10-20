@@ -2493,13 +2493,25 @@ const DECORATION_STREAKS = [["gumball", "Gumball machine", 5], ["lavalamp", "Lav
 // Drawn, but held back for now: the big showpieces, until they're redrawn to standard.
 const DECORATIONS_ON_HOLD = ["cattree", "arcade", "egg", "dragon", "battree", "haunted", "papel", "alebrije", "trophy", "telescope", "rocket"];
 
+// Without Claude Code there's no quiz, so each goal moves to a commit milestone at
+// the same place in its ladder, spread out like the hoard's later steps: 1 right is
+// 50 commits, 3 is 100, 6 is 200, and so on.
+const QUIZ_STEPS = [0, 1, 3, 6, 12, 20, 25, 30, 35, 45, 50, 65];
+const COMMIT_STEPS = [0, 50, 100, 200, 300, 500, 600, 700, 850, 1000, 1200, 1500];
+const commitStep = (cost) => {
+  const i = QUIZ_STEPS.findIndex((c) => c >= cost);
+  return COMMIT_STEPS[i < 0 ? COMMIT_STEPS.length - 1 : i];
+};
+
 // A theme's decorations as Settings shows them: drawn ones only, each with what it
-// takes and whether you have it. right = right answers; run = your best run of them.
-function decorationsFor(theme, right, run) {
-  const ladder = (DECORATION_LADDERS[theme] || []).map(([name, label, cost]) => ({
-    name, label, unlocked: right >= cost, needs: cost ? `${cost} right` : "", need: cost, kind: "right" }));
-  const streaks = DECORATION_STREAKS.map(([name, label, cost]) => ({
-    name, label, unlocked: run >= cost, needs: `${cost} in a row`, need: cost, kind: "run" }));
+// takes and whether you have it. right = right answers; run = your best run of them;
+// commits, when given, stands in for both.
+function decorationsFor(theme, right, run, commits) {
+  const goal = (cost, kind, words) => typeof commits === "number"
+    ? { unlocked: commits >= commitStep(cost), needs: cost ? `${commitStep(cost)} commits` : "", need: commitStep(cost), kind, by: "commits" }
+    : { unlocked: (kind === "run" ? run : right) >= cost, needs: cost ? `${cost} ${words}` : "", need: cost, kind };
+  const ladder = (DECORATION_LADDERS[theme] || []).map(([name, label, cost]) => ({ name, label, ...goal(cost, "right", "right") }));
+  const streaks = DECORATION_STREAKS.map(([name, label, cost]) => ({ name, label, ...goal(cost, "run", "in a row") }));
   return ladder.concat(streaks).filter((d) => DECORATIONS[d.name] && !DECORATIONS_ON_HOLD.includes(d.name));
 }
 const api = { MOODS, ANIMALS, HATS, COATS, HAT_COLOURS, W, H, compose, companion, dressUp, DECORATIONS,

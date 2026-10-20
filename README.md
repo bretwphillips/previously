@@ -117,7 +117,9 @@ Nothing here needs a model to run, and nearly all of it works with no AI:
   know*, tabs for every ticket you are working on, the standup (*Yesterday* from
   commits, comments and approvals; *Today* from open tickets; MR links; the
   weight limit), Sync, blockers from GitLab, ticket descriptions and *+ blocker*,
-  weights, fantasy mode in full, the companion, tasks, notes, folding.
+  weights, fantasy mode in full, the companion, tasks, notes, folding. The
+  companion's decorations, a quiz reward with Claude, unlock with commits
+  instead.
 - **Where threads come from:** every ticket branch in play -- the one you are on,
   any touched in the last two weeks that has not merged, and anything you
   committed to in the last three days -- gets a thread, titled with the ticket's
@@ -463,7 +465,8 @@ recent. It never repeats a question.
 - Don't want it? Settings → A.I. → Code quiz → Quiz button: Off hides it.
 - How many questions: Settings → A.I. → Code quiz, 3 by default. Questions asked,
   answers, and a streak (weekends don't break it) are kept in the space's
-  `quiz-history.json`, for a reward still to come.
+  `quiz-history.json`; right answers and runs of them unlock the companion's
+  decorations (see *Fantasy mode*).
 
 ---
 ## Sync
@@ -670,6 +673,9 @@ instead: La Catrina's plumed hat and ruffled dress, El Catrín's top hat and sui
 a crown of roses and marigolds with a rebozo, or a flowered fedora and waistcoat.
 Its face is painted as a sugar skull -- bone white, its features black, petals
 round the eyes, a stitched grin -- so each animal keeps its own face and moods.
+Not everyone paints their face, so **Face paint** (None / Sugar skull) leaves it off
+the crown and the fedora, which keep their marigolds; La Catrina and El Catrín
+are calaveras, so they always wear it.
 See *Día de los Muertos in fantasy mode* below.
 
 Outside fantasy mode the companion is a few lines of text; with fantasy mode on it is
@@ -849,7 +855,7 @@ page, standup and companion all work with no model involved.
 
 ## Fantasy mode (optional, off by default)
 
-Settings → Extras → **Quest mode** turns the thread tabs into a small game, dressed by its **Theme**: Fantasy, Halloween or Día de los Muertos.
+Settings → Extras → **Quest mode** turns the thread tabs into a small game, dressed by its **Theme**: Fantasy, Halloween or Día de los Muertos -- or **None**, which keeps the page as it is out of quest mode and only draws the companion (see *None* below).
 
 **Holidays** (under Theme) lets the theme follow the calendar. **Switch** changes
 it when a holiday is near and back afterwards; **Ask** asks first, with **Switch**,
@@ -941,6 +947,28 @@ joined by a road of marigold petals. The monsters become alebrijes -- a
 hummingbird, an axolotl, an iguana, an owl, a Xolo, a winged jaguar and a dragon,
 smallest to most fearsome -- and one befriended brightens and rises into a warm
 light, letting go of marigold petals and papel picado. The markers are veladoras.
+
+**None.** The companion as pixel art, its decoration and a hoard of pet toys --
+and nothing else: no banner, round markers, the plain padlock and key on tabs,
+paw prints on the trail. The toys grow at the gold's steps: a ball, then a mouse
+beside it, a mixed pile (bones, fish, a plush carrot, a duck, a heart, yarn,
+tennis balls, a squeaky ring, a rope toy, a feather wand), a wicker basket from
+100 that fills and overflows, then a toy box from 700.
+
+**Decorations.** With the companion on, something stands on its other side, as
+the hoard does on this one: Settings → Companion → **Decoration**. Each theme has
+its own seven and remembers its pick -- a food bowl, yarn, a dog house, a fish tank
+for None; potions, a campfire, a sword in the stone, a spellbook for Fantasy; a
+jack-o'-lantern, a cauldron, a ghost, a coffin for Halloween; veladoras, pan de
+muerto, marigolds, copal for Día de los Muertos -- and a few move. The first is
+free; the rest unlock with right answers in the *Code quiz*, at 1, 3, 6, 12, 20 and
+30, and two specials, a gumball machine and a lava lamp, with 5 and 10 right in a
+row. The count under the decoration is your right answers. **Without Claude Code**
+there's no quiz, so commits unlock them instead -- 50, 100, 200, 300, 500 and 700,
+the specials at 200 and 300 -- and the count under the hoard is the one that counts. In Settings a
+locked one is chained like a blocked ticket, says what it takes when you hover it,
+and its chain falls off the first time you see it after reaching that.
+`"unlockAllDecorations": true` in `settings.json` unlocks them all, to look them over.
 
 ## A repo nobody has written about
 

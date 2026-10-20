@@ -737,7 +737,7 @@ function companion(pet, tally, quiz) {
   if (!pet) return "";
   // the quiz's right answers (shown under a decoration) and best run of them: what unlocks decorations
   const right = quiz?.stats?.correct ?? 0, run = quiz?.stats?.bestRun ?? 0, streak = quiz?.stats?.run ?? 0;
-  return `<div class="pet" id="pet" data-mood="${pet.mood}" data-quiz-right="${right}" data-quiz-run="${run}" data-quiz-streak="${streak}"${quiz?.unlockAll ? " data-unlock-all" : ""} hidden>
+  return `<div class="pet" id="pet" data-mood="${pet.mood}" data-quiz-right="${right}" data-quiz-run="${run}" data-quiz-streak="${streak}" data-quiz-ai="${quiz?.claude ? 1 : 0}" data-commits="${tally?.count ?? 0}"${quiz?.unlockAll ? " data-unlock-all" : ""} hidden>
     ${Object.entries(pet.arts ?? { cat: pet.art })
       .map(([race, art]) => `<pre class="art" data-race="${race}"${race === "cat" ? "" : " hidden"}>${esc(art)}</pre>`)
       .join("")}
@@ -1197,7 +1197,7 @@ function settingsPane(userName, weightLimit = 5, terminals = [], update = null, 
               `<div class="themes" id="decoration-choice"></div>
               <div class="themes deco-specials" id="decoration-specials"></div>
               <p class="hint" id="decoration-progress"></p>`,
-              "Something beside it in quest mode. Each theme has its own and remembers its pick; right quiz answers unlock more, and streaks of them a few specials.",
+              "Something beside it in quest mode. Each theme has its own and remembers its pick; right quiz answers unlock more, and streaks of them a few specials. Without Claude Code there's no quiz, so commits unlock them.",
             )}
           </div>
         </div>
