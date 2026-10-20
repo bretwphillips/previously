@@ -1040,6 +1040,11 @@ function settingsPane(userName, weightLimit = 5, terminals = [], update = null, 
         )}
         <h3>Code quiz</h3>
         ${row(
+          "Quiz button",
+          `<div class="themes" id="quiz-choice"><button data-quiz="off">Off</button><button data-quiz="on">On</button></div>
+          ${about("Shows the Quiz button beside Standup. Off hides it; your answers and streak are kept for when it\u2019s back.")}`,
+        )}
+        ${row(
           "Questions",
           `<input type="number" id="quiz-count" min="1" max="10" step="1" value="${esc(String(settings.quizCount ?? 3))}">
           ${about(

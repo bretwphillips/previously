@@ -451,6 +451,7 @@ recent. It never repeats a question.
 - **Repeats:** after 30 questions, every other quiz is one fewer new question plus one
   asked before -- one you got wrong first, else the longest ago -- rechecked against
   the code: if its quote is no longer in the file it's never tried again.
+- Don't want it? Settings → A.I. → Code quiz → Quiz button: Off hides it.
 - How many questions: Settings → A.I. → Code quiz, 3 by default. Questions asked,
   answers, and a streak (weekends don't break it) are kept in the space's
   `quiz-history.json`, for a reward still to come.

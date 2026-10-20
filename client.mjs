@@ -874,6 +874,25 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
   paintResume();
+
+  /* Settings -> A.I. -> Code quiz: the Quiz button, on unless turned off. */
+  function paintQuizChoice() {
+    var on = syncState.quiz !== 'off';
+    var buttons = document.querySelectorAll('#quiz-choice button');
+    for (var i = 0; i < buttons.length; i++) buttons[i].setAttribute('aria-pressed', String((buttons[i].dataset.quiz === 'on') === on));
+    var open = document.getElementById('quiz-open');
+    if (open && open.dataset.ready) open.hidden = !on;
+  }
+  var quizChoice = document.querySelectorAll('#quiz-choice button');
+  for (var qc = 0; qc < quizChoice.length; qc++) {
+    if (!settingsBridge) quizChoice[qc].disabled = true;
+    quizChoice[qc].addEventListener('click', function () {
+      saveSetting('quiz', this.dataset.quiz);
+      paintQuizChoice();
+    });
+  }
+  paintQuizChoice();
+
   var resumeButtons = document.querySelectorAll('#resume-choice button');
   for (var rb = 0; rb < resumeButtons.length; rb++) {
     resumeButtons[rb].addEventListener('click', function () {
@@ -1953,7 +1972,8 @@ document.addEventListener('DOMContentLoaded', function () {
   var quizOpen = document.getElementById('quiz-open');
   var quizBridge = window.webkit && window.webkit.messageHandlers;
   if (quiz && quizOpen && quizBridge && quizBridge.makeQuiz) {
-    quizOpen.hidden = false;
+    quizOpen.dataset.ready = '1';
+    paintQuizChoice();
     var showQuiz = function () {
       quiz.hidden = false;
       try { sessionStorage.setItem('quiz-open', '1'); } catch (e) {}
