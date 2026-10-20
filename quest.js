@@ -689,9 +689,20 @@ function snap(svg) {
     if (dx || dy) svg.style.transform = 'translate(' + dx + 'px,' + dy + 'px)';
   });
 }
+/* A decoration wider than the space left of the companion sits up against it
+   instead, and runs off the sidebar's left edge -- a big one shows its best end. */
+function fitDeco(svg) {
+  requestAnimationFrame(function () {
+    var pet = document.getElementById('pet'); if (!pet) return;
+    svg.style.justifySelf = '';
+    var room = pet.getBoundingClientRect().left + parseFloat(getComputedStyle(pet).paddingLeft);
+    if (svg.getBoundingClientRect().left < room) svg.style.justifySelf = 'end';
+  });
+}
+
 // all three: the decoration, the companion and the hoard
 function snapPet() { document.querySelectorAll('#pet .deco, #pet .wizard > svg, #pet .tally-hoard > svg').forEach(snap); }
-window.addEventListener('resize', snapPet);
+window.addEventListener('resize', function () { document.querySelectorAll('#pet .deco').forEach(fitDeco); snapPet(); });
 
 /* A decoration, drawn finer than the companion, as the hoard is. */
 function decoration(d, px) {
@@ -735,6 +746,7 @@ function wizardCat() {
     var right = Number(pet.dataset.quizRight) || 0, n = document.createElement('span');
     n.className = 'deco-n'; n.textContent = right; n.title = right + ' quiz answer' + (right === 1 ? '' : 's') + ' right';
     pet.insertBefore(deco, first); pet.insertBefore(n, first);
+    fitDeco(deco);
   }
   snapPet();
 }

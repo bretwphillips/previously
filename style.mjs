@@ -897,6 +897,7 @@ nav .space-switch select { width: 100%; font: inherit; font-size: 12.5px; font-w
                  border: 1px solid var(--line); background: var(--bg); color: var(--ink);
                  border-radius: 6px; }
 .themes button[aria-pressed="true"] { background: var(--sel); border-color: var(--muted); font-weight: 600; }
+.themes button.locked { cursor: default; color: var(--muted); border-style: dashed; }
 table.keys { width: 100%; border-collapse: collapse; font-size: 12.5px; }
 table.keys td { padding: 5px 0; border-bottom: 1px solid var(--line-soft); }
 table.keys td:last-child { text-align: right; }

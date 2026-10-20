@@ -735,9 +735,9 @@ function project(r) {
 // Optional, off-switchable, and fed only by evidence that something moved.
 function companion(pet, tally, quiz) {
   if (!pet) return "";
-  // the quiz's right answers, shown under a decoration
-  const right = quiz?.stats?.correct ?? 0;
-  return `<div class="pet" id="pet" data-mood="${pet.mood}" data-quiz-right="${right}" hidden>
+  // the quiz's right answers (shown under a decoration) and best run of them: what unlocks decorations
+  const right = quiz?.stats?.correct ?? 0, run = quiz?.stats?.bestRun ?? 0;
+  return `<div class="pet" id="pet" data-mood="${pet.mood}" data-quiz-right="${right}" data-quiz-run="${run}" hidden>
     ${Object.entries(pet.arts ?? { cat: pet.art })
       .map(([race, art]) => `<pre class="art" data-race="${race}"${race === "cat" ? "" : " hidden"}>${esc(art)}</pre>`)
       .join("")}
@@ -1189,15 +1189,9 @@ function settingsPane(userName, weightLimit = 5, terminals = [], update = null, 
             ${row("Colour", `<div class="swatches" id="colour-choice"></div>`, "The hat, plume or cloak.")}
             ${row(
               "Decoration",
-              `<div class="themes" id="decoration-choice">${[
-                ["none", "None"], ["bowl", "Food bowl"], ["house", "Dog house"], ["yarn", "Yarn"], ["arcade", "Arcade"],
-                ["chest", "Treasure chest"], ["campfire", "Campfire"], ["sword", "Sword in the stone"], ["potions", "Potions"],
-                ["pumpkin", "Jack-o\u2019-lantern"], ["cauldron", "Cauldron"], ["tombstone", "Tombstone"],
-                ["veladoras", "Veladoras"], ["marigolds", "Cempas\u00fachil"], ["sugarskull", "Sugar skull"],
-              ]
-                .map(([d, label]) => `<button data-deco="${d}">${label}</button>`)
-                .join("")}</div>`,
-              "Something beside it in quest mode. Each theme has its own, and remembers its pick.",
+              `<div class="themes" id="decoration-choice"></div>
+              <p class="hint" id="decoration-progress"></p>`,
+              "Something beside it in quest mode. Each theme has its own and remembers its pick; right quiz answers unlock more, and streaks of them a few specials.",
             )}
           </div>
           <div class="builder-preview" id="builder-preview" aria-hidden="true"></div>
