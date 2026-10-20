@@ -39,10 +39,14 @@ export function alertsFor(repo, narrative = {}) {
     return days < 14 ? plural(days, "day") : days < 60 ? plural(Math.floor(days / 7), "week")
       : plural(Math.floor(days / 30), "month");
   };
+  const ago = (at) => {
+    const days = Math.floor((Date.now() / 1000 - at) / 86400);
+    return days === 0 ? "today" : days === 1 ? "yesterday" : `${age(at)} ago`;
+  };
   for (const b of repo.unpushedBranches ?? [])
-    add("info", `${b.branch} has ${plural(b.commits, "commit")} on no remote, last ${age(b.at)} ago`, "git", true);
+    add("info", `${b.branch} has ${plural(b.commits, "commit")} on no remote, the last ${ago(b.at)}`, "git", true);
   if (repo.stashTimes?.length)
-    add("info", `${repo.stashTimes.length} stash${repo.stashTimes.length === 1 ? "" : "es"}, oldest ${age(Math.min(...repo.stashTimes))} ago`, "git", true);
+    add("info", `${repo.stashTimes.length} stash${repo.stashTimes.length === 1 ? "" : "es"}, oldest ${ago(Math.min(...repo.stashTimes))}`, "git", true);
 
   if (!repo.isDefault && repo.days !== null && repo.days > STALE_DAYS)
     add("quiet", `no commits in ${plural(repo.days, "day")}`, "git");
