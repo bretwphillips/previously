@@ -966,7 +966,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  // Settings -> Projects: one space's sync, or every space's, from its own buttons.
+  // Settings -> Spaces: one space's sync, or every space's, from its own buttons.
   document.addEventListener('click', function (e) {
     var button = e.target.closest ? e.target.closest('[data-sync-space], #sync-all') : null;
     if (!button || !window.webkit || !window.webkit.messageHandlers.syncNow) return;
@@ -1371,7 +1371,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (bridge) bridge.postMessage(this.value);
   });
 
-  /* Settings -> Projects: each space a column -- its name, the word on the
+  /* Settings -> Spaces: each space a column -- its name, the word on the
      title card, its folders and when it syncs -- plus whether the companion
      and the menu bar are shared. Saved whole to the app, which rebuilds. */
   var spacesState = JSON.parse((document.getElementById('spaces-data') || {}).textContent || 'null');

@@ -63,7 +63,7 @@ keeps macOS from blocking it -- and opens it. Each person on a shared Mac gets
 their own copy, built from their own folder. It also offers to add the Claude Code conventions to that folder's
 `CLAUDE.md` (see *Working with Claude*); the text is in `claude-section.md`.
 Repos in other folders, or a second set like personal projects, go in spaces of
-their own: Settings → Projects (see *Spaces* under *Using it*).
+their own: Settings → Spaces (see *Spaces* under *Using it*).
 
 **Updating:** once a day, when the window opens, Previously asks GitHub whether
 there's a newer release. When there is, a dot appears on the gear and
@@ -146,7 +146,7 @@ Open **Previously** (in `~/Applications`, or from Spotlight). It rebuilds and sh
 
 **Spaces.** Work and personal projects -- or a side job's -- don't have to share
 a dashboard. Each space is its own: its own repos, narrative, notes, tasks,
-standup and sync schedule. Settings → Projects shows them as columns: add the
+standup and sync schedule. Settings → Spaces shows them as columns: add the
 folders a space tracks (a folder of projects or a single project, anywhere on
 the Mac), drag a folder from one to another, set how often each syncs, and add
 more spaces. Once more than one space has folders, a select at the top of the
@@ -231,8 +231,8 @@ tasks go with it.
   [Tokyo Night](https://github.com/enkia/tokyo-night-vscode-theme) by enkia
   (all MIT), with a few colours adjusted for readability.
 - ⚙ or `⌘,` opens **Settings** as a pane of its own, in tabs: *General* (theme,
-  title card name, terminal, editor, standup weight, updates), *Projects* (spaces,
-  their folders and sync), *Markers*, *Shortcuts*, *Extras* (quote of the day, quest
+  title card name, terminal, editor, standup weight, updates), *Spaces* (their
+  folders and sync), *Markers*, *Shortcuts*, *Extras* (quote of the day, quest
   mode, the companion) and *A.I.* (notes for the AI, the code quiz, auto-resume). Hover a setting's name for what it does; **Done** or `Esc` goes back to
   the pane you came from. `⌘R` refresh, `⌘0` Overview, `⌘E` open `notes.md` in
   the app macOS opens `.md` files with, `` ⌃` `` terminal, `⌘Q` quit.
@@ -413,7 +413,7 @@ Standup is for team work. Whichever host most of a space's repos live on is take
 work, and anything else — no remote at all, or a side project on another host — is
 shown in the app but left out of the post. Its pane says so, next to the title.
 
-That is each space's **Standup** choice in Settings → Projects, *Main host only*,
+That is each space's **Standup** choice in Settings → Spaces, *Main host only*,
 and the default: side projects mixed in with work stay out until you move them to
 a space of their own. *Every repo* reports everything in the space instead -- for a
 Work space that holds only work, where the odd work tool hosted publicly on GitHub
@@ -483,7 +483,7 @@ recent. A new question is never one it has asked before.
 ---
 ## Sync
 
-Each space sets its own schedule in Settings → Projects. **Manual** by default —
+Each space sets its own schedule in Settings → Spaces. **Manual** by default —
 nothing is fetched, ever.
 
 Set it to **Weekly**, **Daily**, **Hourly** or **Every 15 min** and the app syncs -- `git fetch --prune` across
@@ -624,7 +624,7 @@ When you sync, the sync's own answer wins (see *Sync*).
 On launch, *"Previously, on Sam's work…"* holds for a few seconds under the title
 bar and fades out. The name comes from `git config user.name`, falling back to your
 macOS account name, and Settings takes an override — leave it blank to go back to
-git's answer. The last word is the space's own (Settings → Projects): *work*,
+git's answer. The last word is the space's own (Settings → Spaces): *work*,
 *personal*, *side job*.
 
 It plays once per launch, not once per render: the page reloads whenever the window
@@ -711,7 +711,7 @@ the rest sit beside the code. None of them are tracked by git.
 
 | | |
 |---|---|
-| `spaces.json` | The spaces: each one's name, title-card word and folders, which one is showing, and the companion and menu-bar choices. Written by Settings → Projects. |
+| `spaces.json` | The spaces: each one's name, title-card word and folders, which one is showing, and the companion and menu-bar choices. Written by Settings → Spaces. |
 | `settings.json` | The app's settings -- markers, terminal, editor, standup weight, updates, the quiz and auto-resume (the theme and the companion are kept by the app itself). Each space has its own too, holding only when it syncs. |
 | `ai-notes.md` | Your notes for AI sessions, for every space (**Settings → A.I.**). Each space keeps its own beside its other data. |
 | `update.json` | The last update check: the latest release and its notes, and why the last update stopped, if it did. |
@@ -1174,7 +1174,7 @@ tag -- a full release, not a draft or a pre-release, which the update check skip
 - Contact GitLab or GitHub unless you ask it to, apart from asking GitHub at
   launch and about once a day for Previously's own latest release (off in **Settings → General**). Everything
   else comes from clones on disk; syncing is opt-in, per space, in
-  **Settings → Projects** (see *Sync*).
+  **Settings → Spaces** (see *Sync*).
 - Run in the background. No daemon, no cron; with the app closed, the laptop shut
   or you away, nothing happens. (With auto-resume on, Claude Code runs a small hook
   as each session starts; it only notes the session's ID for a drawer tab.)
