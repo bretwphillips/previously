@@ -813,6 +813,10 @@ final class TerminalDrawer: NSObject, WKScriptMessageHandler, WKNavigationDelega
         UserDefaults.standard.set(shells.values.filter(\.claude).map(\.key), forKey: Self.claudeKey)
     }
 
+    private func forgetSession(_ key: String) {
+        try? FileManager.default.removeItem(at: codeDir.appendingPathComponent("terminal-sessions/\(key)"))
+    }
+
     /// The session a tab was running: what the hook filed under its key, else
     /// the newest in that folder. Only one Claude Code still has on disk.
     private func sessionId(for key: String, in dir: URL) -> String? {
@@ -986,6 +990,8 @@ final class TerminalDrawer: NSObject, WKScriptMessageHandler, WKNavigationDelega
         shell.exitWatch?.cancel()
         shells[shell.id] = nil
         saveClaudeTabs()
+        // Closed by hand: its session isn't coming back. A quit or crash keeps it.
+        if !quitting { forgetSession(shell.key) }
         // Whatever it printed last is dropped: its tab is going.
         call("window.termClosed(\(shell.id))")
         if shells.isEmpty { onEmpty?() }
@@ -1019,6 +1025,9 @@ final class TerminalDrawer: NSObject, WKScriptMessageHandler, WKNavigationDelega
         if claude != shell.claude {
             shell.claude = claude
             saveClaudeTabs()
+            // Left Claude: a later one here may start with the hook off, and must
+            // not inherit this session. Quitting ends Claude too, and keeps it.
+            if !claude && !quitting { forgetSession(shell.key) }
         }
         guard front == shell.pid,
               let cwd = workingDirectory(of: shell)

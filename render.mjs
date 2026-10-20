@@ -956,9 +956,10 @@ function settingsPane(userName, weightLimit = 5, terminals = [], update = null, 
           "Auto-resume",
           `<div class="themes" id="resume-choice"><button data-resume="off">Off</button><button data-resume="on">On</button></div>
           ${about(
-            "Claude sessions running in the in-app terminal when the app quits or crashes come back in their tabs next time.",
+            "Claude sessions running in the in-app terminal when the app quits or crashes come back in their tabs next time. Sessions already running when you turn it on aren\u2019t tracked: restart them.",
             `<p>Each tab of the in-app terminal (Settings \u2192 General \u2192 Terminal: In app) remembers the Claude Code session running in it, by its ID. When the app opens again, a tab that had one starts <code>claude --resume</code> with that ID, then is an ordinary shell once you leave Claude. Resuming only reloads the conversation; nothing is sent until you type.</p>
             <p><b>What turning it on changes.</b> A small hook is added to <code>~/.claude/settings.json</code>, so each session tells Previously its ID as it starts; turning it off takes the hook out again and leaves the rest of that file as it was. Only IDs are kept, never what was said -- the conversations stay where Claude Code keeps them.</p>
+            <p><b>Sessions already running.</b> A session tells Previously its ID only as it starts, so one already open when you turn this on can\u2019t. After a restart its tab picks the most recent conversation in that folder, which may be another one -- leave Claude and start it again (or <code>/resume</code> it) to be sure. Leaving Claude or closing the tab forgets its session; quitting the app keeps it.</p>
             <p>A session that has since been deleted opens a plain shell with a note instead. Sessions in another terminal app are out of reach.</p>`,
           )}`,
         )}
