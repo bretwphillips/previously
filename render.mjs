@@ -19,6 +19,7 @@ import { issueUrl, mrUrl, branchUrl, isGitHub } from "./hosts.mjs";
 import { OFRENDA, ofrendaArt, DOTD_STOPS, PAPEL_PICADO, MUERTOS_CSS } from "./muertos.mjs";
 import { COBWEB, COBWEB_CSS } from "./cobweb.mjs";
 import { IVY, IVY_CSS } from "./ivy.mjs";
+import { TOYS, toysArt } from "./toys.mjs";
 import { TRIGGERS, COLOURS, DEFAULT_MARKERS, readMarkers, triggerOf } from "./markers.mjs";
 import { HOLIDAYS } from "./holidays.mjs";
 
@@ -788,9 +789,9 @@ function tallyMark(tally) {
     const next = steps.find(([from]) => from > count);
     return `${count} commit${count === 1 ? "" : "s"} since ${day}${next ? ` \u00b7 ${next[1]} at ${next[0]}` : ""}`;
   };
-  return `<div class="tally" title="${esc(titleFor(HOARD))}" data-title-gold="${esc(titleFor(HOARD))}" data-title-candy="${esc(titleFor(CANDY))}" data-title-ofrenda="${esc(titleFor(OFRENDA))}">
+  return `<div class="tally" title="${esc(titleFor(HOARD))}" data-title-gold="${esc(titleFor(HOARD))}" data-title-candy="${esc(titleFor(CANDY))}" data-title-ofrenda="${esc(titleFor(OFRENDA))}" data-title-toys="${esc(titleFor(TOYS))}">
       <div class="tally-text"><span class="tally-label">commit${count === 1 ? "" : "s"}</span><span class="tally-n">${count}</span></div>
-      <div class="tally-hoard">${hoardArt(count)}${candyArt(count)}${ofrendaArt(count)}<span class="tally-n">${count}</span></div>
+      <div class="tally-hoard">${hoardArt(count)}${candyArt(count)}${ofrendaArt(count)}${toysArt(count)}<span class="tally-n">${count}</span></div>
     </div>`;
 }
 

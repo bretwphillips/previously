@@ -648,8 +648,10 @@ function defeat(tab, id) {
    its pane is first shown -- a hidden pane measures every tab as zero wide. */
 function decorate() {
   var s = seen();
+  // the None theme keeps the tabs as they are out of quest mode
+  var plain = document.body.classList.contains('quest-none');
   document.querySelectorAll('.thread-tabs button[data-quest]').forEach(function (tab) {
-    if (tab.dataset.questDone || !tab.offsetWidth) return;
+    if (plain || tab.dataset.questDone || !tab.offsetWidth) return;
     tab.dataset.questDone = '1';
     var q = JSON.parse(tab.dataset.quest);
     var lock = (q.locks || []).filter(function (l) { return l.open; })[0];
@@ -770,7 +772,7 @@ document.addEventListener('companionchange', function () { if (questOn()) wizard
 function drawRoad() {
   var scroll = document.querySelector('nav .nav-scroll'); if (!scroll) return;
   var old = scroll.querySelector('.road'); if (old) old.remove();
-  if (!questOn()) return;
+  if (!questOn() || document.body.classList.contains('quest-none')) return;
   var base = scroll.getBoundingClientRect();
   var pts = [].slice.call(scroll.querySelectorAll('.trail'))
     .sort(function (a, b) { return b.dataset.step - a.dataset.step; })
