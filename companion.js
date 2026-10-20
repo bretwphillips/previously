@@ -393,9 +393,11 @@ const LOOK_OUTFITS = {
   dress: ["..UUUUUUUUUUUUU..", ".E3U3U3U3U3U3U3E.", "E333333333333333E", "E333333383333333E", "E131313131313131E"],
   suit: ["...E000898000E...", "..E000UUUUU000E..", "..E0600UUU0000E..", "..E00000U00000E.."],
   rebozo: [".E3333333333333E.", "E3333E.....E3333E", "E31E.........E13E", "E33E.........E33E", ".1.1.........1.1."],
-  waistcoat: ["...EVVUUUUUVVE...", "...EV6VUUUVVVE...", "...EVVVV7VVVVE...", "....EVVVVVVVE...."],
+  waistcoat: ["...EV6UUUUUVVE...", "...E676UUUVVVE...", "...EV6VV7VVVVE...", "....EVVVVVVVE...."],
 };
 const LOOKS = { catrina: ["catrina", "dress"], catrin: ["topHat", "suit"], crown: ["crown", "rebozo"], fedora: ["fedora", "waistcoat"] };
+// La Catrina and El Catrín are calaveras; the others are worn with or without the face paint.
+const LOOKS_PAINTED = ["catrina", "catrin"];
 const LOOK_FUR = { C: 1, h: 1, c: 1, D: 1, i: 1, k: 1 }, LOOK_FEATURES = { e: 1, w: 1, p: 1, m: 1 };
 function calavera(grid, a, ox, oy, calm) {
   const eyes = [], mid = W / 2;
@@ -438,7 +440,7 @@ function calavera(grid, a, ox, oy, calm) {
 }
 
 // Puts a costume on an already composed animal; returns the colours it adds.
-function dressUp(grid, animal, mood, costume) {
+function dressUp(grid, animal, mood, costume, facePaint = true) {
   const a = ANIMALS[animal];
   const ox = (W - 17) / 2, oy = H - a.rows.length;
   // '_' is an eye hole: the animal shows through it as it is, eyes and all.
@@ -449,7 +451,7 @@ function dressUp(grid, animal, mood, costume) {
   }));
   if (LOOKS[costume]) {
     const [head, outfit] = LOOKS[costume];
-    calavera(grid, a, ox, oy, layerRows(a, "happy"));
+    if (facePaint || LOOKS_PAINTED.includes(costume)) calavera(grid, a, ox, oy, layerRows(a, "happy"));
     const hat = LOOK_HEADS[head];
     put(hat, oy + a.headTop + (a.hatDrop || 0) - (hat.length - 1));
     put(LOOK_OUTFITS[outfit], oy + a.neck);
@@ -537,7 +539,7 @@ function companion(pick, mood) {
   const costume = pick.halloween || pick.muertos ? [null, {}]
     : { wizard: ["wizard", {}], ranger: ["ranger", { cloak: true }], knight: ["knightChin", {}] }[pick.cls] || [null, {}];
   const { grid, pal: dressed } = compose(pick.race, mood, costume[0], pick.coat, spooky ? null : pick.colour, costume[1]);
-  const pal = spooky ? { ...dressed, ...dressUp(grid, pick.race, mood, spooky) } : dressed;
+  const pal = spooky ? { ...dressed, ...dressUp(grid, pick.race, mood, spooky, pick.facePaint !== false) } : dressed;
   const rows = grid.slice(CROP).map((r) => r.join(""));
   const pad = ".".repeat((W - 17) / 2);
   // On a roll the health overruns the bar: the frame whole, the gold running over its
@@ -2502,7 +2504,7 @@ function decorationsFor(theme, right, run) {
 }
 const api = { MOODS, ANIMALS, HATS, COATS, HAT_COLOURS, W, H, compose, companion, dressUp, DECORATIONS,
   RACES: ["cat", "pug", "frog"], CLASSES: ["none", "wizard", "ranger", "knight"],
-  COSTUMES: ["none", ...Object.keys(COSTUMES)], LOOKS: Object.keys(LOOKS),
+  COSTUMES: ["none", ...Object.keys(COSTUMES)], LOOKS: Object.keys(LOOKS), LOOKS_PAINTED,
   DECORATION_NAMES: ["none", ...Object.keys(DECORATIONS)], DECORATION_LADDERS, DECORATION_STREAKS, decorationsFor,
   DECORATION_PX, decorationPx };
 

@@ -1185,6 +1185,11 @@ function settingsPane(userName, weightLimit = 5, terminals = [], update = null, 
                 .join("")}</div>`,
               "What it wears in fantasy mode during Día de los Muertos.",
             )}
+            ${row(
+              "Face paint",
+              `<div class="themes" id="paint-choice"><button data-paint="on">Sugar skull</button><button data-paint="off">None</button></div>`,
+              "A sugar skull painted on, or its own face. La Catrina and El Catrín are always calaveras.",
+            )}
             ${row("Colour", `<div class="swatches" id="colour-choice"></div>`, "The hat, plume or cloak.")}
             ${row(
               "Decoration",
