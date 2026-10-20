@@ -727,6 +727,23 @@ document.addEventListener('DOMContentLoaded', function () {
 
   /* Saved with sync in settings.json, because the standup is drafted by the
      build, which cannot read this page's storage. */
+  var editorButtons = document.querySelectorAll('#editor-choice button');
+  for (var eb = 0; eb < editorButtons.length; eb++) {
+    editorButtons[eb].addEventListener('click', function () {
+      saveSetting('editor', this.dataset.editor);
+      for (var x = 0; x < editorButtons.length; x++) editorButtons[x].setAttribute('aria-pressed', String(editorButtons[x] === this));
+    });
+  }
+  var quizCount = document.getElementById('quiz-count');
+  if (quizCount) {
+    if (!settingsBridge) quizCount.disabled = true;
+    quizCount.addEventListener('change', function () {
+      var n = Math.max(1, Math.min(10, Math.round(Number(this.value) || 3)));
+      this.value = n;
+      saveSetting('quizCount', n);
+    });
+  }
+
   var weightField = document.getElementById('weight-limit');
   if (weightField) {
     if (!settingsBridge) weightField.disabled = true;
@@ -1929,6 +1946,52 @@ document.addEventListener('DOMContentLoaded', function () {
     standupPreview.scrollTop = 0;
   }
   document.getElementById('standup-open').addEventListener('click', openStandup);
+
+  /* Quiz: made by the app (quiz.mjs) when asked, answered here. A new quiz
+     reloads the page, so an open sheet is remembered and opened again. */
+  var quiz = document.getElementById('quiz');
+  var quizOpen = document.getElementById('quiz-open');
+  var quizBridge = window.webkit && window.webkit.messageHandlers;
+  if (quiz && quizOpen && quizBridge && quizBridge.makeQuiz) {
+    quizOpen.hidden = false;
+    var showQuiz = function () {
+      quiz.hidden = false;
+      try { sessionStorage.setItem('quiz-open', '1'); } catch (e) {}
+    };
+    var hideQuiz = function () {
+      quiz.hidden = true;
+      try { sessionStorage.removeItem('quiz-open'); } catch (e) {}
+    };
+    quizOpen.addEventListener('click', showQuiz);
+    quiz.querySelector('.close').addEventListener('click', hideQuiz);
+    quiz.addEventListener('click', function (e) { if (e.target === quiz) hideQuiz(); });
+    try { if (sessionStorage.getItem('quiz-open')) quiz.hidden = false; } catch (e) {}
+
+    var make = document.getElementById('quiz-make');
+    if (make) make.addEventListener('click', function () {
+      make.disabled = true;
+      make.textContent = 'Making\u2026';
+      document.getElementById('quiz-status').textContent = 'Reading the code; this takes a few seconds.';
+      quizBridge.makeQuiz.postMessage('');
+    });
+
+    quiz.addEventListener('click', function (e) {
+      var choice = e.target.closest ? e.target.closest('.quiz-choices button') : null;
+      if (!choice || choice.disabled) return;
+      var item = choice.closest('.quiz-q');
+      var picked = Number(choice.dataset.choice);
+      var answer = Number(item.dataset.answer);
+      var buttons = item.querySelectorAll('.quiz-choices button');
+      for (var i = 0; i < buttons.length; i++) {
+        buttons[i].disabled = true;
+        if (i === answer) buttons[i].classList.add('is-answer');
+        else if (i === picked) buttons[i].classList.add('is-chosen');
+      }
+      item.classList.add(picked === answer ? 'right' : 'wrong');
+      item.querySelector('.quiz-why').hidden = false;
+      if (quizBridge.quizAnswer) quizBridge.quizAnswer.postMessage(JSON.stringify({ id: item.dataset.id, choice: picked }));
+    });
+  }
 
   /* A ticket's own checklist, ticked here. Saved to checks.json beside the
      narrative; GitLab is never written to. Read-only outside the app. */
