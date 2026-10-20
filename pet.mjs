@@ -20,14 +20,14 @@ const MOODS = {
   dancing: {
     face: "^o^",
     arms: ["\\", "/"],
-    line: "thriving",
+    line: "on a roll",
     quest: "unstoppable",
   },
   happy: { face: "^.^", arms: ["(", ")"], line: "well fed", quest: "full health" },
   content: { face: "o.o", arms: ["(", ")"], line: "doing fine", quest: "ready" },
-  peckish: { face: "-.-", arms: ["(", ")"], line: "peckish", quest: "worn" },
+  peckish: { face: "-.-", arms: ["(", ")"], line: "getting peckish", quest: "worn" },
   hungry: { face: ";_;", arms: ["(", ")"], line: "hungry", quest: "low HP" },
-  sad: { face: "T_T", arms: ["(", ")"], line: "starving", quest: "needs healing" },
+  sad: { face: "T_T", arms: ["(", ")"], line: "has not eaten in a while", quest: "needs healing" },
 };
 
 // Each feed adds one to fullness, which halves every hour. A count over a fixed

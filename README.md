@@ -629,15 +629,15 @@ fed by evidence that something moved, not by volume:
   its own reach the fullness of six that makes it dance
 
 The good moods come from **fullness**: each feed adds one, and fullness halves
-every hour. Six or more is `thriving`, and it dances; two or more is `well fed`.
+every hour. Six or more is `on a roll`, and it dances; two or more is `well fed`.
 A quick burst gets it dancing, and it calms as you slow down rather than staying
 up for the rest of the day, then empties overnight on its own. The status line
 still counts the calendar day's feeds — the count is the record, the mood is
 momentum, so a big day can end on `doing fine`.
 
 Below that, mood is hunger, counted from the last feed: `doing fine` for four
-hours, then `peckish`, `hungry` past a working day, and `starving` past
-three. Four hours is short on purpose — one commit a day
+hours, then `getting peckish`, `hungry` past a working day, and `has not
+eaten in a while` past three. Four hours is short on purpose — one commit a day
 should not keep it content, so it usually wakes up peckish and the first feed of
 the morning settles it. It reads `--author=` your git email, so other
 people's commits in a shared repo do not feed it.
