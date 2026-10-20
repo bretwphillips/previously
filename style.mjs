@@ -202,6 +202,18 @@ const GARDEN = `
   --sel: #5e4632;
 `;
 
+// Starry night, after Van Gogh: night blue, moon-yellow ink, and glowing stars
+// and swirling strokes behind the panels. Goes on top of DARK.
+const STARRY_NIGHT = `
+  --bg: #0f1e3d; --panel: #16284d; --ink: #f3ecd2; --muted: #b7c2dc;
+  --line: #2a3f6b; --line-soft: #1f335c;
+  --blocked: #ff7a6b; --action: #f2a65a; --waiting: #8fb3ea; --quiet: #6f7fa6;
+  --mark-other: #ff7a6b; --mark-unfinished: #c49af0; --mark-new: #9fd67a;
+  --mark-blue: #8fb3ea; --mark-amber: #f2c94c;
+  --sel: #2c4478;
+`;
+const STARS = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320' opacity='0.6'%3E%3Cpath d='M93.8,111.2 L94.0,112.6 L93.8,114.1 L92.9,115.7 L91.5,117.0 L89.6,117.9 L87.3,118.3 L84.8,118.0 L82.3,116.8 L80.1,114.9 L78.3,112.3 L77.3,109.1 L77.3,105.6 L78.2,102.0 L80.2,98.6 L83.2,95.7 L87.0,93.6 L91.5,92.6 L96.2,92.9 L100.9,94.5 L105.2,97.4 L108.7,101.5 L111.1,106.5 L112.0,112.2 L111.4,118.2 L109.2,124.0 L105.3,129.1 L100.1,133.2 L93.8,135.8 L86.8,136.7 L79.7,135.7 L72.8,132.7 L66.9,127.9 L62.3,121.5 L59.4,114.0 L58.7,105.8 L60.1,97.4 L63.8,89.5 L69.6,82.8' stroke='%238fb3ea' stroke-width='2.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M84.1,118.1 L81.4,117.0 L78.8,114.9 L76.9,112.0 L75.7,108.4 L75.6,104.3 L76.7,100.1 L79.1,96.1 L82.6,92.7 L87.2,90.3 L92.6,89.2 L98.3,89.6 L104.0,91.6 L109.2,95.2 L113.4,100.3 L116.2,106.5 L117.3,113.6 L116.4,121.1 L113.5,128.2 L108.6,134.6 L102.0,139.6 L94.0,142.8 L85.1,143.8 L76.1,142.4 L67.5,138.5 L59.9,132.3 L54.1,124.1 L50.6,114.4 L49.8,103.8 L51.8,93.1 L56.6,83.0 L64.2,74.4' stroke='%235f86c8' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M241.8,233.6 L241.0,234.6 L239.7,235.4 L238.0,235.9 L236.1,235.7 L234.2,235.0 L232.4,233.6 L231.0,231.6 L230.2,229.1 L230.1,226.3 L230.9,223.4 L232.5,220.7 L234.9,218.3 L238.0,216.7 L241.7,215.9 L245.6,216.2 L249.5,217.6 L253.0,220.1 L255.8,223.6 L257.7,227.9 L258.3,232.7 L257.6,237.8 L255.5,242.6 L252.1,246.8 L247.5,250.1 L242.0,252.1 L236.0,252.6 L229.9,251.4 L224.1,248.5 L219.2,244.1 L215.6,238.3 L213.5,231.6 L213.3,224.4 L215.1,217.3' stroke='%238fb3ea' stroke-width='2.4' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M10 200 C 50 180, 90 225, 135 205 S 200 185, 230 160' stroke='%235f86c8' stroke-width='2.2' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M180 60 C 210 45, 245 75, 280 55 S 310 40, 318 48' stroke='%238fb3ea' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M150 290 C 175 275, 200 300, 225 285' stroke='%238fb3ea' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='200' cy='120' r='8.3' fill='%23f2c94c' opacity='0.22'/%3E%3Ccircle cx='200' cy='120' r='4.7' fill='%23f2c94c' opacity='0.35'/%3E%3Ccircle cx='200' cy='120' r='2.6' fill='%23fff6c8'/%3E%3Ccircle cx='40' cy='40' r='6.4' fill='%23f2c94c' opacity='0.22'/%3E%3Ccircle cx='40' cy='40' r='3.6' fill='%23f2c94c' opacity='0.35'/%3E%3Ccircle cx='40' cy='40' r='2' fill='%23fff6c8'/%3E%3Ccircle cx='285' cy='150' r='7.0' fill='%23f2c94c' opacity='0.22'/%3E%3Ccircle cx='285' cy='150' r='4.0' fill='%23f2c94c' opacity='0.35'/%3E%3Ccircle cx='285' cy='150' r='2.2' fill='%23fff6c8'/%3E%3Ccircle cx='150' cy='250' r='5.8' fill='%23f2c94c' opacity='0.22'/%3E%3Ccircle cx='150' cy='250' r='3.2' fill='%23f2c94c' opacity='0.35'/%3E%3Ccircle cx='150' cy='250' r='1.8' fill='%23fff6c8'/%3E%3Ccircle cx='260' cy='300' r='1.4' fill='%23fff6c8'/%3E%3Ccircle cx='120' cy='30' r='1.2' fill='%23fff6c8'/%3E%3Ccircle cx='30' cy='280' r='1.5' fill='%23fff6c8'/%3E%3Ccircle cx='300' cy='20' r='1.2' fill='%23fff6c8'/%3E%3Ccircle cx='170' cy='180' r='1.1' fill='%23fff6c8'/%3E%3Ccircle cx='60' cy='160' r='1.2' fill='%23fff6c8'/%3E%3Ccircle cx='240' cy='90' r='1' fill='%23fff6c8'/%3E%3C/svg%3E";
+
 // Borrowed palettes, each based on its author's theme (all MIT), with a few
 // colours adjusted where the original is too faint to read as text:
 // Solarized (Ethan Schoonover), Gruvbox (Pavel Pertsev), Everforest (Sainnhe Park),
@@ -256,7 +268,7 @@ const BORROWED = [
 ];
 
 // Every theme picked by hand that wants the dark versions of pictures.
-export const DARK_ROOT = `:root:is(${["dark", "bacon", "blueberry", "garden", ...BORROWED.filter((t) => t.dark).map((t) => t.id)]
+export const DARK_ROOT = `:root:is(${["dark", "bacon", "blueberry", "garden", "starry-night", ...BORROWED.filter((t) => t.dark).map((t) => t.id)]
   .map((id) => `[data-theme="${id}"]`).join(", ")})`;
 
 export const THEMES = [
@@ -281,6 +293,7 @@ export const THEMES = [
   { id: "birthday-cake-white", label: "Birthday Cake (White)", group: "Just for fun" },
   { id: "nineties", label: "90s", group: "Just for fun" },
   { id: "garden", label: "Grass & Dirt", group: "Just for fun" },
+  { id: "starry-night", label: "Starry Night", group: "Just for fun" },
 ];
 
 export const CSS = `
@@ -301,6 +314,8 @@ ${LIGHT}
 :root[data-theme="birthday-cake-white"] {${BIRTHDAY_CAKE_WHITE}}
 :root[data-theme="nineties"] {${NINETIES}}
 :root[data-theme="garden"] {${DARK}${GARDEN}}
+:root[data-theme="starry-night"] {${DARK}${STARRY_NIGHT}}
+${backdrop("starry-night", "15, 30, 61", STARS)}
 :root[data-theme="garden"] body { background-image: linear-gradient(#3b2a1d, #2a1d14); background-attachment: fixed; }
 :root[data-theme="garden"] .top { background: linear-gradient(#4f8a2e, #3f7524); border-bottom: 0; }
 :root[data-theme="strawberry"] {${STRAWBERRY}}
