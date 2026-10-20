@@ -509,10 +509,34 @@ final class Shell {
     }
 }
 
+/// The drawer's web view, taking files dropped on it as Terminal does: their
+/// paths, pasted where you dropped them. The page itself only ever sees text.
+final class DropWebView: WKWebView {
+    var onDropFiles: (([URL], NSPoint) -> Void)?
+
+    private func files(_ info: NSDraggingInfo) -> [URL] {
+        info.draggingPasteboard.readObjects(forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true]) as? [URL] ?? []
+    }
+    override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation {
+        files(sender).isEmpty ? super.draggingEntered(sender) : .copy
+    }
+    override func draggingUpdated(_ sender: NSDraggingInfo) -> NSDragOperation {
+        files(sender).isEmpty ? super.draggingUpdated(sender) : .copy
+    }
+    override func performDragOperation(_ sender: NSDraggingInfo) -> Bool {
+        let urls = files(sender)
+        guard !urls.isEmpty else { return super.performDragOperation(sender) }
+        let p = convert(sender.draggingLocation, from: nil)
+        onDropFiles?(urls, NSPoint(x: p.x, y: bounds.height - p.y))
+        return true
+    }
+}
+
 /// The in-app terminal: a shell per tab, all shown in one web view of their
-/// own. Only keystrokes typed into that view reach a shell: the dashboard's
-/// web view has no handler that leads here, and the app itself never writes
-/// to one -- it can start a shell in a folder, show it, or end it.
+/// own. Only what you put into that view reaches a shell -- keystrokes, and the
+/// paths of files you drop on it: the dashboard's web view has no handler that
+/// leads here, and the app never writes to one on its own -- it can start a shell
+/// in a folder, show it, or end it.
 final class TerminalDrawer: NSObject, WKScriptMessageHandler, WKNavigationDelegate {
     let view = NSView()
     let shade = Shade()
@@ -544,8 +568,10 @@ final class TerminalDrawer: NSObject, WKScriptMessageHandler, WKNavigationDelega
         for name in ["termInput", "termResize", "termReady", "termClose", "termNew", "termSplit", "termLayout"] {
             config.userContentController.add(self, name: name)
         }
-        web = WKWebView(frame: .zero, configuration: config)
+        let dropView = DropWebView(frame: .zero, configuration: config)
+        web = dropView
         web.navigationDelegate = self
+        dropView.onDropFiles = { [weak self] urls, point in self?.dropFiles(urls, at: point) }
         web.setValue(false, forKey: "drawsBackground")
 
         handle.onDrag = { [weak self] y in self?.onDrag?(y) }
@@ -732,6 +758,23 @@ final class TerminalDrawer: NSObject, WKScriptMessageHandler, WKNavigationDelega
     func terminateAll(quitting: Bool = false) {
         if quitting { self.quitting = true }
         for shell in shells.values { kill(shell.pid, SIGHUP) }
+    }
+
+    // MARK: Dropped files
+
+    /// Each path shell-quoted the way Terminal does it, then pasted into the shell
+    /// under the pointer by the page, as a paste -- so nothing runs, and a program
+    /// listening for pastes (Claude Code taking an image) sees one.
+    private func dropFiles(_ urls: [URL], at point: NSPoint) {
+        let quoted = urls.map { url -> String in
+            var out = ""
+            for ch in url.path {
+                if " \\'\"()[]{}&;|<>*?$`!#~=%^,".contains(ch) { out.append("\\") }
+                out.append(ch)
+            }
+            return out
+        }.joined(separator: " ") + " "
+        call("window.termDrop(\(point.x), \(point.y), \(jsString(quoted)))")
     }
 
     // MARK: Auto-resume
