@@ -30,5 +30,11 @@ if (want === "install") starts.push({ hooks: [{ type: "command", command: COMMAN
 settings.hooks = { ...settings.hooks, SessionStart: starts };
 if (!starts.length) delete settings.hooks.SessionStart;
 if (!Object.keys(settings.hooks).length) delete settings.hooks;
-writeFileSync(FILE, JSON.stringify(settings, null, 2) + "\n");
-console.log(want === "install" ? "hook added" : "hook removed");
+const text = JSON.stringify(settings, null, 2) + "\n";
+// Run at every launch: a file already as it should be is left untouched.
+const before = existsSync(FILE) ? readFileSync(FILE, "utf8") : "";
+if (JSON.stringify(JSON.parse(before || "{}")) === JSON.stringify(settings)) console.log("hook already " + (want === "install" ? "in" : "out"));
+else {
+  writeFileSync(FILE, text);
+  console.log(want === "install" ? "hook added" : "hook removed");
+}

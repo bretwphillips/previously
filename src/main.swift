@@ -779,6 +779,24 @@ final class TerminalDrawer: NSObject, WKScriptMessageHandler, WKNavigationDelega
 
     // MARK: Auto-resume
 
+    /// Claude Code, however it was installed: its executable is often named for
+    /// its version (~/.local/share/claude/versions/2.1.304, linked as claude), or
+    /// it is node running claude-code. So what it was started as counts, not the
+    /// file's name.
+    static func isClaude(_ pid: pid_t) -> Bool {
+        var mib: [Int32] = [CTL_KERN, KERN_PROCARGS2, pid]
+        var size = 0
+        guard sysctl(&mib, 3, nil, &size, nil, 0) == 0, size > 0 else { return false }
+        var buf = [UInt8](repeating: 0, count: size)
+        guard sysctl(&mib, 3, &buf, &size, nil, 0) == 0, size > 4 else { return false }
+        // argc, then the executable's path, padding, then argv
+        let parts = buf[4..<size].split(separator: 0, omittingEmptySubsequences: true)
+            .prefix(4).map { String(decoding: $0, as: UTF8.self) }
+        return parts.contains { p in
+            (p as NSString).lastPathComponent == "claude" || p.contains("/claude/versions/") || p.contains("claude-code")
+        }
+    }
+
     /// The keys of tabs Claude Code is running in, kept as it changes, so a
     /// crash leaves the last word.
     private static let claudeKey = "TerminalClaude"
@@ -997,9 +1015,7 @@ final class TerminalDrawer: NSObject, WKScriptMessageHandler, WKNavigationDelega
     private func inspect(_ shell: Shell, react: Bool = false) {
         guard !shell.closed else { return }
         let front = tcgetpgrp(shell.master)
-        var name = [CChar](repeating: 0, count: 256)
-        let claude = front > 0 && front != shell.pid
-            && proc_name(front, &name, UInt32(name.count)) > 0 && String(cString: name) == "claude"
+        let claude = front > 0 && front != shell.pid && Self.isClaude(front)
         if claude != shell.claude {
             shell.claude = claude
             saveClaudeTabs()
@@ -1081,6 +1097,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, WKN
             self?.followPage()
         }
         checkForUpdate()
+        // Auto-resume needs Claude Code's session hook: added or taken out to match
+        // the setting, in case it was switched while the app couldn't do it.
+        let resume = ((try? JSONSerialization.jsonObject(with: Data(contentsOf: codeDir.appendingPathComponent("settings.json")))) as? [String: Any])?["autoResume"] as? String
+        try? script("session-hook.sh", args: [resume == "on" ? "install" : "remove"]).run()
     }
 
     func applicationWillTerminate(_ notification: Notification) { drawer.terminateAll(quitting: true) }
