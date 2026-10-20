@@ -12,6 +12,7 @@ export const TRIGGERS = [
   { id: "comments", label: "Comment from someone else" },
   { id: "commits", label: "Someone pushed to your branch" },
   { id: "settled", label: "Someone merged or closed yours" },
+  { id: "unblocked", label: "A blocker landed" },
   { id: "conflict", label: "Merge conflict", lasting: true },
   { id: "pipeline", label: "Pipeline failed", lasting: true },
   { id: "blocked", label: "Blocked note", lasting: true },
@@ -41,13 +42,13 @@ export const DEFAULT_MARKERS = {
   // lowest to highest priority, after the empty column
   order: ["blue", "amber", "news", "action", "waiting"],
   assign: {
-    review: "waiting", threads: "waiting", comments: "waiting", commits: "waiting", settled: "waiting",
+    review: "waiting", threads: "waiting", comments: "waiting", commits: "waiting", settled: "waiting", unblocked: "waiting",
     conflict: "action", pipeline: "action", blocked: "action", waiting: "action", uncommitted: "action",
     unpushed: "action", stash: "action", sidebranch: "action", neverpushed: "action",
     merged: "news", behind: "news", quiet: "news", other: "news",
   },
   // also shown in the menu bar
-  bell: { review: true, threads: true, conflict: true, pipeline: true, blocked: true },
+  bell: { review: true, threads: true, conflict: true, pipeline: true, blocked: true, unblocked: true },
 };
 
 // A saved layout, made whole: anything missing or unknown falls back to the default.

@@ -179,7 +179,10 @@ tasks go with it.
   something on yours -- asked you to review a merge request, commented on your
   ticket or merge request (counted from
   the sync, net of your own comments), merged or closed it, or pushed commits to
-  your ticket branch in the last two weeks (read from git, so no GitLab call);
+  your ticket branch in the last two weeks (read from git, so no GitLab call),
+  or landed a ticket one of yours was waiting on -- "#58 is unblocked: #46 merged",
+  once, when the change is seen (from any blocker the app knows: the narrative,
+  your links, GitLab's blocking links or "blocked by #46" in a description);
   **purple**, work you haven't finished -- uncommitted, unpushed or stashed, a
   side branch never pushed, a note that it's blocked or waiting; **green**,
   anything else that changed since you last looked; **empty**, nothing new. Red
