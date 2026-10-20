@@ -38,9 +38,9 @@ const SPRITES = {
     "oTTTTTTTTTTTTTTto", "oRRRRRRRRRRRRRRRo", "ooooooooooooooooo"],
 };
 // each sweet's place takes a toy of its shape, taken in turn so a pile is a mix
-const AS = { wrapped: ["bone", "mouse", "fish", "carrot"], corn: ["yarn", "duck", "star"], drop: ["ball", "tennis", "ring"],
+const AS = { wrapped: ["mouse", "bone", "carrot", "fish"], corn: ["yarn", "duck", "star"], drop: ["ball", "tennis", "ring"],
   pop: ["rope", "wand"], handle: ["handle"], pail: ["basket"], sackBack: ["boxBack"], sackFront: ["boxFront"] };
-const NAMES = ["a toy", "two toys", "a handful of toys", "a small pile", "a basket", "a few in the basket", "a full basket",
+const NAMES = ["a ball", "a ball and a toy", "a handful of toys", "a small pile", "a basket", "a few in the basket", "a full basket",
   "a brimming basket", "an overflowing basket", "a toy box", "a toy box overflowing"];
 // the toys' colours in turn, not the candy's, which leaned orange
 const TINT = ["red", "purple", "green", "pink", "orange", "blue"];
@@ -51,6 +51,9 @@ export const TOYS = CANDY.map(([from, , w, h, items], i) => {
     return [kinds[n % kinds.length], x, y, TINT[(i * 2 + k) % TINT.length]];
   })];
 });
+// It starts with a ball, as any animal plays with one, and the next toy joins it.
+TOYS[0][4] = [["ball", 2, 0, "red"]];
+TOYS[1] = [TOYS[1][0], TOYS[1][1], 15, 5, [["mouse", 0, 0, "purple"], ["ball", 10, 0, "red"]]];
 
 function pile(w, h, items) {
   const grid = Array.from({ length: h }, () => Array(w).fill(null));
