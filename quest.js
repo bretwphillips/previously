@@ -729,7 +729,8 @@ function wizardCat() {
   // A decoration stands left of it, as the hoard does right, with the quiz's right
   // answers under it as the commits are under the hoard.
   pet.querySelectorAll('.deco, .deco-n').forEach(function (n) { n.remove(); });
-  var deco = decoration(COMPANION.DECORATIONS[companionPick().decoration], COMPANION.decorationPx(window.devicePixelRatio));
+  var pickedDeco = COMPANION.DECORATIONS[companionPick().decoration];
+  var deco = decoration(pickedDeco, COMPANION.decorationPx(window.devicePixelRatio, pickedDeco));
   if (deco) {
     var right = Number(pet.dataset.quizRight) || 0, n = document.createElement('span');
     n.className = 'deco-n'; n.textContent = right; n.title = right + ' quiz answer' + (right === 1 ? '' : 's') + ' right';

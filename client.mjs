@@ -1043,7 +1043,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var preview = document.getElementById('builder-preview');
     if (store.get('worklog.quest', 'off') === 'on') {
       var deco = C.DECORATIONS[pick.decoration];
-      preview.innerHTML = (deco ? builderSvg(deco, C.decorationPx(window.devicePixelRatio), false) : '') + builderSvg(C.companion(pick, 'happy'), deco ? 3 : 4);
+      preview.innerHTML = (deco ? builderSvg(deco, C.decorationPx(window.devicePixelRatio, deco), false) : '') + builderSvg(C.companion(pick, 'happy'), deco ? 3 : 4);
     } else {
       var texts = JSON.parse(document.getElementById('text-companions').textContent);
       preview.innerHTML = '<pre class="text-companion"></pre>';
