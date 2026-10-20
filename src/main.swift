@@ -1700,14 +1700,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, WKN
         if message.name == "syncNow" {
             let body = message.body as? String ?? ""
             if body == "all" {
-                syncQueue = spacesConfig()?.spaces.map(\.id) ?? [currentSpace()]
-                if !hourlyRunning { runSync(space: syncQueue.removeFirst()) }
+                for id in spacesConfig()?.spaces.map(\.id) ?? [currentSpace()] { queueSync(space: id) }
             } else if body.hasPrefix("{"),
                       let ask = try? JSONSerialization.jsonObject(with: Data(body.utf8)) as? [String: Any],
                       let space = ask["space"] as? String {
-                if hourlyRunning { syncQueue.append(space) } else { runSync(full: ask["full"] as? Bool == true, space: space) }
+                queueSync(full: ask["full"] as? Bool == true, space: space)
             } else {
-                runSync(full: body == "full")
+                queueSync(full: body == "full", space: currentSpace())
             }
             return
         }
@@ -1977,8 +1976,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, WKN
 
     /// A full sync of one space (the current one unless named): git fetch and
     /// GitLab. That space is then rebuilt, so the menu bar has its news.
-    /// Spaces waiting their turn after Sync all.
-    private var syncQueue: [String] = []
+    /// Syncs asked for while another runs, waiting their turn: one at a time, never two at once.
+    private var syncQueue: [(space: String, full: Bool)] = []
+
+    private func queueSync(full: Bool = false, space: String) {
+        if let i = syncQueue.firstIndex(where: { $0.space == space }) {
+            if full { syncQueue[i].full = true }
+        } else {
+            syncQueue.append((space, full))
+        }
+        if !hourlyRunning { nextSync() }
+    }
+
+    private func nextSync() {
+        guard !hourlyRunning, !syncQueue.isEmpty else { return }
+        let next = syncQueue.removeFirst()
+        runSync(full: next.full, space: next.space)
+    }
 
     private func runSync(full: Bool = false, space: String? = nil) {
         hourlyRunning = true
@@ -1992,7 +2006,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, WKN
                 self.refresh(space: id)
                 // The page shows every space's last sync, so it redraws even for another's.
                 if id != currentSpace() { self.refresh(cached: true) }
-                if !self.syncQueue.isEmpty { self.runSync(space: self.syncQueue.removeFirst()) }
+                self.nextSync()
             }
         }
         try? task.run()
@@ -2099,6 +2113,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, WKN
                 self.hourlyBackoff = done.terminationStatus == 0 ? 1 : min(self.hourlyBackoff * 2, 4)
                 self.stamp([quick ? "lastQuickSyncAt" : "lastApiSyncAt"], space: id)
                 self.refresh(space: id)
+                self.nextSync()
             }
         }
         try? task.run()

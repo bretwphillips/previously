@@ -106,10 +106,10 @@ and so on.
 
 An edit is applied to `worklog.json` as one change to one field of one ticket,
 not by sending the whole file back, so a session writing about another ticket at
-the same moment is not overwritten. What you write in *Now*, *Next* and Notes is
-tagged **you**, and a line you leave unchanged keeps its original tag. A scope line
-you move keeps its id, so a commit's tick on it stays; rewording one makes it a
-new line, unticked.
+the same moment is not overwritten. What you write is tagged **you**, and a line
+you leave unchanged keeps its original tag. A scope line you move or only reword
+(in its place, most of its words kept) keeps its id, so a commit's tick on it
+stays; one replaced by a different task starts unticked.
 
 ---
 
@@ -507,8 +507,8 @@ window showing. One that comes due while you're away waits for you, then a
 random 0-5 minutes more (up to one for the quick check) so people arriving
 together don't sync together; one of these that fails pushes the next back,
 doubling up to four times as long. Each kind keeps its own "since", so a quick check never
-makes the hourly one skip anything. Nothing overnight. Scheduled syncs take turns
-across spaces, never two at once.
+makes the hourly one skip anything. Nothing overnight. Syncs take turns -- one
+asked for while another runs waits for it -- so never two at once.
 
 A sync does two things, on each repo's own host -- GitLab through `glab`, GitHub
 through `gh`, side by side when a space has both (GitHub's side is described
@@ -1033,10 +1033,9 @@ reads the same way — and the rest is one click away.
 Nothing stacks.
 
 Each thread claims the commits on its own branch (`31-…` for #31), wherever you
-are checked out, so a day spent across three branches reports three tickets. Scope
-ticks are read from the branch you have checked out (see *How a scope line gets
-checked*), and a review thread with no scope lines simply contributes nothing —
-which is right, not a gap.
+are checked out, so a day spent across three branches reports three tickets. Each
+thread's scope ticks come from its own branch's notes, and a review thread with no
+scope lines simply contributes nothing — which is right, not a gap.
 
 **Finished threads retire three working days after they land** (merged on a Friday, still there on Wednesday), so the tab row does not accumulate a
 term's worth of tickets. A thread counts as finished when every merge request on it
@@ -1126,7 +1125,8 @@ a path.
 
 That writes a note on `refs/notes/worklog` — **not** in the commit message, so
 GitLab history stays readable, and the ref is never pushed. The page reads the
-notes on the current branch and ticks the matching lines with their date.
+notes on each ticket branch and ticks the matching lines of that ticket's thread,
+with their date.
 
 Nothing else can check a box. The `n of m` tally is evidence, not a claim.
 

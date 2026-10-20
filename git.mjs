@@ -248,31 +248,37 @@ export async function readRepo(root, name, author) {
 export async function readProgress(root, name) {
   const repo = join(root, name);
   const base = await defaultBase(repo);
-
-  const log = await git(repo, [
-    'log',
-    '--notes=worklog',
-    '--format=%ct%x1f%N%x1e',
-    `${base}..HEAD`,
-  ]);
-  if (!log) return { done: {}, unrecorded: 0 };
-
-  const done = {};
-  let unrecorded = 0;
-
-  for (const record of log.split('\x1e')) {
-    if (!record.trim()) continue;
-    const [ts, note = ''] = record.trim().split('\x1f');
-    const ids = [...note.matchAll(/^\s*done:\s*(\S+)/gm)].map((m) => m[1]);
-    if (!ids.length) {
-      unrecorded += 1;
-      continue;
+  const claims = async (range) => {
+    const log = await git(repo, ['log', '--notes=worklog', '--format=%ct%x1f%N%x1e', range]);
+    const done = {};
+    let unrecorded = 0;
+    for (const record of (log || '').split('\x1e')) {
+      if (!record.trim()) continue;
+      const [ts, note = ''] = record.trim().split('\x1f');
+      const ids = [...note.matchAll(/^\s*done:\s*(\S+)/gm)].map((m) => m[1]);
+      if (!ids.length) {
+        unrecorded += 1;
+        continue;
+      }
+      // Keep the earliest commit that claimed an item.
+      for (const id of ids) done[id] = Math.min(done[id] ?? Infinity, Number(ts) || 0);
     }
-    // Keep the earliest commit that claimed an item.
-    for (const id of ids) done[id] = Math.min(done[id] ?? Infinity, Number(ts) || 0);
-  }
+    return { done, unrecorded };
+  };
 
-  return { done, unrecorded };
+  const { done, unrecorded } = await claims(`${base}..HEAD`);
+  // Each ticket branch's own ticks too, so a thread whose branch isn't checked
+  // out still shows what its commits claimed -- and only those.
+  const byTicket = {};
+  const heads = (await git(repo, ['for-each-ref', '--format=%(refname:short)', 'refs/heads'])) || '';
+  for (const branch of heads.split('\n').filter(Boolean)) {
+    const ticket = ticketFrom(branch);
+    if (!ticket) continue;
+    const own = (await claims(`${base}..${branch}`)).done;
+    const into = (byTicket[ticket] ??= {});
+    for (const [id, at] of Object.entries(own)) into[id] = Math.min(into[id] ?? Infinity, at);
+  }
+  return { done, unrecorded, byTicket };
 }
 
 // origin as a browsable URL: git@host:group/project.git and the https form both

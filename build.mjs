@@ -191,11 +191,13 @@ const repos = await Promise.all(
     const threads = (all.length ? all : [placeholder]).map((thread) => {
       const items = (thread.plan ?? []).map((e) => (typeof e === "string" ? { text: e } : e));
       const ticketOf = thread.ticket ?? repo.ticket;
+      // the checked-out branch's ticks for its own thread; another ticket's from its own branch
+      const ticks = ticketOf && ticketOf !== repo.ticket ? (progress.byTicket?.[ticketOf] ?? {}) : progress.done;
       return {
         ...thread,
         mrs: withSynced(ticketOf, thread.mrs),
         ticket: ticketOf,
-        plan: items.map((i) => ({ ...i, doneAt: i.id ? (progress.done[i.id] ?? null) : null })),
+        plan: items.map((i) => ({ ...i, doneAt: i.id ? (ticks[i.id] ?? null) : null })),
       };
     });
 
@@ -280,7 +282,8 @@ const repos = await Promise.all(
       reviewCopyOn: onMr,
       problems,
       alerts,
-      scopeDone: Object.values(progress.done),
+      scopeDone: [...Object.values(progress.done),
+        ...Object.entries(progress.byTicket ?? {}).filter(([t]) => t !== repo.ticket).flatMap(([, d]) => Object.values(d))],
       group: groupOf(repo, alerts),
     };
   }),

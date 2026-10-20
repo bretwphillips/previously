@@ -22,7 +22,7 @@ const keep = (before, wanted) =>
 const slug = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "line";
 
 if (patch.field === "goals") {
-  doc.goals = lines;
+  doc.goals = keep(doc.goals, lines);
 } else {
   const { repo, ticket, current } = patch;
   if (!repo) process.exit(1);
@@ -45,11 +45,23 @@ if (patch.field === "goals") {
     if (lines.length) thread[patch.field] = keep(thread[patch.field], lines);
     else delete thread[patch.field];
   } else if (patch.field === "plan") {
-    // A scope line keeps its id when its text is kept, so a tick by a commit stays.
-    const taken = new Set((thread.plan ?? []).map((i) => i.id).filter(Boolean));
+    // A scope line keeps its id when its text is kept, so a tick by a commit stays --
+    // and when it is only reworded: still in its place among the lines that changed,
+    // and sharing most of its words. A line replaced by another task starts fresh.
+    const before = thread.plan ?? [];
+    const words = (t) => new Set(t.toLowerCase().match(/[a-z0-9]+/g) ?? []);
+    const alike = (a, b) => {
+      const x = words(a), y = words(b), both = [...x].filter((w) => y.has(w)).length;
+      return both / Math.max(1, Math.min(x.size, y.size)) >= 0.5;
+    };
+    const unmatchedOld = before.filter((i) => !lines.includes(text(i)));
+    const unmatchedNew = lines.filter((l) => !before.some((i) => text(i) === l));
+    const taken = new Set(before.map((i) => i.id).filter(Boolean));
     thread.plan = lines.map((l) => {
-      const old = (thread.plan ?? []).find((i) => text(i) === l);
+      const old = before.find((i) => text(i) === l);
       if (old) return old;
+      const was = unmatchedOld[unmatchedNew.indexOf(l)];
+      if (was?.id && alike(text(was), l)) return { ...was, text: l, src: "you" };
       let id = slug(l), n = 2;
       while (taken.has(id)) id = `${slug(l)}-${n++}`;
       taken.add(id);
