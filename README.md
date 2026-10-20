@@ -209,6 +209,16 @@ tasks go with it.
   never while you are typing, and an open standup is just handed its new draft.
 - Ticket numbers, branch names and `#18` / `!27` / `&12` references are links; they
   open in your real browser, never inside the app.
+- Besides Previously's own, the themes are based on
+  [Solarized](https://ethanschoonover.com/solarized/) by Ethan Schoonover,
+  [Gruvbox](https://github.com/morhetz/gruvbox) by Pavel Pertsev,
+  [Everforest](https://github.com/sainnhe/everforest) by Sainnhe Park,
+  [Kanagawa](https://github.com/rebelot/kanagawa.nvim) by Tommaso Laurenzi,
+  [Nord](https://www.nordtheme.com) by Arctic Ice Studio,
+  [Dracula](https://draculatheme.com) by Zeno Rocha,
+  [Catppuccin](https://catppuccin.com) by the Catppuccin org and
+  [Tokyo Night](https://github.com/enkia/tokyo-night-vscode-theme) by enkia
+  (all MIT), with a few colours adjusted for readability.
 - ⚙ or `⌘,` opens **Settings** as a pane of its own, in tabs: *General* (theme,
   title card name, terminal, standup weight), *Projects* (spaces, their folders
   and sync), *Markers*, *Shortcuts* and *Extras* (quote of the day, the overlay,
