@@ -2478,7 +2478,7 @@ const DECORATION_LADDERS = {
     ["cauldron", "Cauldron", 6], ["scarecrow", "Scarecrow", 12], ["ghost", "Ghost", 20],
     ["battree", "Bat tree", 25], ["coffin", "Coffin", 30], ["haunted", "Haunted house", 50]],
   muertos: [["sugarskull", "Sugar skull", 0], ["veladoras", "Veladoras", 1], ["pan", "Pan de muerto", 3],
-    ["marigolds", "Cempas\u00fachil", 6], ["guitar", "Guitar", 12], ["jarrito", "Jarrito", 20],
+    ["marigolds", "Marigolds", 6], ["guitar", "Guitar", 12], ["jarrito", "Jarrito", 20],
     ["papel", "Papel picado", 25], ["copal", "Copal", 30], ["alebrije", "Alebrije", 50]],
 };
 const DECORATION_STREAKS = [["gumball", "Gumball machine", 5], ["lavalamp", "Lava lamp", 10], ["trophy", "Gold trophy", 20],
