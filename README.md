@@ -308,8 +308,11 @@ git state -- a commit, checkout, stash, fetch or staging -- the page rebuilds.
   It never writes to one, and nothing a shell prints reaches the page.
 - `xterm.js` is vendored in `terminal/vendor/`; nothing loads from the network.
 - A web address in a shell's output opens in your browser on click, as do links a
-  program marks as links (Claude Code's). Only `http` and `https`; the app opens them,
-  never the drawer.
+  program marks as links (Claude Code's). A full path (`/…` or `~/…`, a trailing
+  `:line` ignored) opens too: a folder in Finder, a file in its own app -- except
+  anything that would run (an app, a script, an installer, an executable), which is
+  only shown in Finder. The app opens them, never the drawer. A path a program broke
+  across lines itself can't be followed; one the terminal wrapped can.
 
 Settings and Standup work around the drawer: Settings is a pane, padded like the
 rest, and while Standup is open the app dims the drawer to match its backdrop;

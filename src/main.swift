@@ -850,6 +850,19 @@ final class TerminalDrawer: NSObject, WKScriptMessageHandler, WKNavigationDelega
         return newest.map { $0.deletingPathExtension().lastPathComponent }
     }
 
+    /// A folder opens in Finder, a file in its app -- but anything that would run
+    /// (an app, a script, an installer) is only shown in Finder.
+    private func openPath(_ path: String) {
+        var isDir: ObjCBool = false
+        guard FileManager.default.fileExists(atPath: path, isDirectory: &isDir) else { return }
+        let url = URL(fileURLWithPath: path)
+        let runs = ["app", "command", "sh", "tool", "terminal", "pkg", "mpkg", "workflow", "scpt", "applescript"]
+            .contains(url.pathExtension.lowercased())
+            || (!isDir.boolValue && FileManager.default.isExecutableFile(atPath: path))
+        if runs { NSWorkspace.shared.activateFileViewerSelecting([url]) }
+        else { NSWorkspace.shared.open(url) }
+    }
+
     /// A line in a tab's view, from Previously -- shown, never sent to the shell.
     private func note(_ text: String, in id: Int) {
         let line = "\u{1b}[2m[Previously] \(text)\u{1b}[0m\r\n"
@@ -886,11 +899,20 @@ final class TerminalDrawer: NSObject, WKScriptMessageHandler, WKNavigationDelega
             if let body = message.body as? [String: Any] { saveLayout(body) }
             return
         }
-        // A link clicked in a shell's output: web addresses only, in the browser.
+        // A link clicked in a shell's output: a web address in the browser, a path
+        // (or file:// link) that exists in Finder or its own app.
         if message.name == "termLink" {
-            if let text = message.body as? String, let url = URL(string: text),
-               ["http", "https"].contains(url.scheme?.lowercased() ?? "") {
-                NSWorkspace.shared.open(url)
+            guard let text = message.body as? String else { return }
+            if text.hasPrefix("/") || text.hasPrefix("~") {
+                // a trailing :line, as compilers and grep print, is not part of the file
+                let bare = text.range(of: #":\d+$"#, options: .regularExpression).map { String(text[..<$0.lowerBound]) } ?? text
+                openPath((bare as NSString).expandingTildeInPath)
+            } else if let url = URL(string: text) {
+                switch url.scheme?.lowercased() {
+                case "http", "https": NSWorkspace.shared.open(url)
+                case "file": openPath(url.path)
+                default: break
+                }
             }
             return
         }

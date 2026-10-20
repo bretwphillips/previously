@@ -396,6 +396,32 @@ function newTab(position) {
 
 function openLink(uri) { app.termLink.postMessage(uri); }
 
+// A full path in the output (/... or ~/...) is a link too; the app checks it is
+// there when it's clicked. Soft-wrapped lines are read as one, so a path the
+// terminal wrapped still works -- one a program broke with its own newline can't.
+var PATH = /(^|[\s"'`(\[=])((?:~|\/(?!\/))(?:\/?[\w.@%+~-])+(?::\d+)?)/g;
+function pathLinks(term) {
+  return {
+    provideLinks: function (y, done) {
+      var buf = term.buffer.active, cols = term.cols, first = y - 1;
+      while (first > 0 && buf.getLine(first) && buf.getLine(first).isWrapped) first--;
+      var rows = [], i = first, line;
+      while ((line = buf.getLine(i)) && (i === first || line.isWrapped)) { rows.push(line.translateToString(false)); i++; }
+      var text = rows.join('').replace(/\s+$/, ''), links = [], m;
+      var at = function (n) { return { x: n % cols + 1, y: first + Math.floor(n / cols) + 1 }; };
+      PATH.lastIndex = 0;
+      while ((m = PATH.exec(text))) {
+        var path = m[2].replace(/[.,:;]+$/, ''), start = m.index + m[1].length;
+        if (path.length < 3 || path === '~/') continue;
+        var from = at(start), to = at(start + path.length - 1);
+        if (from.y > y || to.y < y) continue;
+        links.push({ range: { start: from, end: to }, text: path, activate: function (e, t) { openLink(t); } });
+      }
+      done(links.length ? links : undefined);
+    }
+  };
+}
+
 function addShell(tab, id, label, index) {
   var pane = document.createElement('div');
   pane.className = 'pane';
@@ -418,6 +444,7 @@ function addShell(tab, id, label, index) {
   // A web address in the output opens in the browser on click. This page can't
   // go anywhere itself, so the app opens it.
   term.loadAddon(new WebLinksAddon.WebLinksAddon(function (e, uri) { openLink(uri); }));
+  term.registerLinkProvider(pathLinks(term));
 
   var s = { id: id, term: term, fit: fit, pane: pane, tab: tab, label: label, size: '', grow: 1 };
   shells[id] = s;
