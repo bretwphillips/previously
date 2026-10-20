@@ -2041,6 +2041,8 @@ const DECORATIONS = {
       "...oRRRRRRRRRro...",
       "...oRRRSSSSRRro...",
       "...oRRRSKKSRRro...",
+      "...oRRRSKKSRRro...",
+      "...oRRRRRRRRRro...",
       "...oRRRRRRRRRro...",
       "...oooooWSooooo...",
       ".......oWSo.......",
