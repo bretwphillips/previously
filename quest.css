@@ -15,7 +15,10 @@ body.quest .pet-status { display: none; }
 @keyframes hp-spark { 0% { opacity: 0; transform: translate(0, 0); } 20% { opacity: 1; } 100% { opacity: 0; transform: translate(1.5px, -1.5px); } }
 @media (prefers-reduced-motion: reduce) { .wizard .swell, .wizard .surge, .wizard .spark { animation: none; } .wizard .spark { opacity: .8; } }
 body.quest .pet-line .questy { display: inline; }
-.wizard { display: flex; justify-content: center; margin-bottom: 4px; }
+.wizard { display: flex; justify-content: center; margin-bottom: 4px; position: relative; }
+/* The sprite is 21 pixels wide around a 17-wide animal: its left edge is 25.5px
+   left of centre at 3px a pixel, and the decoration stands a pixel clear of it. */
+.wizard svg.decoration { position: absolute; bottom: 0; right: calc(50% + 28.5px); }
 .wizard svg { display: block; shape-rendering: crispEdges; overflow: visible; }
 .spk { transform-box: fill-box; transform-origin: center; animation: twinkle 1.8s steps(3, end) infinite; opacity: 0; }
 @keyframes twinkle { 0% { opacity: 0; transform: scale(.34) } 25% { opacity: 1; transform: scale(.67) } 50% { opacity: 1; transform: scale(1) } 75% { opacity: .8; transform: scale(.67) } 100% { opacity: 0; transform: scale(.34) } }

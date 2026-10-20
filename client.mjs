@@ -95,7 +95,9 @@ function companionPick() {
   var muertos = !halloween && store.get('worklog.muertos', 'off') === 'on';
   var look = store.get('worklog.pet.look', 'catrina');
   if (C.LOOKS.indexOf(look) < 0) look = 'catrina';
-  return { race: race, coat: coat, cls: cls, colour: colour, halloween: halloween, costume: costume, muertos: muertos, look: look };
+  var decoration = store.get('worklog.pet.decoration', 'none');
+  if (C.DECORATION_NAMES.indexOf(decoration) < 0) decoration = 'none';
+  return { race: race, coat: coat, cls: cls, colour: colour, halloween: halloween, costume: costume, muertos: muertos, look: look, decoration: decoration };
 }
 window.companionPick = companionPick;
 
@@ -952,8 +954,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
   /* The character builder. Every choice repaints the preview, the sidebar's text
      animal and, in fantasy mode, its sprite. */
-  function builderSvg(v, px) {
-    var rows = v.rows.slice(0, -4), w = rows[0].length, h = rows.length, out = '<g class="body">';
+  function builderSvg(v, px, bar) {
+    var rows = bar === false ? v.rows : v.rows.slice(0, -4), w = rows[0].length, h = rows.length, out = '<g class="body">';
     rows.forEach(function (row, y) {
       for (var x = 0; x < w; x++) if (row[x] !== '.' && v.pal[row[x]]) {
         out += '<rect x="' + x + '" y="' + y + '" width="1" height="1" fill="' + v.pal[row[x]] + '"/>';
@@ -985,6 +987,7 @@ document.addEventListener('DOMContentLoaded', function () {
     mark('#class-choice', 'cls', pick.cls);
     mark('#costume-choice', 'costume', pick.costume);
     mark('#look-choice', 'look', pick.look);
+    mark('#decoration-choice', 'deco', pick.decoration);
     mark('#halloween-toggle', 'halloween', pick.halloween ? 'on' : 'off');
     swatches(document.getElementById('coat-choice'), Object.keys(C.COATS[pick.race]).map(function (n) {
       return { name: n, colour: C.COATS[pick.race][n].C };
@@ -1005,6 +1008,7 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('class-choice').closest('.srow').hidden = !petOn || !questOn || dressed;
     document.getElementById('costume-choice').closest('.srow').hidden = !petOn || !questOn || !pick.halloween;
     document.getElementById('look-choice').closest('.srow').hidden = !petOn || !questOn || !pick.muertos;
+    document.getElementById('decoration-choice').closest('.srow').hidden = !petOn || !questOn;
     document.getElementById('builder-preview').hidden = !petOn;
     // Shown happy: the preview is for choosing a look, not reading the mood.
     // The text companion's colour, kept per animal like its coat; "text" is the
@@ -1024,7 +1028,8 @@ document.addEventListener('DOMContentLoaded', function () {
     // With no overlay the companion is text, so the preview is too.
     var preview = document.getElementById('builder-preview');
     if (store.get('worklog.quest', 'off') === 'on') {
-      preview.innerHTML = builderSvg(C.companion(pick, 'happy'), 4);
+      var deco = C.DECORATIONS[pick.decoration];
+      preview.innerHTML = (deco ? builderSvg(deco, 3, false) : '') + builderSvg(C.companion(pick, 'happy'), deco ? 3 : 4);
     } else {
       var texts = JSON.parse(document.getElementById('text-companions').textContent);
       preview.innerHTML = '<pre class="text-companion"></pre>';
@@ -1052,6 +1057,11 @@ document.addEventListener('DOMContentLoaded', function () {
   var lookButtons = document.querySelectorAll('#look-choice button');
   for (var lb = 0; lb < lookButtons.length; lb++) lookButtons[lb].addEventListener('click', function () {
     store.set('worklog.pet.look', this.dataset.look);
+    paintBuilder();
+  });
+  var decoButtons = document.querySelectorAll('#decoration-choice button');
+  for (var db = 0; db < decoButtons.length; db++) decoButtons[db].addEventListener('click', function () {
+    store.set('worklog.pet.decoration', this.dataset.deco);
     paintBuilder();
   });
   var muertosButtons = document.querySelectorAll('#muertos-toggle button');

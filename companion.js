@@ -558,9 +558,113 @@ function companion(pick, mood) {
   return { rows, pal: { ...pal, ...BAR_PAL, o: pal.o }, fx };
 }
 
-const api = { MOODS, ANIMALS, HATS, COATS, HAT_COLOURS, W, H, compose, companion, dressUp,
+// ---------- decorations: something beside the companion in fantasy mode, standing on
+// its floor to its left -- one drawing each, the same beside every animal.
+// o = outline (the hats' outline colour).
+const DECORATIONS = {
+  // H = rim shine, P = a heart on the band, w = the band in shade, k/K = kibble.
+  bowl: {
+    pal: { o: "#3a2a1a", R: "#d9534f", H: "#f39a94", r: "#a8322f", W: "#f6f3ec", w: "#d8cfc0", P: "#d9534f", k: "#c48a48", K: "#7a4f22" },
+    rows: [
+      "......K........",
+      "....kKkKk.Kk...",
+      "..kKkkKkKkkKkK.",
+      ".KkkKkkKkkKkkKk",
+      "ooooooooooooooo",
+      "oHHHRRRRRRRRRro",
+      "oWWWWWPWPWWWWwo",
+      "oWWWWWWPWWWWWwo",
+      ".oRRRRRRRRRRro.",
+      "..orrrrrrrrro..",
+      "...ooooooooo...",
+    ],
+  },
+  // Shingles in two reds, a shadow under the eaves, plank seams with nails (n), a
+  // bone (B) over a doorway with depth (K/k), and grass (G/g) at its feet.
+  house: {
+    pal: { o: "#3a2a1a", R: "#c8423a", r: "#9a2c26", S: "#7a5530", T: "#d9a566", t: "#b8834a", n: "#6b4a2a",
+      B: "#f6f3ec", K: "#2a1d14", k: "#4a3424", G: "#6fbf4a", g: "#3f8a3a" },
+    rows: [
+      "........o........",
+      ".......oro.......",
+      "......oRrRo......",
+      ".....oRRRRRo.....",
+      "....oRrRrRrRo....",
+      "...oRRRRRRRRRo...",
+      "..oRrRrRrRrRrRo..",
+      ".oRRRRRRRRRRRRRo.",
+      "oRrRrRrRrRrRrRrRo",
+      "ooooooooooooooooo",
+      "..oSSSSSSSSSSSo..",
+      "..oTTBBTTTBBTTo..",
+      "..otttBBBBBttto..",
+      "..oTTBBTTTBBTTo..",
+      "..oTTTToooTTTTo..",
+      "..otttoKKKottto..",
+      "..oTnToKkKoTnTo..",
+      "g.otttoKKKottto.g",
+      "GgoTTToKKKoTTToGg",
+      "..ooooooooooooo..",
+    ],
+  },
+  // Wound in two pinks with a shine (L), a knitting needle (n, bead b) stuck in,
+  // and a loose strand (p) trailing over the floor.
+  yarn: {
+    pal: { o: "#3a2a1a", P: "#e8508a", p: "#b8346a", L: "#f9b8cf", n: "#c9ccd2", b: "#e5383b" },
+    rows: [
+      "..........b....",
+      ".........n.....",
+      "...oooooon.....",
+      "..oPLLPPnPo....",
+      ".oPPpLLPnPPo...",
+      ".oLpPPPpLPPo...",
+      ".opLpPPPpLPo...",
+      ".oPpLpPPPpPo...",
+      "..opPLpPPpo....",
+      "...ooooopp.....",
+      ".........p..pp.",
+      "..........pp..p",
+    ],
+  },
+  // A lit marquee (Y/M/m), side art (C/c), a screen with a space invader (G), its
+  // score (d) and ground (g); a ball-top joystick (R on J), three buttons, a coin
+  // door with lit slots (O) and a kick plate.
+  arcade: {
+    pal: { o: "#3a2a1a", Y: "#fff3b0", M: "#f2c94c", m: "#e5383b", C: "#5b3fa0", c: "#3f2a75", S: "#141c28", d: "#f6f3ec",
+      G: "#5fe08a", g: "#2fb3c4", R: "#e5383b", J: "#15171b", P: "#7a5cc4", p: "#4a3488", B: "#e5383b", E: "#5fe08a", F: "#f2c94c",
+      O: "#ff9a3c", K: "#1d1530" },
+    rows: [
+      ".ooooooooooooo.",
+      ".oYMmMmMmMmMYo.",
+      "ooooooooooooooo",
+      "oCcooooooooocCo",
+      "oCcoSdSdSdSocCo",
+      "oCcoSSGGGSSocCo",
+      "oCcoSGSGSGSocCo",
+      "oCcoSGGGGGSocCo",
+      "oCcoSGSSSGSocCo",
+      "oCcoSSSSSSSocCo",
+      "oCcogggggggocCo",
+      "oCcooooooooocCo",
+      "ooooRoooooooooo",
+      "oPPPJPPBPEPFPPo",
+      "opppppppppppppo",
+      "ooooooooooooooo",
+      ".oCcCCCCCCCcCo.",
+      ".oCcCoooooCcCo.",
+      ".oCcCoOoOoCcCo.",
+      ".oCcCoKKKoCcCo.",
+      ".oCcCoooooCcCo.",
+      ".occccccccccco.",
+      ".ooooooooooooo.",
+    ],
+  },
+};
+
+const api = { MOODS, ANIMALS, HATS, COATS, HAT_COLOURS, W, H, compose, companion, dressUp, DECORATIONS,
   RACES: ["cat", "pug", "frog"], CLASSES: ["none", "wizard", "ranger", "knight"],
-  COSTUMES: ["none", ...Object.keys(COSTUMES)], LOOKS: Object.keys(LOOKS) };
+  COSTUMES: ["none", ...Object.keys(COSTUMES)], LOOKS: Object.keys(LOOKS),
+  DECORATION_NAMES: ["none", ...Object.keys(DECORATIONS)] };
 
 if (typeof module !== "undefined" && module.exports) module.exports = api;
 else root.COMPANION = api;

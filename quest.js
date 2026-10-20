@@ -678,6 +678,17 @@ function undecorate() {
   var pet = document.getElementById('pet'); if (pet) pet.classList.remove('pixel');
 }
 
+/* A decoration stands on the companion's floor, just left of it -- out of the flow,
+   so the companion stays centred, and still while it hops. */
+function decoration(d, px) {
+  if (!d) return null;
+  var w = d.rows[0].length, h = d.rows.length;
+  var svg = el('svg', { class: 'decoration', width: w * px, height: h * px, viewBox: '0 0 ' + w + ' ' + h });
+  d.rows.forEach(function (row, y) { for (var x = 0; x < w; x++) { var c = row[x];
+    if (c !== '.' && d.pal[c]) svg.appendChild(el('rect', { x: x, y: y, width: 1, height: 1, fill: d.pal[c] })); } });
+  return svg;
+}
+
 /* With the companion on too, the text animal becomes its pixel self, dressed as
    built in Settings -- race, coat, class, colour -- with its mood's effects and HP. */
 function wizardCat() {
@@ -685,6 +696,8 @@ function wizardCat() {
   var old = pet.querySelector('.wizard'); if (old) old.remove();
   var box = document.createElement('div'); box.className = 'wizard';
   box.appendChild(sprite(COMPANION.companion(companionPick(), pet.dataset.mood || 'content'), 3));
+  var deco = decoration(COMPANION.DECORATIONS[companionPick().decoration], 3);
+  if (deco) box.appendChild(deco);
   var first = pet.querySelector('.art');
   pet.insertBefore(box, first);
   pet.classList.add('pixel');

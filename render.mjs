@@ -1184,6 +1184,15 @@ function settingsPane(userName, weightLimit = 5, terminals = [], update = null, 
               "What it wears in fantasy mode during Día de los Muertos.",
             )}
             ${row("Colour", `<div class="swatches" id="colour-choice"></div>`, "The hat, plume or cloak.")}
+            ${row(
+              "Decoration",
+              `<div class="themes" id="decoration-choice">${[
+                ["none", "None"], ["bowl", "Food bowl"], ["house", "Dog house"], ["yarn", "Yarn"], ["arcade", "Arcade"],
+              ]
+                .map(([d, label]) => `<button data-deco="${d}">${label}</button>`)
+                .join("")}</div>`,
+              "Something beside it in fantasy mode.",
+            )}
           </div>
           <div class="builder-preview" id="builder-preview" aria-hidden="true"></div>
         </div>
