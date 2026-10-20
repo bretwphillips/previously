@@ -2370,7 +2370,7 @@ const DECORATIONS = {
   },
   // an open spellbook
   spellbook: {
-    pal: { o: "#2a1d14", Q: "#f4ecd6", q: "#d9c9a3", d: "#b8a27a", e: "#e0d2ae", R: "#6a2a5a", G: "#d9a43a", V: "#8a55c9", v: "#c9a8f0" },
+    pal: { o: "#2a1d14", Q: "#f4ecd6", q: "#d9c9a3", d: "#b8a27a", e: "#e0d2ae", E: "#c9b88e", R: "#6a2a5a", G: "#d9a43a", V: "#8a55c9", v: "#c9a8f0" },
     rows: [
       "...........................",
       "....................v......",
@@ -2385,11 +2385,11 @@ const DECORATIONS = {
       "oQQQQQQQQQQqqoqqQQVQvQVQQQo",
       "oQddddddQQQqqoqqQQVvVvVQQQo",
       "oQQQQQQQQQQqqoqqQQVQvQVQQQo",
-      "oQQddddddQQqqoqqQQQVVVQQQQo",
-      "oQQQQQQQQQQqqoqqQQQQQQQQQQo",
-      "oQQQQQQQQQQqqoqqQQQQQQQQQQo",
-      "ooooooooooooooooooooooooooo",
-      "oGeeeeeeeeeeeoeeeeeeeeeeeGo",
+      "oQQddddddQQqoooqQQQVVVQQQQo",
+      "ooQQQQQQQQQoeoeoQQQQQQQQQoo",
+      "oEooQQQQQooEEoEEooQQQQQooEo",
+      "oeeeoooooeeeeoeeeeoooooeeeo",
+      "oEEEEEEEEEEEEoEEEEEEEEEEEEo",
       "oGRRRRRRRRRRRRRRRRRRRRRRRGo",
       ".ooooooooooooooooooooooooo.",
     ],
