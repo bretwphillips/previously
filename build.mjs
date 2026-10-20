@@ -392,6 +392,33 @@ for (const repo of repos) {
   }
   for (const r of repos)
     for (const t of r.threads) if (t.quest) t.quest.keys = keys.get(t.quest.id) ?? [];
+
+  // Unblocked: a lock seen open on an earlier build and resolved now is news, once.
+  // Only a change counts -- a blocker already done when first seen says nothing.
+  const file = join(here, "unblocked.json");
+  const before = readJson(file, { open: [], unblocked: {} });
+  const wasOpen = new Set(before.open);
+  const open = [];
+  const unblocked = {};
+  for (const r of repos) {
+    for (const t of r.threads) {
+      for (const lock of t.quest?.locks ?? []) {
+        if (!lock.ref) continue;
+        if (lock.open) open.push(lock.pair);
+        else if (!t.quest.merged && (wasOpen.has(lock.pair) || before.unblocked[lock.pair])) {
+          const [, otherRepo, ticket] = /^([^#]*)(#\d+)$/.exec(lock.ref) ?? [];
+          const at = before.unblocked[lock.pair]?.at ?? Math.floor(Date.now() / 1000);
+          unblocked[lock.pair] = { at };
+          if (at < Date.now() / 1000 - 14 * 86400) continue;
+          r.messages.unshift({
+            kind: "unblocked", repo: r.name, ref: t.ticket, title: t.title, at,
+            by: otherRepo ? `${otherRepo} ${ticket}` : ticket, how: synced(otherRepo || r.name, ticket)?.state === "closed" ? "closed" : "merged",
+          });
+        }
+      }
+    }
+  }
+  writeFileSync(file, JSON.stringify({ open, unblocked }));
 }
 
 // Goals: what you wrote, plus each epic your unfinished tickets belong to --
@@ -563,8 +590,8 @@ const belled = [
   ...repos.flatMap((r) => (r.reviews ?? []).map((v) => ({ repo: r.name, text: `${v.who} asked you to review !${v.number}`, trigger: "review" }))),
   ...repos.flatMap((r) => (r.problems ?? []).map((p) => ({ repo: r.name, text: `${PROBLEM[p.kind]} on !${p.number}`, trigger: p.kind }))),
   ...repos.flatMap((r) => (r.messages ?? []).filter((m) => m.at >= recent).map((m) => ({
-    repo: r.name, text: `${(m.who ?? []).join(", ") || "Someone"} ${m.kind === "commits" ? `pushed to ${m.ref}` : m.kind === "merged" ? `merged ${m.ref}` : m.kind === "closed" ? `closed ${m.ref}` : `commented on ${m.ref}`}`,
-    trigger: m.kind === "commits" ? "commits" : m.kind === "merged" || m.kind === "closed" ? "settled" : "comments",
+    repo: r.name, text: m.kind === "unblocked" ? `${m.ref} is unblocked: ${m.by} ${m.how}` : `${(m.who ?? []).join(", ") || "Someone"} ${m.kind === "commits" ? `pushed to ${m.ref}` : m.kind === "merged" ? `merged ${m.ref}` : m.kind === "closed" ? `closed ${m.ref}` : `commented on ${m.ref}`}`,
+    trigger: m.kind === "unblocked" ? "unblocked" : m.kind === "commits" ? "commits" : m.kind === "merged" || m.kind === "closed" ? "settled" : "comments",
   }))),
   ...repos.flatMap((r) => r.alerts).map((a) => ({ repo: a.repo, text: a.text, trigger: triggerOf(a) })),
 ].filter((x) => markers.bell[x.trigger] && markers.assign[x.trigger] !== "none");

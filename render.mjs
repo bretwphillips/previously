@@ -313,9 +313,11 @@ function messageLine(m, withRepo) {
     : m.kind === "closed" ? `${by} closed`
     : m.kind === "commits" ? `${m.count} commit${m.count === 1 ? "" : "s"} from ${by} on`
     : `${m.count} new comment${m.count === 1 ? "" : "s"} on`;
-  const what = `${did} ${m.ref}${m.title ? ` \u00b7 ${m.title}` : ""}`;
+  const what = m.kind === "unblocked"
+    ? `${m.ref}${m.title ? ` \u00b7 ${m.title}` : ""} is unblocked: ${m.by} ${m.how}`
+    : `${did} ${m.ref}${m.title ? ` \u00b7 ${m.title}` : ""}`;
   const go = withRepo ? ` class="go" data-go="${esc(m.repo)}" title="Open ${esc(m.repo)}"` : "";
-  return `<li${go} data-key="${esc(`m:${m.ref}:${m.at}`)}" data-sev="message" data-trigger="${m.kind === "commits" ? "commits" : m.kind === "merged" || m.kind === "closed" ? "settled" : "comments"}"><span class="dot waiting"></span>${
+  return `<li${go} data-key="${esc(`m:${m.ref}:${m.at}`)}" data-sev="message" data-trigger="${m.kind === "unblocked" ? "unblocked" : m.kind === "commits" ? "commits" : m.kind === "merged" || m.kind === "closed" ? "settled" : "comments"}"><span class="dot waiting"></span>${
     withRepo ? `<span class="who">${esc(m.repo)}</span>` : ""
   }<span class="what">${url && !withRepo ? link(url, esc(what)) : esc(what)}</span></li>`;
 }
