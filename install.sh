@@ -20,7 +20,10 @@ case "$(basename "$HERE")" in
   previously|.previously) ROOT=$(dirname "$HERE") ;;
   *) ROOT="" ;;
 esac
-if [ -z "$ROOT" ] || ! ls -d "$ROOT"/*/.git >/dev/null 2>&1; then
+# Previously's own clone isn't one of your repos: a copy cloned into Downloads
+# would otherwise make Downloads the folder that holds them.
+others() { for d in "$1"/*/ "$1"/.*/; do [ -d "$d.git" ] && [ "${d%/}" != "$HERE" ] && echo x; done | wc -l | tr -d ' '; }
+if [ -z "$ROOT" ] || [ "$(others "$ROOT")" -eq 0 ]; then
   printf 'Which folder holds your repos (your clones side by side)? [~/Projects] '
   read -r answer || answer=""
   answer=${answer:-~/Projects}
@@ -51,7 +54,7 @@ command -v git >/dev/null 2>&1 || fail "git is missing: xcode-select --install"
 xcode-select -p >/dev/null 2>&1 && command -v swiftc >/dev/null 2>&1 ||
   fail "Xcode's command-line tools are missing: xcode-select --install, then run this again"
 
-repos=$(for d in "$ROOT"/*/ "$ROOT"/.*/; do [ -d "$d.git" ] && echo x; done | wc -l | tr -d ' ')
+repos=$(others "$ROOT")
 say "Repos in $ROOT: $repos"
 
 say "Building Previously.app…"
