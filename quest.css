@@ -30,9 +30,15 @@ body.quest .pet.pixel .tally-hoard .tally-n { grid-area: hnum; align-self: start
 body.quest .pet.pixel .deco { grid-area: deco; justify-self: center; display: block; shape-rendering: crispEdges; }
 body.quest .pet.pixel .deco-n { grid-area: dnum; align-self: start; justify-self: center;
   font-family: var(--mono); font-weight: 600; font-size: 11px; line-height: 1.3; color: #3f7fd9; }
-/* A moving decoration's frames, each shown for its share of the loop (2 or 3 of them). */
-@keyframes deco-2 { 0% { opacity: 1; } 50%, 100% { opacity: 0; } }
+/* A moving decoration's frames, each shown for its share of the loop -- a keyframe
+   for every count of frames a decoration can have (2 to 8). */
+@keyframes deco-2 { 0% { opacity: 1; } 50.000%, 100% { opacity: 0; } }
 @keyframes deco-3 { 0% { opacity: 1; } 33.333%, 100% { opacity: 0; } }
+@keyframes deco-4 { 0% { opacity: 1; } 25.000%, 100% { opacity: 0; } }
+@keyframes deco-5 { 0% { opacity: 1; } 20.000%, 100% { opacity: 0; } }
+@keyframes deco-6 { 0% { opacity: 1; } 16.667%, 100% { opacity: 0; } }
+@keyframes deco-7 { 0% { opacity: 1; } 14.286%, 100% { opacity: 0; } }
+@keyframes deco-8 { 0% { opacity: 1; } 12.500%, 100% { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .decoration .df { animation: none !important; opacity: 0; } .decoration .df0 { opacity: 1; } }
 .wizard svg { display: block; shape-rendering: crispEdges; overflow: visible; }
 .spk { transform-box: fill-box; transform-origin: center; animation: twinkle 1.8s steps(3, end) infinite; opacity: 0; }
