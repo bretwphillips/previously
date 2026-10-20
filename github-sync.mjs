@@ -323,7 +323,9 @@ const activity = {
   approvals,
   mrs: Object.values(cache.prs).map((pr) => {
     const ticket = /^(\d+)-/.exec(pr.branch ?? "")?.[1];
-    return ticket ? { repo: repos.get(pr.slug), ticket: `#${ticket}`, number: pr.number, state: STATE(pr), title: pr.title ?? "" } : null;
+    // a finished PR's last update is when it merged or closed, near enough
+    const doneAt = pr.state === "MERGED" || pr.state === "CLOSED" ? pr.updatedAt ?? null : null;
+    return ticket ? { repo: repos.get(pr.slug), ticket: `#${ticket}`, number: pr.number, state: STATE(pr), title: pr.title ?? "", doneAt } : null;
   }).filter(Boolean),
   issues: (() => {
     const out = Object.values(cache.issues).map((t) => {

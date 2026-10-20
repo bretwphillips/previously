@@ -931,7 +931,8 @@ branch that produces code are different work. `worklog.json` holds them as threa
 ```
 
 The thread matching the checked-out branch leads, since that is where your editor
-is. Each thread has a tab above *Now* — a repo with one thread still shows its
+is. Finished threads -- every merge request merged or closed -- carry a ✓, sit
+dashed and faded after the open ones, so the solid tabs are what's left. Each thread has a tab above *Now* — a repo with one thread still shows its
 one tab, so every repo reads the same way — and the rest is one click away.
 Nothing stacks.
 
@@ -940,7 +941,7 @@ are checked out, so a day spent across three branches reports three tickets. Eve
 thread reports whatever scope it closed, and a review thread with no scope lines
 simply contributes nothing — which is right, not a gap.
 
-**Finished threads retire after three days**, so the tab row does not accumulate a
+**Finished threads retire three working days after they land** (merged on a Friday, still there on Wednesday), so the tab row does not accumulate a
 term's worth of tickets. A thread counts as finished when every merge request on it
 is merged or closed, or when it carries an explicit `"endedAt"`. Two exceptions: the
 thread on the branch you are checked out on always stays, and a repo never loses its

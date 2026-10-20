@@ -68,7 +68,12 @@ const mrs = parse(process.env.MRS)
     const ticket = /^(\d+)-/.exec(mr.source_branch ?? "")?.[1];
     const repo = folderOf((mr.references?.full ?? "").split("!")[0]);
     return ticket && repo
-      ? { repo, ticket: `#${ticket}`, number: mr.iid, state: STATE(mr), title: mr.title ?? "" }
+      ? { repo, ticket: `#${ticket}`, number: mr.iid, state: STATE(mr), title: mr.title ?? "",
+          // when it landed or was closed, so a finished thread retires on time
+          // (a finished MR's last update, for one cached before its date was kept)
+          doneAt: STATE(mr) === "merged" || STATE(mr) === "closed"
+            ? Date.parse(mr.merged_at ?? mr.closed_at ?? mr.updated_at ?? "") / 1000 || null
+            : null }
       : null;
   })
   .filter(Boolean);
