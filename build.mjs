@@ -12,7 +12,7 @@ import { readMarkers, triggerOf } from "./markers.mjs";
 import { alertsFor, groupOf, NEEDS_YOU } from "./alerts.mjs";
 import { markdown } from "./md.mjs";
 import { renderPage } from "./render.mjs";
-import { readLedger, updateLedger } from "./ledger.mjs";
+import { readLedger, updateLedger, commitStreak, nextStreakDay } from "./ledger.mjs";
 import { petState } from "./pet.mjs";
 import { standup } from "./standup.mjs";
 import { quoteFor } from "./quotes.mjs";
@@ -191,11 +191,13 @@ const repos = await Promise.all(
     const threads = (all.length ? all : [placeholder]).map((thread) => {
       const items = (thread.plan ?? []).map((e) => (typeof e === "string" ? { text: e } : e));
       const ticketOf = thread.ticket ?? repo.ticket;
+      // the checked-out branch's ticks for its own thread; another ticket's from its own branch
+      const ticks = ticketOf && ticketOf !== repo.ticket ? (progress.byTicket?.[ticketOf] ?? {}) : progress.done;
       return {
         ...thread,
         mrs: withSynced(ticketOf, thread.mrs),
         ticket: ticketOf,
-        plan: items.map((i) => ({ ...i, doneAt: i.id ? (progress.done[i.id] ?? null) : null })),
+        plan: items.map((i) => ({ ...i, doneAt: i.id ? (ticks[i.id] ?? null) : null })),
       };
     });
 
@@ -280,7 +282,8 @@ const repos = await Promise.all(
       reviewCopyOn: onMr,
       problems,
       alerts,
-      scopeDone: Object.values(progress.done),
+      scopeDone: [...Object.values(progress.done),
+        ...Object.entries(progress.byTicket ?? {}).filter(([t]) => t !== repo.ticket).flatMap(([, d]) => Object.values(d))],
       group: groupOf(repo, alerts),
     };
   }),
@@ -495,7 +498,7 @@ const ledgerFile = shared ? join(CODE, "ledger.json") : join(here, "ledger.json"
 const ledger = cached
   ? readLedger(ledgerFile)
   : updateLedger(ledgerFile, repoList.map((r) => r.path), authorOf);
-const tally = ledger ? { count: ledger.seen.length, since: ledger.since } : null;
+const tally = ledger ? { count: ledger.seen.length, since: ledger.since, streak: commitStreak(ledger, sync.streakDays) } : null;
 
 const now = new Date();
 // What fed the companion in this space, kept so a shared companion can eat from
@@ -551,7 +554,10 @@ const quiz = (() => {
   const claude = ["/opt/homebrew/bin", "/usr/local/bin", join(homedir(), ".local/bin"), ...(process.env.PATH ?? "").split(":")]
     .some((dir) => dir && existsSync(join(dir, "claude")));
   const today = readJson(join(here, "quiz.json"), null);
-  const stats = readJson(join(here, "quiz-history.json"), {}).stats ?? {};
+  const stats = { ...(readJson(join(here, "quiz-history.json"), {}).stats ?? {}) };
+  // the streak as of today: one whose next streak day has passed without a quiz is over
+  const todayIs = new Date().toLocaleDateString("en-CA");
+  if (stats.lastDay && nextStreakDay(stats.lastDay, sync.streakDays) < todayIs) stats.streak = 0;
   const editor = editors.find((e) => e.id === sync.editor) ?? editors[0] ?? null;
   const questions = (today?.questions ?? []).map((q) => {
     // a question brought back may be from another repo than today's

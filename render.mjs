@@ -736,8 +736,9 @@ function project(r) {
 function companion(pet, tally, quiz) {
   if (!pet) return "";
   // the quiz's right answers (shown under a decoration) and best run of them: what unlocks decorations
-  const right = quiz?.stats?.correct ?? 0, run = quiz?.stats?.bestRun ?? 0, streak = quiz?.stats?.run ?? 0;
-  return `<div class="pet" id="pet" data-mood="${pet.mood}" data-quiz-right="${right}" data-quiz-run="${run}" data-quiz-streak="${streak}" data-quiz-ai="${quiz?.claude ? 1 : 0}" data-commits="${tally?.count ?? 0}"${quiz?.unlockAll ? " data-unlock-all" : ""} hidden>
+  // the day streak of quizzes unlocks the specials; the run of right answers is kept too, unused for now
+  const s = quiz?.stats ?? {}, right = s.correct ?? 0;
+  return `<div class="pet" id="pet" data-mood="${pet.mood}" data-quiz-right="${right}" data-quiz-days="${s.streak ?? 0}" data-quiz-days-best="${s.best ?? 0}" data-quiz-right-run="${s.run ?? 0}" data-quiz-right-best="${s.bestRun ?? 0}" data-quiz-ai="${quiz?.claude ? 1 : 0}" data-commits="${tally?.count ?? 0}" data-commit-days="${tally?.streak?.current ?? 0}" data-commit-days-best="${tally?.streak?.best ?? 0}"${quiz?.unlockAll ? " data-unlock-all" : ""} hidden>
     ${Object.entries(pet.arts ?? { cat: pet.art })
       .map(([race, art]) => `<pre class="art" data-race="${race}"${race === "cat" ? "" : " hidden"}>${esc(art)}</pre>`)
       .join("")}
@@ -1197,7 +1198,14 @@ function settingsPane(userName, weightLimit = 5, terminals = [], update = null, 
               `<div class="themes" id="decoration-choice"></div>
               <div class="themes deco-specials" id="decoration-specials"></div>
               <p class="hint" id="decoration-progress"></p>`,
-              "Something beside it in quest mode. Each theme has its own and remembers its pick; right quiz answers unlock more, and streaks of them a few specials. Without Claude Code there's no quiz, so commits unlock them.",
+              "Something beside it in quest mode. Each theme has its own and remembers its pick; right quiz answers unlock more, and a streak of days with a quiz, right or wrong, a few specials. Without Claude Code there's no quiz, so commits unlock them.",
+            )}
+            ${row(
+              "Streak days",
+              `<div class="themes" id="streak-days">${[[1, "Mon"], [2, "Tue"], [3, "Wed"], [4, "Thu"], [5, "Fri"], [6, "Sat"], [0, "Sun"]]
+                .map(([d, label]) => `<button data-day="${d}">${label}</button>`)
+                .join("")}</div>`,
+              "The days a streak counts: the quiz's day streak, and without Claude Code the commit streak. Miss one of them and it starts over; the other days neither count nor break it.",
             )}
           </div>
         </div>

@@ -2469,10 +2469,10 @@ const DECORATIONS = {
   },
 };
 
-// Which decorations each quest theme offers; a theme without a set has none.
 // Which decorations each quest theme offers, and what unlocks each: right quiz
 // answers in all (the first is free, the next two come quickly, then they space
-// out), or -- the streak specials, in every theme -- right answers in a row.
+// out), or -- the streak specials, in every theme -- days in a row with a quiz,
+// right or wrong, so they reward the habit rather than the score.
 const DECORATION_LADDERS = {
   none: [["bowl", "Food bowl", 0], ["yarn", "Yarn", 1], ["bone", "Bone", 3], ["bed", "Pet bed", 6],
     ["post", "Scratching post", 12], ["house", "Dog house", 20], ["tank", "Fish tank", 30], ["cattree", "Cat tree", 45],
@@ -2504,14 +2504,17 @@ const commitStep = (cost) => {
 };
 
 // A theme's decorations as Settings shows them: drawn ones only, each with what it
-// takes and whether you have it. right = right answers; run = your best run of them;
-// commits, when given, stands in for both.
-function decorationsFor(theme, right, run, commits) {
-  const goal = (cost, kind, words) => typeof commits === "number"
-    ? { unlocked: commits >= commitStep(cost), needs: cost ? `${commitStep(cost)} commits` : "", need: commitStep(cost), kind, by: "commits" }
-    : { unlocked: (kind === "run" ? run : right) >= cost, needs: cost ? `${cost} ${words}` : "", need: cost, kind };
-  const ladder = (DECORATION_LADDERS[theme] || []).map(([name, label, cost]) => ({ name, label, ...goal(cost, "right", "right") }));
-  const streaks = DECORATION_STREAKS.map(([name, label, cost]) => ({ name, label, ...goal(cost, "run", "in a row") }));
+// takes and whether you have it. right = right answers; days = your best day streak
+// of quizzes. Without the quiz, commits (a number) stands in for right answers and
+// commitDays, your best streak of working days with a commit, for the quiz's.
+function decorationsFor(theme, right, days, commits, commitDays = 0) {
+  const goal = (cost, kind, words) => typeof commits !== "number"
+    ? { unlocked: (kind === "run" ? days : right) >= cost, needs: cost ? words(cost) : "", need: cost, kind }
+    : kind === "run"
+      ? { unlocked: commitDays >= cost, needs: `${cost}-day commit streak`, need: cost, kind, by: "commits" }
+      : { unlocked: commits >= commitStep(cost), needs: cost ? `${commitStep(cost)} commits` : "", need: commitStep(cost), kind, by: "commits" };
+  const ladder = (DECORATION_LADDERS[theme] || []).map(([name, label, cost]) => ({ name, label, ...goal(cost, "right", (n) => `${n} right`) }));
+  const streaks = DECORATION_STREAKS.map(([name, label, cost]) => ({ name, label, ...goal(cost, "run", (n) => `${n}-day streak`) }));
   return ladder.concat(streaks).filter((d) => DECORATIONS[d.name] && !DECORATIONS_ON_HOLD.includes(d.name));
 }
 const api = { MOODS, ANIMALS, HATS, COATS, HAT_COLOURS, W, H, compose, companion, dressUp, DECORATIONS,
