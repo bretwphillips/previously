@@ -12,6 +12,18 @@ case "$1" in
 esac
 [ -n "$PREVIOUSLY_TERM" ] || exit 0
 case "$PREVIOUSLY_TERM" in *[!A-Za-z0-9-]*) exit 0 ;; esac
+# Only the tab's own session: a `claude -p` that something inside it runs (a script
+# being tested) inherits the tab too, and would take it over. That one has a second
+# Claude Code above it.
+claudes=0
+pid=$PPID
+while [ "${pid:-1}" -gt 1 ]; do
+  case "$(ps -o comm= -p "$pid") $(ps -o args= -p "$pid")" in
+    claude\ *|*/claude\ *|*/claude/versions/*|*claude-code*) claudes=$((claudes + 1)) ;;
+  esac
+  pid=$(ps -o ppid= -p "$pid" | tr -d ' ')
+done
+[ "$claudes" -le 1 ] || exit 0
 id=$(sed -n 's/.*"session_id"[[:space:]]*:[[:space:]]*"\([0-9A-Za-z-]*\)".*/\1/p' | head -1)
 [ -n "$id" ] || exit 0
 mkdir -p "$HERE/terminal-sessions"
