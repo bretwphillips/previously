@@ -1190,6 +1190,7 @@ function settingsPane(userName, weightLimit = 5, terminals = [], update = null, 
             ${row(
               "Decoration",
               `<div class="themes" id="decoration-choice"></div>
+              <div class="themes deco-specials" id="decoration-specials"></div>
               <p class="hint" id="decoration-progress"></p>`,
               "Something beside it in quest mode. Each theme has its own and remembers its pick; right quiz answers unlock more, and streaks of them a few specials.",
             )}

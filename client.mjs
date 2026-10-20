@@ -1075,14 +1075,18 @@ document.addEventListener('DOMContentLoaded', function () {
     store.set('worklog.pet.look', this.dataset.look);
     paintBuilder();
   });
-  /* Decorations: this theme's, the locked ones saying what they take, and a line
+  /* Decorations: this theme's, then the streak specials on a row of their own as
+     they're not the theme's; the locked ones saying what they take, and a line
      saying what comes next. Built here, as what's unlocked depends on the quiz. */
   function paintDecorations(pick) {
-    var holder = document.getElementById('decoration-choice');
-    if (!holder) return;
+    var holder = document.getElementById('decoration-choice'), specials = document.getElementById('decoration-specials');
+    if (!holder || !specials) return;
     var right = quizRight(), run = quizRun();
     var list = window.COMPANION.decorationsFor(pick.theme, right, run);
     holder.textContent = '';
+    specials.textContent = '';
+    var tag = document.createElement('span'); tag.className = 'deco-specials-label'; tag.textContent = 'Streak specials';
+    specials.appendChild(tag);
     [{ name: 'none', label: 'None', unlocked: true }].concat(list).forEach(function (d) {
       var b = document.createElement('button');
       b.dataset.deco = d.name;
@@ -1094,7 +1098,7 @@ document.addEventListener('DOMContentLoaded', function () {
           : 'Unlocks at ' + d.need + ' right quiz answers (you have ' + right + ')';
       }
       b.setAttribute('aria-pressed', String(d.name === pick.decoration));
-      holder.appendChild(b);
+      (d.kind === 'run' ? specials : holder).appendChild(b);
     });
     var next = list.filter(function (d) { return !d.unlocked; });
     var nextRight = next.filter(function (d) { return d.kind === 'right'; })[0];
@@ -1106,12 +1110,14 @@ document.addEventListener('DOMContentLoaded', function () {
     else line += ' Everything here is unlocked.';
     document.getElementById('decoration-progress').textContent = line;
   }
-  var decoHolder = document.getElementById('decoration-choice');
-  if (decoHolder) decoHolder.addEventListener('click', function (e) {
-    var b = e.target.closest('button');
-    if (!b || b.disabled) return;
-    store.set(decorationKey(companionPick().theme), b.dataset.deco);
-    paintBuilder();
+  ['decoration-choice', 'decoration-specials'].forEach(function (id) {
+    var decoHolder = document.getElementById(id);
+    if (decoHolder) decoHolder.addEventListener('click', function (e) {
+      var b = e.target.closest('button');
+      if (!b || b.disabled) return;
+      store.set(decorationKey(companionPick().theme), b.dataset.deco);
+      paintBuilder();
+    });
   });
   var muertosButtons = document.querySelectorAll('#muertos-toggle button');
   for (var mb = 0; mb < muertosButtons.length; mb++) muertosButtons[mb].addEventListener('click', function () {
