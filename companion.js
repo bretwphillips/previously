@@ -1896,6 +1896,9 @@ const DECORATION_LADDERS = {
 const DECORATION_STREAKS = [["gumball", "Gumball machine", 5], ["lavalamp", "Lava lamp", 10], ["trophy", "Gold trophy", 20],
   ["telescope", "Telescope", 35], ["rocket", "Rocket ship", 50]];
 
+// Drawn, but held back for now: the big showpieces, until they're redrawn to standard.
+const DECORATIONS_ON_HOLD = ["cattree", "arcade", "egg", "dragon", "battree", "haunted", "papel", "alebrije", "trophy", "telescope", "rocket"];
+
 // A theme's decorations as Settings shows them: drawn ones only, each with what it
 // takes and whether you have it. right = right answers; run = your best run of them.
 function decorationsFor(theme, right, run) {
@@ -1903,7 +1906,7 @@ function decorationsFor(theme, right, run) {
     name, label, unlocked: right >= cost, needs: cost ? `${cost} right` : "", need: cost, kind: "right" }));
   const streaks = DECORATION_STREAKS.map(([name, label, cost]) => ({
     name, label, unlocked: run >= cost, needs: `${cost} in a row`, need: cost, kind: "run" }));
-  return ladder.concat(streaks).filter((d) => DECORATIONS[d.name]);
+  return ladder.concat(streaks).filter((d) => DECORATIONS[d.name] && !DECORATIONS_ON_HOLD.includes(d.name));
 }
 const api = { MOODS, ANIMALS, HATS, COATS, HAT_COLOURS, W, H, compose, companion, dressUp, DECORATIONS,
   RACES: ["cat", "pug", "frog"], CLASSES: ["none", "wizard", "ranger", "knight"],
