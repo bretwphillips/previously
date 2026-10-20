@@ -116,6 +116,11 @@ function xtermTheme(c) {
 function resize(s) {
   if (s.tab.box.hidden) return;
   try { s.fit.fit(); } catch (e) { return; }
+  // Output that lands while a tab is hidden sizes xterm's scroll area for a 0px-tall
+  // view, a screen short, and fit() leaves it alone when the size hasn't changed --
+  // so it couldn't scroll to the end until the next keypress. Re-measure on show.
+  var viewport = s.term._core && s.term._core.viewport;
+  if (viewport) viewport.syncScrollArea(true);
   var next = s.term.cols + 'x' + s.term.rows;
   if (next === s.size) return;
   s.size = next;
