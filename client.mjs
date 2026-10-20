@@ -95,9 +95,15 @@ function companionPick() {
   var muertos = !halloween && store.get('worklog.muertos', 'off') === 'on';
   var look = store.get('worklog.pet.look', 'catrina');
   if (C.LOOKS.indexOf(look) < 0) look = 'catrina';
-  var decoration = store.get('worklog.pet.decoration', 'none');
-  if (C.DECORATION_NAMES.indexOf(decoration) < 0) decoration = 'none';
-  return { race: race, coat: coat, cls: cls, colour: colour, halloween: halloween, costume: costume, muertos: muertos, look: look, decoration: decoration };
+  // Each quest theme has its own decorations, and remembers its own pick.
+  var theme = halloween ? 'halloween' : muertos ? 'muertos' : 'quest';
+  var decoration = store.get(decorationKey(theme), 'none');
+  if ((C.DECORATION_SETS[theme] || []).indexOf(decoration) < 0) decoration = 'none';
+  return { race: race, coat: coat, cls: cls, colour: colour, halloween: halloween, costume: costume, muertos: muertos, look: look,
+    theme: theme, decoration: decoration };
+}
+function decorationKey(theme) {
+  return theme === 'quest' ? 'worklog.pet.decoration' : 'worklog.pet.decoration.' + theme;
 }
 window.companionPick = companionPick;
 
@@ -988,6 +994,11 @@ document.addEventListener('DOMContentLoaded', function () {
     mark('#costume-choice', 'costume', pick.costume);
     mark('#look-choice', 'look', pick.look);
     mark('#decoration-choice', 'deco', pick.decoration);
+    var offered = C.DECORATION_SETS[pick.theme] || [];
+    var decoChoices = document.querySelectorAll('#decoration-choice button');
+    for (var dc = 0; dc < decoChoices.length; dc++) {
+      decoChoices[dc].hidden = decoChoices[dc].dataset.deco !== 'none' && offered.indexOf(decoChoices[dc].dataset.deco) < 0;
+    }
     mark('#halloween-toggle', 'halloween', pick.halloween ? 'on' : 'off');
     swatches(document.getElementById('coat-choice'), Object.keys(C.COATS[pick.race]).map(function (n) {
       return { name: n, colour: C.COATS[pick.race][n].C };
@@ -1061,7 +1072,7 @@ document.addEventListener('DOMContentLoaded', function () {
   });
   var decoButtons = document.querySelectorAll('#decoration-choice button');
   for (var db = 0; db < decoButtons.length; db++) decoButtons[db].addEventListener('click', function () {
-    store.set('worklog.pet.decoration', this.dataset.deco);
+    store.set(decorationKey(companionPick().theme), this.dataset.deco);
     paintBuilder();
   });
   var muertosButtons = document.querySelectorAll('#muertos-toggle button');

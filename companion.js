@@ -659,12 +659,124 @@ const DECORATIONS = {
       ".ooooooooooooo.",
     ],
   },
+  // ---------- Halloween's: a jack-o'-lantern (P/q, Y lit), a cauldron (G brew, K iron,
+  // a fire under it), a tombstone (S stone, d carved, M moss, G grass).
+  pumpkin: {
+    pal: { o: "#3a2a1a", P: "#e8842a", q: "#c4641a", Y: "#ffd23f", j: "#3f8a3a", F: "#6b3a10" },
+    rows: [
+      "......jF.....",
+      "......F......",
+      "...oooFooo...",
+      ".ooPPqPqPPoo.",
+      "oPPqPPqPPqPPo",
+      "oPYYPPqPPYYPo",
+      "oPPYPPqPPYPPo",
+      "oPqPPPYPPPqPo",
+      "oPYYYYYYYYYPo",
+      "oPPYPYPYPYPPo",
+      ".oqPPqPqPPqo.",
+      "..ooooooooo..",
+    ],
+  },
+  cauldron: {
+    pal: { o: "#1d1b22", G: "#7ed957", g: "#4caf50", b: "#c8f5a8", B: "#9be87a", M: "#5b5f66", K: "#2b2b31", m: "#4a4a55",
+      F: "#e8842a", f: "#c4641a", Y: "#ffd23f", L: "#6b3a10" },
+    rows: [
+      "...b.....b...",
+      ".....B...b...",
+      "..b.BB.b.....",
+      ".ooooooooooo.",
+      "oGgGGGgGGGgGo",
+      "oMMMMMMMMMMMo",
+      ".oKKKKKKKKKo.",
+      "oKmKKKKKKKKKo",
+      "oKmKKKKKKKKKo",
+      ".oKKKKKKKKKo.",
+      "..ooooooooo..",
+      "...FfYFYfF...",
+      "..oLLLLLLo...",
+    ],
+  },
+  tombstone: {
+    pal: { o: "#2a2630", S: "#b8bcc4", s: "#8a8f98", d: "#5b5f66", M: "#5c8a3a", G: "#6fbf4a", g: "#3f8a3a" },
+    rows: [
+      "...ooooo...",
+      "..oMMSSSo..",
+      ".oMSSSSSSo.",
+      ".oSSSdSSSo.",
+      ".oSSdddSSo.",
+      ".oSSSdSSSo.",
+      ".oSSSdSSSo.",
+      ".oSsSSSSSo.",
+      ".oSSsSSSso.",
+      ".oSSSSSsSo.",
+      "GoSSSSSSSoG",
+      "gGoooooooGg",
+    ],
+  },
+  // ---------- Día de los Muertos': veladoras (jars in the look colours, a printed
+  // band, a flame), a pot of cempasúchil (F/f, c centres, L leaves, T clay),
+  // and a sugar skull (Q, icing in the look colours).
+  veladoras: {
+    pal: { o: "#3a2418", 1: "#e8508a", 2: "#2fb3c4", 3: "#8a55c9", 5: "#1f7a8a", V: "#7a1f3d", Q: "#f4efe6", Y: "#ffd23f", y: "#f08a1c" },
+    rows: [
+      "..y..........",
+      ".yY........y.",
+      "oooo......yY.",
+      "o1Vo...y.oooo",
+      "oQQo..yY.o25o",
+      "o1Vo.oooooQQo",
+      "o1Vo.o3Voo25o",
+      "o1Vo.oQQoo25o",
+      "o1Vo.o3Voo25o",
+      "oooo.oooooooo",
+    ],
+  },
+  marigolds: {
+    pal: { o: "#3a2418", F: "#f08a1c", f: "#ffc23a", c: "#c4641a", L: "#3f8a3a", l: "#6fbf4a", T: "#c0563a", t: "#9a3f28", Y: "#e6c79c" },
+    rows: [
+      "..fFf.fFf..",
+      ".fFcFfFcFf.",
+      "..fFfLfFf..",
+      "fFflLlLlfFf",
+      "FcFLlLlLFcF",
+      "fFfLlLlLfFf",
+      ".lLlLLLlLl.",
+      "ooooooooooo",
+      "oYYYYYYYYYo",
+      ".oTTTTTTto.",
+      ".oTTTTTTto.",
+      "..oTTTTto..",
+      "..ooooooo..",
+    ],
+  },
+  sugarskull: {
+    pal: { o: "#3a2418", Q: "#f4efe6", K: "#1d1b22", 1: "#e8508a", 2: "#2fb3c4", 3: "#8a55c9", 4: "#f2c94c", 9: "#ff8fa8" },
+    rows: [
+      "...ooooo...",
+      "..oQQQQQo..",
+      ".oQ1Q4Q1Qo.",
+      ".oQQ2Q2QQo.",
+      ".o3KKQKK3o.",
+      ".oQKKQKKQo.",
+      ".oQQQ9QQQo.",
+      "..oQQQQQo..",
+      "..oKQKQKo..",
+      "...ooooo...",
+    ],
+  },
 };
 
+// Which decorations each quest theme offers; a theme without a set has none.
+const DECORATION_SETS = {
+  quest: ["bowl", "house", "yarn", "arcade"],
+  halloween: ["pumpkin", "cauldron", "tombstone"],
+  muertos: ["veladoras", "marigolds", "sugarskull"],
+};
 const api = { MOODS, ANIMALS, HATS, COATS, HAT_COLOURS, W, H, compose, companion, dressUp, DECORATIONS,
   RACES: ["cat", "pug", "frog"], CLASSES: ["none", "wizard", "ranger", "knight"],
   COSTUMES: ["none", ...Object.keys(COSTUMES)], LOOKS: Object.keys(LOOKS),
-  DECORATION_NAMES: ["none", ...Object.keys(DECORATIONS)] };
+  DECORATION_NAMES: ["none", ...Object.keys(DECORATIONS)], DECORATION_SETS };
 
 if (typeof module !== "undefined" && module.exports) module.exports = api;
 else root.COMPANION = api;

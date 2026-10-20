@@ -1188,10 +1188,12 @@ function settingsPane(userName, weightLimit = 5, terminals = [], update = null, 
               "Decoration",
               `<div class="themes" id="decoration-choice">${[
                 ["none", "None"], ["bowl", "Food bowl"], ["house", "Dog house"], ["yarn", "Yarn"], ["arcade", "Arcade"],
+                ["pumpkin", "Jack-o\u2019-lantern"], ["cauldron", "Cauldron"], ["tombstone", "Tombstone"],
+                ["veladoras", "Veladoras"], ["marigolds", "Cempas\u00fachil"], ["sugarskull", "Sugar skull"],
               ]
                 .map(([d, label]) => `<button data-deco="${d}">${label}</button>`)
                 .join("")}</div>`,
-              "Something beside it in fantasy mode.",
+              "Something beside it in fantasy mode. Halloween and D\u00eda de los Muertos have their own, and each remembers its pick.",
             )}
           </div>
           <div class="builder-preview" id="builder-preview" aria-hidden="true"></div>
