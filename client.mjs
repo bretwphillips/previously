@@ -1090,8 +1090,10 @@ document.addEventListener('DOMContentLoaded', function () {
     [{ name: 'none', label: 'None', unlocked: true }].concat(list).forEach(function (d) {
       var b = document.createElement('button');
       b.dataset.deco = d.name;
-      b.textContent = d.unlocked ? d.label : '\ud83d\udd12 ' + d.label + ' \u00b7 ' + d.needs;
+      b.textContent = d.unlocked ? d.label : d.label + ' \u00b7 ' + d.needs;
       if (!d.unlocked) {
+        if (window.questPadlock) b.insertBefore(window.questPadlock(d.name), b.firstChild);
+        else b.textContent = '\ud83d\udd12 ' + b.textContent;
         b.disabled = true;
         b.className = 'locked';
         b.title = d.kind === 'run' ? 'Unlocks after ' + d.need + ' right answers in a row (your best is ' + run + ')'

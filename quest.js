@@ -813,4 +813,12 @@ new MutationObserver(function () { if (questOn()) decorate(); drawRoad(); playVi
 document.addEventListener('halloweenchange', applyQuest);
 applyQuest();
 
+/* A blocked ticket's padlock, small, for Settings' locked decorations: the same
+   name always gets the same shape and metal. */
+window.questPadlock = function (name) {
+  var svg = el('svg', { class: 'mini-lock', width: 15, height: 14, viewBox: '-9 -6.5 18 17', filter: 'url(#worn)', 'aria-hidden': 'true' });
+  svg.appendChild(padlock(0, 0, 1, setFor(name)));
+  return svg;
+};
+
 })();
