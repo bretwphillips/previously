@@ -3647,8 +3647,8 @@ const DECORATION_LADDERS = {
     ["marigolds", "Marigolds", 6], ["guitar", "Guitar", 12], ["jarrito", "Jarrito", 20],
     ["papel", "Papel picado", 25], ["copal", "Copal", 30], ["alebrije", "Alebrije", 50]],
 };
-const DECORATION_STREAKS = [["gumball", "Gumball machine", 5], ["lavalamp", "Lava lamp", 10], ["jukebox", "Jukebox", 15],
-  ["robot", "Robot buddy", 20], ["pinball", "Pinball machine", 25], ["trophy", "Gold trophy", 35], ["telescope", "Telescope", 45],
+const DECORATION_STREAKS = [["gumball", "Gumball machine", 5], ["lavalamp", "Lava lamp", 10], ["robot", "Robot buddy", 15],
+  ["pinball", "Pinball machine", 20], ["jukebox", "Jukebox", 25], ["trophy", "Gold trophy", 35], ["telescope", "Telescope", 45],
   ["rocket", "Rocket ship", 50]];
 
 // Drawn, but held back for now: the big showpieces, until they're redrawn to standard.
