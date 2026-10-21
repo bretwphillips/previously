@@ -97,7 +97,7 @@ if ! grep -q "## Previously (work dashboard)" "$CLAUDE" 2>/dev/null; then
   printf 'Add the Previously section to %s, for Claude Code sessions? [y/N] ' "$CLAUDE"
   read -r answer || answer=n
   case "$answer" in
-    y|Y) { [ -s "$CLAUDE" ] && printf '\n'; sed -e '1,/^-->/d' -e "s#~/Projects/previously#$HERE#g" -e "s#~/Projects#$ROOT#g" "$HERE/claude-section.md"; } >> "$CLAUDE"
+    y|Y) { [ -s "$CLAUDE" ] && printf '\n'; sed -e '1,/-->$/d' -e "s#~/Projects/previously#$HERE#g" -e "s#~/Projects#$ROOT#g" "$HERE/claude-section.md"; } >> "$CLAUDE"
          say "Added." ;;
     *) say "Skipped -- it's in $HERE/claude-section.md if you want it later." ;;
   esac
