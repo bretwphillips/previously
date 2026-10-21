@@ -78,7 +78,9 @@ the rest sit beside the code. None of them are tracked by git.
 | `standup.mjs` | Builds the morning post from threads, commits and activity. |
 | `activity.mjs` | Turns raw GitLab events and MRs into per-ticket comments, approvals and MR states. |
 | `src/Info.plist` | The app bundle's manifest; `make.sh` copies it in, so a first build makes a whole app. |
-| `src/main.swift` | The Mac app: window, menu bar, quick view, and the terminal drawer (`TerminalDrawer`, which owns each shell's PTY). The menu-bar icon is drawn here (`menuBarIcon()`), from the app icon's cloud. |
+| `core.mjs` | What the app decides, whatever shell hosts the page: saving what the page sends, switching spaces, the sync queue and schedule, updates, the quiz, review trees, the menu bar's list, and rebuilding then showing the page. A shell supplies only what its system does (`host`). |
+| `core-server.mjs` | The core as a child process, for a shell that can't run JavaScript itself: JSON lines over stdin and stdout. |
+| `src/main.swift` | The Mac app around the core: window, menu bar, quick view, clipboard, folder picker, whether you're at the Mac, and the terminal drawer (`TerminalDrawer`, which owns each shell's PTY). The menu-bar icon is drawn here (`menuBarIcon()`), from the app icon's cloud. |
 
 **Scripts.**
 
