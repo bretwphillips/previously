@@ -3,8 +3,8 @@
 *Previously, on your work…*
 
 It answers one question — **where do I pick up?** — across every repo you
-work in. It reads your local git, so it works offline, and opening it never
-spends AI tokens.
+work in. It starts from the clones on your disk, and Sync adds what GitLab or
+GitHub knows: comments, reviews, merge requests, tickets.
 
 ![The Overview: repos grouped by activity in the sidebar, and what needs you across all of them](docs/images/overview.png)
 
@@ -19,9 +19,8 @@ laptop — on the branch you are on, or on one you left behind and never pushed.
 stash from five months ago. None of it is visible from GitLab, your editor, or any
 single repo — only from something looking at all of them at once.
 
-It is a Mac app with a window and a menu-bar item. Everything it shows comes from
-the clones on your disk; it only touches the network when you sync, checks for an
-update, or makes a quiz.
+It is a Mac app with a window and a menu-bar item. It only touches the network when
+it syncs, checks for an update, or makes a quiz.
 
 What it is not: a tracker — GitLab owns tickets. A metric — the companion is capped
 precisely so it cannot become a number to chase. A service — no daemon, no server,
@@ -144,9 +143,9 @@ the app; your worklogs, notes, tasks and settings are never touched.
 
 ## What it will never do
 
-- Contact GitLab or GitHub unless you ask it to — apart from checking GitHub about
-  once a day for Previously's own latest release, which you can turn off.
-  Everything else comes from the clones on your disk.
+- Contact GitLab or GitHub except to sync — when you click it, or on a schedule
+  you set — and to check GitHub about once a day for Previously's own latest
+  release, which you can turn off.
 - Run in the background. No daemon, no cron; with the app closed, the laptop shut
   or you away, nothing happens.
 - Cost tokens to display. The app is a Swift binary and a node script; no model is
