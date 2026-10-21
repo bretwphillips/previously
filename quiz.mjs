@@ -112,8 +112,10 @@ function make() {
   try {
     const again = count > 1 && history.asked.length >= REPEAT_AFTER && !history.lastRepeated ? repeat(history) : null;
     const { repo, source, diff, shas, reviewed } = pick(history);
+    // numbered on from any quiz already made today, so a remade one never reuses an id
+    const made = history.asked.filter((a) => a.day === today()).length;
     const questions = ask(repo, source, diff, again ? count - 1 : count, history)
-      .map((q, i) => ({ ...q, repo: repo.name, id: `${today()}-${i}` }));
+      .map((q, i) => ({ ...q, repo: repo.name, id: `${today()}-${made + i}` }));
     if (!questions.length) throw new Error("No question could be checked against the code. Try again later.");
     history.asked.push(...questions.map(({ id, ...q }) => ({ ...q, key: id, day: today() })));
     history.asked = history.asked.slice(-500);
@@ -121,7 +123,7 @@ function make() {
     history.lastRepeated = Boolean(again);
     history.sinceReview = reviewed ? 0 : (history.sinceReview ?? 0) + 1;
     history.quizzed = { ...history.quizzed, [repo.name]: [...(history.quizzed?.[repo.name] ?? []), ...shas].slice(-500) };
-    if (again) questions.push({ ...again, id: `${today()}-again` });
+    if (again) questions.push({ ...again, id: `${today()}-again-${made}` });
     write(HISTORY, history);
     write(QUIZ, { day: today(), repo: repo.name, path: repo.path, source, questions });
   } catch (e) {

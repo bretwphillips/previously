@@ -939,7 +939,7 @@ function quizSheet(quiz) {
     ${!questions.length && !current?.error ? `<p class="hint">${esc(String(quiz.count))} question${quiz.count === 1 ? "" : "s"} on code you\u2019ve been working in, each pointing at the line it comes from.</p>` : ""}
     <div class="notes-actions">
       ${questions.length ? "" : `<button class="mini primary" id="quiz-make"${current?.error ? "" : " data-auto"}>${current?.error ? "Try again" : "Make today\u2019s quiz"}</button>`}
-      <span class="hint" id="quiz-status">${done ? "Done for today. " : ""}${esc(record)}</span>
+      <span class="hint" id="quiz-status" data-answered="${s.answered ?? 0}" data-correct="${s.correct ?? 0}" data-streak="${s.streak ?? 0}" data-best="${s.best ?? 0}">${done ? "Done for today. " : ""}${esc(record)}</span>
     </div>
   </div>
 </div>`;

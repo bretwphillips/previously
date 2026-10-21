@@ -2332,6 +2332,9 @@ document.addEventListener('DOMContentLoaded', function () {
       var bad = e.target.closest ? e.target.closest('.quiz-flag') : null;
       if (bad) {
         var flagged = bad.closest('.quiz-q');
+        // a flagged answer comes out of the score
+        if (flagged.classList.contains('right')) tally(-1, -1);
+        else if (flagged.classList.contains('wrong')) tally(-1, 0);
         flagged.classList.remove('right', 'wrong');
         flagged.classList.add('flagged');
         var off = flagged.querySelectorAll('.quiz-choices button');
@@ -2356,8 +2359,20 @@ document.addEventListener('DOMContentLoaded', function () {
       }
       item.classList.add(picked === answer ? 'right' : 'wrong');
       item.querySelector('.quiz-why').hidden = false;
+      tally(1, picked === answer ? 1 : 0);
       if (quizBridge.quizAnswer) quizBridge.quizAnswer.postMessage(JSON.stringify({ id: item.dataset.id, choice: picked }));
     });
+    // The score under the quiz, kept up as you answer rather than at the next rebuild.
+    function tally(answered, correct) {
+      var line = document.getElementById('quiz-status');
+      if (!line) return;
+      var a = Math.max(0, Number(line.dataset.answered || 0) + answered), c = Math.max(0, Number(line.dataset.correct || 0) + correct);
+      line.dataset.answered = a; line.dataset.correct = c;
+      var streak = Number(line.dataset.streak || 0), best = Number(line.dataset.best || 0);
+      var open = quiz.querySelectorAll('.quiz-q:not(.right):not(.wrong):not(.flagged)').length;
+      line.textContent = (open ? '' : 'Done for today. ') + (a ? c + ' of ' + a + ' right' + (streak ? ' \u00b7 ' + streak + '-day streak' : '') +
+        (best > streak ? ' (best ' + best + ')' : '') : '');
+    }
   }
 
   /* A ticket's own checklist, ticked here. Saved to checks.json beside the
