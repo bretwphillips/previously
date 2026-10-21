@@ -1,6 +1,6 @@
 // The happiest place of all the places: a fast-food play place in quest mode. A striped
-// awning for the banner, a hoard of food from one burger to takeout bags, soda cups for
-// the markers, the restaurant, its sign and a slide on the trail. The food on the tabs
+// awning for the banner, a hoard of food from one burger to takeout bags, ball-pit balls
+// for the markers, the restaurant, a house and a car on the trail. The food on the tabs
 // and its eating are in quest.js; the outfits and decorations in companion.js. Nothing
 // here is anyone's brand: its H is its own, and primary-coloured plastic, burgers and
 // fries belong to every play place.
@@ -124,64 +124,45 @@ export function playArt(count) {
   return `<svg class="hoard play" viewBox="0 0 ${w} ${h}" width="${w * scale}" height="${h * scale}" shape-rendering="crispEdges">${rows.join("")}</svg>`;
 }
 
-// ---------- the trail: the restaurant, its sign by the road, the slide out back, newest first.
-const STOP_PAL = { o: "var(--play-o, #3a2418)", R: "#e53935", r: "#ff8a80", Y: "#ffc928", y: "#ffe58a", C: "#2f7fe0", c: "#7fb6ff", G: "#2eae5a",
-  W: "#f7f2e8", w: "#bfe3ff", D: "#7a4a2a", S: "#9aa0a8", B: "#e0a050", b: "#c47c30", L: "#5cc04a", P: "#6b3a1e" };
+// ---------- the trail: the restaurant, a house, a car, newest first, a road between them (quest.js).
+const STOP_PAL = { o: "var(--play-o, #3a2418)", R: "#e53935", r: "#ff8a80", S: "#b8271f", Y: "#ffc928", y: "#ffe58a", C: "#2f7fe0", c: "#7fb6ff", G: "#2eae5a",
+  W: "#f7f2e8", w: "#bfe3ff", s: "#ffffff", D: "#7a4a2a", d: "#ffc928", N: "#3d7be0", K: "#9a5a3a", k: "#9aa0a8", T: "#3a3a40" };
 const STOPS = [
-  // the restaurant: a striped awning, big windows, a play tube winding down its side
-  [["............ooo....", "...........oCCCo...", "..ooooooooooCcCCo..", ".oRRRRRRRRRoCCCCo..", "oRRRRRRRRRRRoYYYo..", "oYRYRYRYRYRYoYyYo..",
-    ".oYoYoYoYoYooYYYo..", ".oWWWWWWWWWWoGGGGo.", ".oWwwWWWWwwWoGGGGo.", ".oWwwWDDWwwWo.oGGo.", ".oWWWWDDWWWWo..oRRo", ".oWWWWDDWWWWo...oRo", "oooooooooooooooooo."], 1.2],
-  // its sign by the road: a burger on a pole
-  [["..ooooooooo..", ".oRRRRRRRRRo.", "oRRoooooooRRo", "oRoBBBBBBBoRo", "oRoLLLLLLLoRo", "oRoPPPPPPPoRo", "oRRobbbbboRRo", ".oRRRRRRRRRo.",
-    "..ooooooooo..", ".....oSo.....", ".....oSo.....", ".....oSo.....", "....ooSoo....", "...ooooooo..."], 1.3],
-  // the playground: a slide down from a little tower
-  [["..ooooo........", ".oYYYYYo.......", "oYYYYYYYo......", ".oSoooSoo......", ".oS...SRRo.....", ".oSSSSSoRRo....", ".oS...S.oRRo...",
-    ".oSSSSS..oRRo..", ".oS...S...oRRo.", ".oSSSSS....oRRo", ".oS...S.....oRo", "ooooooooooooooo"], 1.2],
+  // the restaurant: the H on a sign over the roof, a striped awning, big windows, the drive-thru window, the play tube round the side
+  [[".......ooooooo.........", ".......oYRRRYo.........", ".......oYYYYYo.........", ".......oYRRRYo......ooo", "..ooooooooooooooo..oCCo",
+    ".oRRRRRRRRRRRRRRRo.oCcCo", "oRRRRRRRRRRRRRRRRRooCCo.", "oYRYRYRYRYRYRYRYRYoYYo.", ".oYoYoYoYoYoYoYoYooYyYo.", ".oWWWWWWWWWWWWWWWoGGGGo.",
+    ".oWwwwWwwwWWDDWoWoGGGo..", ".oWwswWwswWWDDWwWo.oRRo.", ".oWwwwWwwwWWDDWoWo..oRo.", ".oWWWWWWWWWWDDWWWo...oo.", "ooooooooooooooooooooooo."], 1.1],
+  // a house: a peaked roof and a chimney, curtained windows, the front door
+  [["..........oo...", "....ooo...oKo..", "...oNNNo..oKo..", "..oNNNNNooKo...", ".oNNNNNNNNNo...", "oNNNNNNNNNNNo..",
+    "ooooooooooooo..", ".oWWWWWWWWWo...", ".owwoWWWoDDo...", ".owwoWWWoDdo...", ".oWWWWWWoDDo...", "ooooooooooooo.."], 1.2],
+  // a little red car
+  [[".....ooooo.......", "....oCcoCCo......", "...oCcCoCCCo.....", ".oooooooooooooo..", "oRrRRRRRRRRRRRYo.", "oRRRRRRRRRRRRRRo.",
+    "oSSooSSSSSSooSSo.", ".ooTToooooooTToo.", "..oTko.....oTko..", "...oo.......oo..."], 1.2],
 ];
 export const PLAY_STOPS = STOPS.map(([rows, scale]) => svg(rows, STOP_PAL, scale, "play-stop"));
 
-// ---------- markers: soda cups, a red straw through the lid, the drink the
-// markers' colours -- red someone else, purple unfinished, green new. Read, a
-// marker is sipped down a row at a time until the cup is empty.
-const CUP = [".....R...", ".....R...", "..KKKRK..", ".KsssssK.", ".KlllllK.", ".KsLLLLK.",
-  ".KsLLLdK.", "..KLLdK..", "..KLLdK..", "..KdddK..", "..KKKKK..", "........."];
-const DRINK_ROWS = [4, 5, 6, 7, 8, 9];
-const DRINKS = {
+// ---------- markers: ball-pit balls in the markers' colours -- red someone else,
+// purple unfinished, green new -- a pale one once read. They don't animate.
+const BALL = ["..ooooo..", ".oLLLLLo.", "oLllLLLLo", "oLlLLLLLo", "oLLLLLLdo", "oLLLLLLdo", "oLLLLLddo", ".odddddo.", "..ooooo.."];
+const BALLS = {
   blocked: { L: "#9b4de0", l: "#d9b3ff", d: "#6a2fa3" }, action: { L: "#9b4de0", l: "#d9b3ff", d: "#6a2fa3" },
   waiting: { L: "#e0283a", l: "#ff9a9a", d: "#a3121f" }, news: { L: "#4cc23a", l: "#b6f0a4", d: "#2e8a24" },
   blue: { L: "#3a86e8", l: "#9cc8ff", d: "#1f5cb8" }, amber: { L: "#f0a020", l: "#ffd98a", d: "#b06f0a" },
-  info: { L: "#b8b2a6", l: "#dcd6ca", d: "#8c867b" }, quiet: { L: "#b8b2a6", l: "#dcd6ca", d: "#8c867b" },
+  info: { L: "#d8d4cc", l: "#f4f2ee", d: "#b0aaa0" }, quiet: { L: "#d8d4cc", l: "#f4f2ee", d: "#b0aaa0" }, none: { L: "#d8d4cc", l: "#f4f2ee", d: "#b0aaa0" },
 };
-const CUP_GLASS = { light: { K: "#3a3640", g: "#e4e8ee", s: "#ffffff" }, dark: { K: "#8a8496", g: "#3a3f48", s: "#6a7280" } };
-const cupUri = (drink, glass, gone = 0) => {
-  const rows = CUP.map((row, y) => (!drink || (DRINK_ROWS.indexOf(y) >= 0 && DRINK_ROWS.indexOf(y) < gone) ? row.replace(/[Lld]/g, "g") : row));
-  const body = rects(rows, { ...glass, R: "#e53935", ...(drink || {}) });
-  return `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 9 12" shape-rendering="crispEdges">${body}</svg>`)}")`;
-};
-const cupRules = (prefix, glass, tag) => {
-  const at = `${prefix} body.quest.play`;
-  const out = [`${at} .dot, ${at} .dot.none { background-image: ${cupUri(null, glass)}; }`];
-  for (const [kind, drink] of Object.entries(DRINKS)) {
-    const f = [0, 1, 2, 3, 4, 6].map((gone) => cupUri(drink, glass, gone)), name = `${kind}-${tag}`;
-    // sipping is the potions' five steps, the last draining the cup; a refill the same backwards
-    out.push(`@keyframes sip-${name} { ${f.slice(1).map((u, i) => `${i * 20}% { background-image: ${u}; }`).join(" ")} 100% { background-image: ${f[5]}; } }
-@keyframes pour-${name} { ${f.slice(0, 5).reverse().map((u, i) => `${i * 20}% { background-image: ${u}; }`).join(" ")} 100% { background-image: ${f[0]}; } }
-${at} .dot.${kind} { background-image: ${f[0]}; }
-${at} .dot.drinking.${kind} { animation: sip-${name} 1.4s steps(1, end) forwards; }
-${at} .dot.filling.${kind} { animation: pour-${name} 1.4s steps(1, end) forwards; }`);
-  }
-  return out.join("\n");
-};
+const ballUri = (colours, outline) => `url("data:image/svg+xml,${encodeURIComponent(
+  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 9 9" shape-rendering="crispEdges">${rects(BALL, { o: outline, ...colours })}</svg>`)}")`;
+const ballRules = (prefix, outline) => [`${prefix} body.quest.play .dot { background-image: ${ballUri(BALLS.none, outline)}; }`,
+  ...Object.entries(BALLS).map(([kind, c]) => `${prefix} body.quest.play .dot.${kind} { background-image: ${ballUri(c, outline)}; }`)].join("\n");
 
 export const PLAY_CSS = `
 /* the markers */
-body.quest.play .dot { width: 9px; height: 12px; background-color: transparent; background-size: 9px 12px; background-repeat: no-repeat; box-shadow: none; border-radius: 0; }
-${cupRules("", CUP_GLASS.light, "light")}
+body.quest.play .dot { width: 9px; height: 9px; background-color: transparent; background-size: 9px 9px; background-repeat: no-repeat; box-shadow: none; border-radius: 0; animation: none !important; }
+${ballRules("", "#3a3640")}
 @media (prefers-color-scheme: dark) {
-${cupRules(":root:not([data-theme])", CUP_GLASS.dark, "dark")}
+${ballRules(":root:not([data-theme])", "#8a8496")}
 }
-${cupRules(DARK_ROOT, CUP_GLASS.dark, "dark")}
-@media (prefers-reduced-motion: reduce) { body.quest.play .dot { animation: none !important; } }
+${ballRules(DARK_ROOT, "#8a8496")}
 
 /* the banner: hung from the bottom edge of the bar, over the page as it scrolls */
 .top .awning { display: none; }
@@ -194,6 +175,7 @@ body.quest.play main { padding-top: 42px; }
 nav .trail .play-stop { display: none; }
 body.quest.play nav .trail .camp, body.quest.play nav .trail .haunt { display: none; }
 body.quest.play nav .trail .play-stop { display: inline; }
+body.quest.play nav .road { opacity: 1; }
 
 /* the hoard */
 body:not(.play) .hoard.play, body.play .hoard:not(.play) { display: none; }

@@ -537,7 +537,7 @@ p { margin: 8px 0; }
 /* The marker sits on the middle of the first line of text, whatever its size. */
 .alerts .dot { position: relative; top: 0; align-self: flex-start; margin-top: calc(0.65em - 2px); }
 body.quest:not(.quest-none) .alerts .dot { margin-top: calc(0.65em - 3.5px); }
-body.quest.halloween .alerts .dot, body.quest.muertos .alerts .dot, body.quest.play .alerts .dot { margin-top: calc(0.65em - 4.5px); }
+body.quest.halloween .alerts .dot, body.quest.muertos .alerts .dot { margin-top: calc(0.65em - 4.5px); }
 .alerts .who { font-family: var(--mono); font-size: 11.5px; color: var(--muted);
                flex: none; width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .alerts .what { flex: 1; }

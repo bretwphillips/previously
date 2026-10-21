@@ -934,18 +934,20 @@ function drawRoad() {
   svg.innerHTML = '<path d="' + d + '" fill="none" stroke="#f3e6c8" stroke-width="5" stroke-linecap="round"/>' +
     '<path d="' + d + '" fill="none" stroke="#8a5a2b" stroke-width="2" stroke-dasharray="4 4"/>';
   scroll.insertBefore(svg, scroll.firstChild);
-  // Día de los Muertos' road is marigold petals, scattered along the same curve; the
-  // play place's is confetti in the ball pit's colours.
-  var marigolds = document.body.classList.contains('muertos'), confetti = document.body.classList.contains('play');
-  if (marigolds || confetti) {
-    var path = svg.firstChild, len = path.getTotalLength(), seed = 3,
-      cols = confetti ? ['#e53935', '#ffc928', '#2f7fe0', '#2eae5a'] : ['#f08a1c', '#ffc23a', '#e8742a'];
+  // The play place's is a road: asphalt, a dashed yellow line down the middle.
+  if (document.body.classList.contains('play')) {
+    svg.innerHTML = '<path d="' + d + '" fill="none" stroke="#5a5a62" stroke-width="6" stroke-linecap="round"/>' +
+      '<path d="' + d + '" fill="none" stroke="#ffd84a" stroke-width="1.2" stroke-dasharray="3 3"/>';
+  }
+  // Día de los Muertos' road is marigold petals, scattered along the same curve.
+  if (document.body.classList.contains('muertos')) {
+    var path = svg.firstChild, len = path.getTotalLength(), seed = 3, cols = ['#f08a1c', '#ffc23a', '#e8742a'];
     var rnd = function () { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
     var petals = [];
     for (var s = 10; s < len - 10; s += 4.5) {
       var a = path.getPointAtLength(s), b = path.getPointAtLength(s + 1), off = (rnd() - 0.5) * 6, size = rnd() < 0.3 ? 2 : 1.5;
       petals.push(el('rect', { x: (a.x - (b.y - a.y) * off).toFixed(1), y: (a.y + (b.x - a.x) * off).toFixed(1),
-        width: size, height: size, fill: cols[Math.floor(rnd() * cols.length)] }));
+        width: size, height: size, fill: cols[Math.floor(rnd() * 3)] }));
     }
     svg.innerHTML = '';
     petals.forEach(function (p) { svg.appendChild(p); });

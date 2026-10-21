@@ -186,7 +186,7 @@ document.addEventListener('DOMContentLoaded', function () {
   function postMarkers() {
     var app = window.webkit && window.webkit.messageHandlers;
     if (!app || !app.markerStyle) return;
-    var b = document.body.classList, out = { style: b.contains('quest') ? (b.contains('halloween') || b.contains('muertos') || b.contains('play') ? 'potions' : 'orbs') : 'dots' };
+    var b = document.body.classList, out = { style: b.contains('quest') ? (b.contains('halloween') || b.contains('muertos') ? 'potions' : 'orbs') : 'dots' };
     if (out.style !== 'dots') {
       var probe = document.createElement('span');
       probe.style.position = 'absolute'; probe.style.left = '-99px';
@@ -307,7 +307,8 @@ document.addEventListener('DOMContentLoaded', function () {
   // How long a drain or refill plays: a potion's liquid, a gem's light, a dot's blink.
   function drainMs() {
     var b = document.body.classList;
-    return b.contains('quest') ? (b.contains('halloween') || b.contains('muertos') || b.contains('play') ? 1450 : 600) : 0;
+    // the play place's balls don't animate
+    return b.contains('quest') && !b.contains('play') ? (b.contains('halloween') || b.contains('muertos') ? 1450 : 600) : 0;
   }
   // A marker mid-drain or mid-fill is left alone until it's done -- by time,
   // not by its class, so it can't get stuck if a repaint comes late.
