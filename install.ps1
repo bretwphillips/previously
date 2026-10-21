@@ -87,6 +87,36 @@ try {
 $repos = Others $Root
 Say "Repos in ${Root}: $repos"
 
+# Sync reads what a clone can't see from each repo's host: GitHub through gh,
+# GitLab through glab. Both optional; only the ones your repos use matter.
+# winget installs to a folder this session's PATH doesn't have yet, so it's read again.
+if (-not (Have gh)) {
+  $answer = Read-Host "GitHub (optional): install gh, so Sync can read pull requests, reviews and issues? [y/N]"
+  if ($answer -match '^[yY]') {
+    if (-not (Have winget)) {
+      Say "winget isn't here -- get gh from https://cli.github.com, then run  gh auth login."
+    } else {
+      winget install --id GitHub.cli -e --accept-source-agreements --accept-package-agreements
+      $env:Path = [Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [Environment]::GetEnvironmentVariable("Path", "User")
+      if (Have gh) {
+        $answer = Read-Host "Log gh in to GitHub now? [Y/n]"
+        if ($answer -notmatch '^[nN]') { gh auth login } else { Say "Later, run  gh auth login  for Sync." }
+      } else {
+        Say "gh didn't install -- see above. It's at https://cli.github.com if you want it later."
+      }
+    }
+  } else {
+    Say "Skipped -- install it later with  winget install GitHub.cli  and run  gh auth login."
+  }
+} else {
+  Say "GitHub: gh is installed. If you haven't, run  gh auth login  so Sync can read pull requests, reviews and issues."
+}
+if (Have glab) {
+  Say "GitLab: glab is installed. If you haven't, run  glab auth login  so Sync can read comments, reviews and tickets."
+} else {
+  Say "GitLab (optional): install glab (winget install GLab.GLab) and run  glab auth login  for Sync."
+}
+
 # The Start menu entry: Electron, pointed at Previously's shell.
 $electron = Join-Path $Here "electron\node_modules\electron\dist\electron.exe"
 if (-not (Test-Path $electron)) { Fail "Electron didn't install: $electron is missing." }
