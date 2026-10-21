@@ -375,6 +375,13 @@ const activity = {
     }
     return out;
   })(),
+  // Every sub-issue of an open parent, closed ones too: Goals shows the parent
+  // once you've worked on any of them.
+  epicChildren: Object.values(cache.issues).filter((t) => t.state === "OPEN" && t.children?.length).flatMap((t) =>
+    t.children.filter((c) => c.number).map((c) => ({
+      repo: c.repo, ticket: `#${c.number}`,
+      epic: { ref: `#${t.number}`, title: t.title, url: `https://github.com/${t.slug}/issues/${t.number}`, open: true, source: "GitHub", parent: true },
+    }))),
   // An open parent's open sub-issues, in its order: the standup's next work when
   // your own leaves room, as an epic's tickets are on GitLab.
   epicIssues: Object.values(cache.issues).filter((t) => t.state === "OPEN" && t.children?.length).flatMap((t) =>
