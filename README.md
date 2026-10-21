@@ -674,7 +674,7 @@ Purely decorative. It changes nothing, reports nothing, and respects
 
 **Build it** in Settings → Extras: a **race** (cat, pug, frog, bunny, pig, fox, bear, mouse, hamster, raccoon or
 penguin -- a panda is one of the bear's coats; **Take the animal quiz** asks
-four questions and suggests one), a **coat**
+five questions and shows a preview of the animal and coat it suggests, to switch to or not), a **coat**
 for it, a **class** (none, wizard, ranger or knight) and a **colour** -- seven,
 black and white among them; the companion in the sidebar shows each choice as you
 make it. The colour dresses the whole costume: the wizard's hat, the ranger's

@@ -1081,7 +1081,8 @@ document.addEventListener('DOMContentLoaded', function () {
     document.dispatchEvent(new Event('companionchange'));
   }
   /* Not sure which animal? Four questions, each answer leaning toward a few of
-     them; the one with the most points is suggested, to take or not. */
+     them, and a fifth for a colour: the animal with the most points, in its
+     nearest coat, is shown as a preview, to switch to or not. */
   var PICK_QUIZ = [
     ['Your ideal Saturday?', [
       ['Curled up with a good book', { cat: 2, bear: 1, hamster: 1 }],
@@ -1103,10 +1104,20 @@ document.addEventListener('DOMContentLoaded', function () {
       ['Quick', { bunny: 2, fox: 1 }],
       ['Steady', { pug: 2, bear: 1 }],
       ['Inventive', { raccoon: 2, pig: 1, frog: 1 }]]],
+    // the last picks a coat, not an animal: the suggested animal's nearest to it
+    ['Pick a colour you like', [['Warm', { coat: 'warm' }], ['Cool', { coat: 'cool' }], ['Light', { coat: 'light' }], ['Dark', { coat: 'dark' }]]],
   ];
+  // How near a coat's main colour is to a kind of colour: warm and cool by hue, light and dark by lightness.
+  function coatFits(hex, kind) {
+    var n = parseInt(hex.slice(1), 16), r = (n >> 16) / 255, g = (n >> 8 & 255) / 255, b = (n & 255) / 255;
+    var max = Math.max(r, g, b), min = Math.min(r, g, b), l = (max + min) / 2, d = max - min, h = 0;
+    if (d) h = max === r ? ((g - b) / d + 6) % 6 : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
+    var sat = d ? d / (1 - Math.abs(2 * l - 1)) : 0, warm = h < 1.2 || h > 5.4, cool = h >= 2.4 && h <= 5.2;
+    return kind === 'light' ? l : kind === 'dark' ? 1 - l : kind === 'warm' ? (warm ? sat : 0) + l * 0.1 : (cool ? sat : 0) + l * 0.1;
+  }
   var PICK_SAYS = {
     cat: 'Independent, curious, and happiest somewhere comfortable.', pug: 'Loyal and steady \u2014 always up for the walk.',
-    frog: 'Calm, patient, and at home anywhere green.', bunny: 'Quick on your feet and quicker to ask for help.',
+    frog: 'Calm, patient, and at home anywhere.', bunny: 'Quick on your feet and quicker to ask for help.',
     pig: 'Clever and easy-going, with a snack never far away.', fox: 'Clever, quick, and fond of a smart shortcut.',
     bear: 'Strong and steady, refuelled by snacks and coffee.', mouse: 'Small, tidy, and into every detail.',
     hamster: 'Organised, busy, and cheek-full of ideas.', raccoon: 'Inventive and resourceful \u2014 whatever works.',
@@ -1130,7 +1141,8 @@ document.addEventListener('DOMContentLoaded', function () {
           b.type = 'button';
           b.textContent = a[0];
           b.addEventListener('click', function () {
-            for (var k in a[1]) scores[k] = (scores[k] || 0) + a[1][k];
+            if (a[1].coat) scores.coat = a[1].coat;
+            else for (var k in a[1]) scores[k] = (scores[k] || 0) + a[1][k];
             step++;
             ask();
           });
@@ -1142,19 +1154,31 @@ document.addEventListener('DOMContentLoaded', function () {
       // the most points wins; a tie goes to the one listed first
       var best = window.COMPANION.RACES.reduce(function (top, r) { return (scores[r] || 0) > (scores[top] || 0) ? r : top; }, window.COMPANION.RACES[0]);
       var name = best[0].toUpperCase() + best.slice(1);
+      var coats = window.COMPANION.COATS[best], coat = Object.keys(coats).reduce(function (top, c) {
+        return coatFits(coats[c].C, scores.coat || 'warm') > coatFits(coats[top].C, scores.coat || 'warm') ? c : top;
+      }, Object.keys(coats)[0]);
+      // a little preview of it, in your outfit, before anything changes
+      var look = document.createElement('div');
+      look.className = 'pick-result';
+      var v = window.COMPANION.companion(Object.assign({}, companionPick(), { race: best, coat: coat }), 'happy');
+      var shown = v.rows.slice(0, -4), px = 3, art = '';
+      shown.forEach(function (row, y) { for (var x = 0; x < row.length; x++) if (row[x] !== '.' && v.pal[row[x]]) art += '<rect x="' + x + '" y="' + y + '" width="1" height="1" fill="' + v.pal[row[x]] + '"/>'; });
+      look.innerHTML = '<svg viewBox="0 0 ' + shown[0].length + ' ' + shown.length + '" width="' + shown[0].length * px + '" height="' + shown.length * px + '" shape-rendering="crispEdges">' + art + '</svg>';
       var result = document.createElement('p');
       result.className = 'pick-q';
       result.innerHTML = 'You\u2019re a <b></b> \u2014 ';
-      result.querySelector('b').textContent = name.toLowerCase();
+      result.querySelector('b').textContent = coat + ' ' + name.toLowerCase();
       result.appendChild(document.createTextNode(PICK_SAYS[best] || ''));
-      pickQuiz.appendChild(result);
+      look.appendChild(result);
+      pickQuiz.appendChild(look);
       var actions = document.createElement('div');
       actions.className = 'themes';
       var take = document.createElement('button');
       take.type = 'button';
-      take.textContent = 'Be a ' + name.toLowerCase();
+      take.textContent = 'Switch to it';
       take.addEventListener('click', function () {
         store.set('worklog.pet.race', best);
+        store.set('worklog.pet.coat.' + best, coat);
         pickQuiz.hidden = true;
         pickOpen.hidden = false;
         paintBuilder();

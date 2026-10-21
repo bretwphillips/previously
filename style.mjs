@@ -912,6 +912,9 @@ nav .space-switch select { width: 100%; font: inherit; font-size: 12.5px; font-w
 .pick-quiz-open[hidden], .pick-quiz[hidden] { display: none; }
 .pick-quiz { margin: 0 0 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); }
 .pick-quiz .pick-q { margin: 0 0 8px; font-size: 13px; }
+.pick-result { display: flex; gap: 14px; align-items: center; margin-bottom: 8px; }
+.pick-result svg { flex: none; }
+.pick-result .pick-q { margin: 0; }
 .deco-specials-label { font-size: 11px; color: #b8860b; width: 100%; font-weight: 600; letter-spacing: .02em; }
 /* The streak specials are a reward of their own: gold, starred. */
 #decoration-specials button { border-color: #e0b84a; }
