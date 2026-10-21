@@ -2431,7 +2431,9 @@ document.addEventListener('DOMContentLoaded', function () {
      sheet is open; all it hears is whether one is. Clicking that shade is
      clicking the backdrop. */
   var scrims = document.querySelectorAll('.scrim');
-  var sheetWasOpen = false;
+  // Unknown until the first report: a reload can come back with a sheet already
+  // reopened, or with the app still shading for one that's gone.
+  var sheetWasOpen = null;
   function reportSheet() {
     var open = false;
     for (var i = 0; i < scrims.length; i++) if (!scrims[i].hidden) open = true;
@@ -2443,6 +2445,7 @@ document.addEventListener('DOMContentLoaded', function () {
   for (var si = 0; si < scrims.length; si++) {
     sheetWatch.observe(scrims[si], { attributes: true, attributeFilter: ['hidden'] });
   }
+  reportSheet();
   window.closeSheets = function () {
     for (var i = 0; i < scrims.length; i++) {
       var close = scrims[i].querySelector('.close');

@@ -730,10 +730,13 @@ body.quest:not(.quest-none) .thread-tabs .mark { display: none; }
          /* Ends above the terminal drawer, unless that leaves too little to use. */
          max-height: max(240px, calc(100vh - 100px - var(--drawer, 0px))); }
 .sheet h2 { font-size: 15px; margin: 0 0 14px; }
+/* The title and the close button stay put while a long sheet scrolls. */
+.sheet > h2 { position: sticky; top: -18px; z-index: 1; background: var(--panel); margin: -18px -20px 14px; padding: 18px 44px 10px 20px; }
 .sheet h3 { margin-top: 18px; }
 .sheet h3:first-of-type { margin-top: 0; }
 .sheet .close { float: right; border: 0; background: none; color: var(--muted);
                 cursor: pointer; font-size: 15px; line-height: 1; padding: 0 2px; }
+.sheet > .close { position: sticky; top: 0; z-index: 2; }
 .sheet .close:hover { color: var(--ink); }
 .sheet.wide { width: 620px; }
 .sheet:not(.wide) { width: 540px; }
