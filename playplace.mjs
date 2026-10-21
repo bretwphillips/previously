@@ -17,17 +17,12 @@ const svg = (rows, pal, s = 1.6, cls = "") => {
 const grid = (w, h) => Array.from({ length: h }, () => Array(w).fill("."));
 
 // ---------- the banner: a red-and-yellow striped awning along the top, its edge
-// scalloped, marquee bulbs twinkling along it.
+// scalloped.
 const BANNER_PAL = {
   o: "var(--play-o, #3a2a30)", K: "#7a3a1e", R: "#e53935", r: "#ff7a6e", S: "#b8271f", Y: "#ffc928", y: "#ffe58a", T: "#d99a00",
-  l: "var(--play-l, #8a7f78)", w: "#ffffff",
-  1: "#ff3b7a", 2: "#2f7fe0", 3: "#2eae5a", 4: "#ffc928", 5: "#8e44ad",
-  a: "#ffb0cc", b: "#9fc8ff", c: "#98e8b0", d: "#fff0a0", e: "#d4a8f0",
 };
-let BULBS = [];
 function awning(w) {
   const h = 24, g = grid(w, h), SW = 12, DEPTH = 9;
-  const bulbs = [];
   const put = (x, y, c) => { if (x >= 0 && x < w && y >= 0 && y < h) g[y][x] = c; };
   // the rod it hangs from
   for (let x = 0; x < w; x++) { put(x, 0, "o"); put(x, 1, "K"); put(x, 2, "o"); }
@@ -43,21 +38,9 @@ function awning(w) {
     put(x, bottom, "o");
     if (at === 0) for (let y = 3; y < bottom; y++) put(x, y, "o");
   }
-  // a marquee bulb at each scallop's tip, lit in two alternating sets
-  for (let k = 0; k * SW < w; k++) {
-    const cx = k * SW + SW / 2 - 1, cy = 3 + DEPTH + 1;
-    bulbs.push([cx, cy, k % 2]);
-  }
-  BULBS = bulbs;
   return g.map((r) => r.join(""));
 }
-const awningRows = awning(1800);
-// the bulbs drawn over the awning, each set its own group so the two can twinkle in turn
-const sockets = BULBS.map(([x, y]) =>
-  `<rect x="${x - 1}" y="${y - 1}" width="4" height="4" fill="#3a2a30"/><rect x="${x}" y="${y}" width="2" height="2" fill="#8a6a3a"/>`).join("");
-const bulbSet = (set) => `<g class="bulbs b${set}">${BULBS.filter((b) => b[2] === set).map(([x, y]) =>
-  `<rect x="${x}" y="${y}" width="2" height="2" fill="#fff3a8"/><rect x="${x}" y="${y}" width="1" height="1" fill="#ffffff"/>`).join("")}</g>`;
-export const PLAY_BANNER = `<div class="awning" aria-hidden="true">${svg(awningRows, BANNER_PAL).replace("</svg>", sockets + bulbSet(0) + bulbSet(1) + "</svg>")}</div>`;
+export const PLAY_BANNER = `<div class="awning" aria-hidden="true">${svg(awning(1800), BANNER_PAL)}</div>`;
 
 
 // ---------- the hoard: food only -- burgers, fries, nuggets, drinks, soft-serve and a kids' meal,
@@ -204,10 +187,6 @@ ${cupRules(DARK_ROOT, CUP_GLASS.dark, "dark")}
 .top .awning { display: none; }
 body.quest.play .top .awning { display: block; position: absolute; top: 100%; left: 0; right: 0; height: 39px; overflow: hidden; pointer-events: none; }
 body.quest.play .awning svg { display: block; }
-.awning .bulbs { animation: bulb 1.2s steps(1, end) infinite; }
-.awning .bulbs.b1 { animation-delay: -.6s; }
-@keyframes bulb { 0% { opacity: 1; } 50% { opacity: 0; } }
-@media (prefers-reduced-motion: reduce) { .awning .bulbs { animation: none; } }
 body.quest.play nav .nav-scroll { padding-top: 34px; }
 body.quest.play main { padding-top: 42px; }
 
