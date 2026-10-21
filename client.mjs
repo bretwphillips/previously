@@ -2274,6 +2274,8 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function showEditor() {
+    // as tall as the preview it replaces, so the window keeps its size
+    standupBox.style.height = Math.max(standupPreview.offsetHeight, 320) + 'px';
     standupPreview.hidden = true;
     standupBox.hidden = false;
     standupBox.focus();
