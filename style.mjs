@@ -911,7 +911,13 @@ nav .space-switch select { width: 100%; font: inherit; font-size: 12.5px; font-w
 .pick-quiz-open[hidden], .pick-quiz[hidden] { display: none; }
 .pick-quiz { margin-top: 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); }
 .pick-quiz .pick-q { margin: 0 0 8px; font-size: 13px; }
-.deco-specials-label { font-size: 11px; color: var(--muted); width: 100%; }
+.deco-specials-label { font-size: 11px; color: #b8860b; width: 100%; font-weight: 600; letter-spacing: .02em; }
+/* The streak specials are a reward of their own: gold, starred. */
+#decoration-specials button { border-color: #e0b84a; }
+#decoration-specials button::before { content: "✦"; margin-right: 5px; color: #e0b84a; }
+#decoration-specials button[aria-pressed="true"] { background: #fbf0cf; border-color: #b8860b; color: #4a3a10; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) #decoration-specials button[aria-pressed="true"] { background: #4a3a10; color: #fbf0cf; } }
+:root[data-theme="dark"] #decoration-specials button[aria-pressed="true"] { background: #4a3a10; color: #fbf0cf; }
 .themes button.locked { cursor: default; color: var(--muted); }
 .themes button[data-deco-lock] { position: relative; overflow: visible; }
 table.keys { width: 100%; border-collapse: collapse; font-size: 12.5px; }
