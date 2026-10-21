@@ -3680,13 +3680,11 @@ const DECORATIONS = {
   duck: {
     pal: {o: "#3a2418", D: "#ffe14a", d: "#e8b400", h: "#fff3a0", A: "#ff8a1e", e: "#1d1b22", R: "#e53935", r: "#ff7a6e", S: "#b8271f", Y: "#ffc928", y: "#ffe58a", T: "#d99a00", k: "#5a1a14"},
     rows: [
-      "..............................",
       "................ooooooooo.....",
       "...............oYYYYYYYYYo....",
       "...............oYo.....oYo....",
       "..............ooooooooooooo...",
-      ".............oyyyyyyyyyyyyyo..",
-      "............oYYYYYYYYYYYYYYYo.",
+      "............oyyyyyyyyyyyyyyyo.",
       "...........ooooooooooooooooooo",
       "...........okkkkkkkkkkkkkkkkko",
       "...........oYYYYYYYYYYYYYYYYYo",
