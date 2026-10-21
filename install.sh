@@ -37,6 +37,22 @@ if [ -d "$ROOT/previously" ]; then TARGET="$ROOT/previously"
 elif [ -d "$ROOT/.previously" ]; then TARGET="$ROOT/.previously"
 else TARGET="$ROOT/previously"
 fi
+# A fresh clone starts at the latest release, not at whatever main has since:
+# updates go from release to release, and so does the first install. Fresh means
+# a new copy, or one that has never run (no spaces.json yet) -- never a copy in
+# use, and only a clean one on main with no commits of its own.
+if [ -d "$HERE/.git" ] && { [ "$HERE" != "$TARGET" ] || [ ! -f "$HERE/spaces.json" ]; }; then
+  here_git() { git -C "$HERE" "$@"; }
+  tag=$(here_git tag --list 'v[0-9]*' --sort=-v:refname 2>/dev/null | head -1)
+  main=$(here_git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null | sed 's#^origin/##')
+  if [ -n "$tag" ] && [ "$(here_git rev-parse --abbrev-ref HEAD)" = "${main:-main}" ] && [ -z "$(here_git status --porcelain)" ] \
+     && [ "$(here_git rev-parse HEAD)" = "$(here_git rev-parse "origin/${main:-main}" 2>/dev/null)" ] \
+     && [ "$(here_git rev-parse HEAD)" != "$(here_git rev-parse "$tag^{commit}")" ] && here_git merge-base --is-ancestor "$tag" HEAD; then
+    say "Using the latest release, $tag."
+    here_git reset -q --hard "$tag"
+  fi
+fi
+
 if [ "$HERE" != "$TARGET" ]; then
   if [ -d "$TARGET" ]; then
     say "Updating $TARGET (your own files are kept)…"
@@ -81,7 +97,7 @@ if ! grep -q "## Previously (work dashboard)" "$CLAUDE" 2>/dev/null; then
   printf 'Add the Previously section to %s, for Claude Code sessions? [y/N] ' "$CLAUDE"
   read -r answer || answer=n
   case "$answer" in
-    y|Y) { [ -s "$CLAUDE" ] && printf '\n'; sed -e '1,/^-->/d' -e "s#~/Projects/previously#$HERE#g" -e "s#~/Projects#$ROOT#g" "$HERE/claude-section.md"; } >> "$CLAUDE"
+    y|Y) { [ -s "$CLAUDE" ] && printf '\n'; sed -e '1,/-->$/d' -e "s#~/Projects/previously#$HERE#g" -e "s#~/Projects#$ROOT#g" "$HERE/claude-section.md"; } >> "$CLAUDE"
          say "Added." ;;
     *) say "Skipped -- it's in $HERE/claude-section.md if you want it later." ;;
   esac

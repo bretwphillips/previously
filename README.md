@@ -43,12 +43,17 @@ bring in comments, reviews and merge-request state from GitLab or GitHub; and
 [Claude Code](https://claude.com/claude-code), to keep the written half of the page
 current for you. Everything else works without them.
 
-**Install** — clone (or unzip) Previously anywhere and run its installer:
+**Install** — clone Previously anywhere and run its installer:
 
 ```sh
 git clone https://github.com/bretwphillips/previously.git
 sh previously/install.sh
 ```
+
+Rather download it? Get the zip from the latest release on the
+[Releases page](https://github.com/bretwphillips/previously/releases/latest) — not
+the green **Code** button, which gives the newest unreleased work — unzip it, and
+run `sh previously/install.sh` the same way.
 
 **On Windows**, the same in PowerShell:
 
