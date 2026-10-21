@@ -1126,13 +1126,15 @@ document.addEventListener('DOMContentLoaded', function () {
     hamster: ['golden', 'mint', 'white', 'black', 'grey'], raccoon: ['rusty', 'blue', 'brown', 'plum', 'grey'],
     penguin: ['pink', 'teal', 'chick', 'classic', 'blue']
   };
+  // coats whose names read oddly as a description
+  var PICK_WORDS = { 'penguin classic': 'tuxedo', 'penguin chick': 'fluffy' };
   var PICK_SAYS = {
-    cat: 'Independent, curious, and happiest somewhere comfortable.', pug: 'Loyal and steady \u2014 always up for the walk.',
-    frog: 'Calm, patient, and at home anywhere.', bunny: 'Quick on your feet and quicker to ask for help.',
-    pig: 'Clever and easy-going, with a snack never far away.', fox: 'Clever, quick, and fond of a smart shortcut.',
-    bear: 'Strong and steady, refuelled by snacks and coffee.', mouse: 'Small, tidy, and into every detail.',
-    hamster: 'Organised, busy, and cheek-full of ideas.', raccoon: 'Inventive and resourceful \u2014 whatever works.',
-    penguin: 'Cool under pressure, and fine in a crowd.'
+    cat: 'Independent, curious, and happiest somewhere comfortable.', pug: 'Loyal, steady, and always up for a walk.',
+    frog: 'Calm, patient, and at home anywhere.', bunny: 'Quick on your feet and happy to share the work.',
+    pig: 'Easy-going and sharp, with a snack never far away.', fox: 'Clever, quick, and fond of a smart shortcut.',
+    bear: 'Strong and steady, refuelled by snacks and coffee.', mouse: 'Small, tidy, and careful with every detail.',
+    hamster: 'Organised, busy, and stuffed with ideas.', raccoon: 'Inventive, resourceful, and happy with whatever works.',
+    penguin: 'Cool under pressure and at ease in a crowd.'
   };
   var pickQuiz = document.getElementById('pick-quiz');
   var pickOpen = document.getElementById('pick-quiz-open');
@@ -1177,8 +1179,10 @@ document.addEventListener('DOMContentLoaded', function () {
       look.innerHTML = '<svg viewBox="0 0 ' + shown[0].length + ' ' + shown.length + '" width="' + shown[0].length * px + '" height="' + shown.length * px + '" shape-rendering="crispEdges">' + art + '</svg>';
       var result = document.createElement('p');
       result.className = 'pick-q';
-      result.innerHTML = 'You\u2019re a <b></b> \u2014 ';
-      result.querySelector('b').textContent = coat + ' ' + name.toLowerCase();
+      // two sentences: who you are, then what that says about you
+      var word = PICK_WORDS[best + ' ' + coat] || coat;
+      result.innerHTML = 'You\u2019re ' + (/^[aeiou]/.test(word) ? 'an' : 'a') + ' <b></b>! ';
+      result.querySelector('b').textContent = (PICK_WORDS[best + ' ' + coat] || coat) + ' ' + name.toLowerCase();
       result.appendChild(document.createTextNode(PICK_SAYS[best] || ''));
       look.appendChild(result);
       pickQuiz.appendChild(look);
@@ -1207,6 +1211,12 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     pickQuiz.hidden = false;
     pickOpen.hidden = true;
+    // one size throughout, the tallest of its steps, so it doesn't jump between questions
+    pickQuiz.style.minHeight = '';
+    var tallest = 0;
+    for (step = 0; step <= PICK_QUIZ.length; step++) { ask(); tallest = Math.max(tallest, pickQuiz.offsetHeight); }
+    scores = {}; step = 0;
+    pickQuiz.style.minHeight = tallest + 'px';
     ask();
   }
   if (pickOpen) pickOpen.addEventListener('click', runPickQuiz);
