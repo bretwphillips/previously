@@ -428,6 +428,11 @@ section[hidden] { display: none; }
 .review-local:hover, .review-remove:hover { color: var(--ink); border-color: var(--muted); }
 .review-local[hidden], .review-remove[hidden] { display: none; }
 .quiz-list { margin: 8px 0 0; padding-left: 22px; }
+.quiz-list[hidden], .quiz-past[hidden] { display: none; }
+/* the score at the far end from the buttons */
+#quiz-status { margin-left: auto; }
+.quiz-missed { color: var(--mark-other); font-weight: 600; }
+.quiz-past h3 { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 14px 0 6px; }
 .quiz-q { margin: 0 0 18px; }
 .quiz-ask { margin: 0 0 8px; font-weight: 500; }
 .quiz-choices { display: grid; gap: 6px; }
@@ -686,7 +691,7 @@ ul.tasks { list-style: none; padding: 0; margin: 0; }
                   border-radius: 6px; padding: 6px 10px; }
 .task-add input:focus { outline: none; border-color: var(--waiting); }
 
-.thread-tabs { display: flex; flex-wrap: wrap; gap: 6px 4px; margin: 22px 0 0; }
+.thread-tabs { display: flex; flex-wrap: wrap; gap: 6px 4px; margin: 22px 0 0; isolation: isolate; }
 /* fantasy mode's monsters and locks sit on a tab's top edge, so wrapped rows leave them room */
 body.quest:not(.quest-none) .thread-tabs { row-gap: 24px; }
 .thread-tabs button { font: inherit; font-size: 11px; font-family: var(--mono); cursor: pointer;
@@ -717,7 +722,7 @@ body.quest:not(.quest-none) .thread-tabs .mark { display: none; }
 .thread-mrs .done { opacity: 0.6; }
 
 /* Settings */
-.scrim { position: fixed; inset: 0; background: rgba(0,0,0,0.28); z-index: 20;
+.scrim { position: fixed; inset: 0; background: transparent; z-index: 20;
          display: flex; align-items: flex-start; justify-content: center; padding-top: 72px; }
 /* A class with display beats the UA rule for [hidden], so say it explicitly. */
 .scrim[hidden] { display: none; }
@@ -727,10 +732,13 @@ body.quest:not(.quest-none) .thread-tabs .mark { display: none; }
          /* Ends above the terminal drawer, unless that leaves too little to use. */
          max-height: max(240px, calc(100vh - 100px - var(--drawer, 0px))); }
 .sheet h2 { font-size: 15px; margin: 0 0 14px; }
+/* The title and the close button stay put while a long sheet scrolls. */
+.sheet > h2 { position: sticky; top: -18px; z-index: 1; background: var(--panel); margin: -18px -20px 14px; padding: 18px 44px 10px 20px; }
 .sheet h3 { margin-top: 18px; }
 .sheet h3:first-of-type { margin-top: 0; }
 .sheet .close { float: right; border: 0; background: none; color: var(--muted);
                 cursor: pointer; font-size: 15px; line-height: 1; padding: 0 2px; }
+.sheet > .close { position: sticky; top: 0; z-index: 2; }
 .sheet .close:hover { color: var(--ink); }
 .sheet.wide { width: 620px; }
 .sheet:not(.wide) { width: 540px; }

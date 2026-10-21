@@ -2332,6 +2332,9 @@ document.addEventListener('DOMContentLoaded', function () {
       var bad = e.target.closest ? e.target.closest('.quiz-flag') : null;
       if (bad) {
         var flagged = bad.closest('.quiz-q');
+        // a flagged answer comes out of the score
+        if (flagged.classList.contains('right')) tally(-1, -1);
+        else if (flagged.classList.contains('wrong')) tally(-1, 0);
         flagged.classList.remove('right', 'wrong');
         flagged.classList.add('flagged');
         var off = flagged.querySelectorAll('.quiz-choices button');
@@ -2356,8 +2359,30 @@ document.addEventListener('DOMContentLoaded', function () {
       }
       item.classList.add(picked === answer ? 'right' : 'wrong');
       item.querySelector('.quiz-why').hidden = false;
+      tally(1, picked === answer ? 1 : 0);
       if (quizBridge.quizAnswer) quizBridge.quizAnswer.postMessage(JSON.stringify({ id: item.dataset.id, choice: picked }));
     });
+    // Previous questions: the plain list in place of today's, and back.
+    var pastToggle = document.getElementById('quiz-past-toggle');
+    if (pastToggle) pastToggle.addEventListener('click', function () {
+      var showing = pastToggle.getAttribute('aria-pressed') !== 'true';
+      pastToggle.setAttribute('aria-pressed', String(showing));
+      pastToggle.textContent = showing ? 'Today\u2019s quiz' : 'Previous questions';
+      document.getElementById('quiz-past').hidden = !showing;
+      var list = quiz.querySelector('.quiz-list');
+      if (list) list.hidden = showing;
+    });
+    // The score under the quiz, kept up as you answer rather than at the next rebuild.
+    function tally(answered, correct) {
+      var line = document.getElementById('quiz-status');
+      if (!line) return;
+      var a = Math.max(0, Number(line.dataset.answered || 0) + answered), c = Math.max(0, Number(line.dataset.correct || 0) + correct);
+      line.dataset.answered = a; line.dataset.correct = c;
+      var streak = Number(line.dataset.streak || 0), best = Number(line.dataset.best || 0);
+      var open = quiz.querySelectorAll('.quiz-q:not(.right):not(.wrong):not(.flagged)').length;
+      line.textContent = (open ? '' : 'Done for today. ') + (a ? c + ' of ' + a + ' right' + (streak ? ' \u00b7 ' + streak + '-day streak' : '') +
+        (best > streak ? ' (best ' + best + ')' : '') : '');
+    }
   }
 
   /* A ticket's own checklist, ticked here. Saved to checks.json beside the
@@ -2402,29 +2427,6 @@ document.addEventListener('DOMContentLoaded', function () {
   if (terminalOpen && handlers && handlers.toggleTerminal) {
     terminalOpen.addEventListener('click', function () { handlers.toggleTerminal.postMessage(''); });
   }
-  /* The drawer sits above the page, so the app shades it itself while a
-     sheet is open; all it hears is whether one is. Clicking that shade is
-     clicking the backdrop. */
-  var scrims = document.querySelectorAll('.scrim');
-  var sheetWasOpen = false;
-  function reportSheet() {
-    var open = false;
-    for (var i = 0; i < scrims.length; i++) if (!scrims[i].hidden) open = true;
-    if (open === sheetWasOpen || !(handlers && handlers.sheetOpen)) return;
-    sheetWasOpen = open;
-    handlers.sheetOpen.postMessage(open);
-  }
-  var sheetWatch = new MutationObserver(reportSheet);
-  for (var si = 0; si < scrims.length; si++) {
-    sheetWatch.observe(scrims[si], { attributes: true, attributeFilter: ['hidden'] });
-  }
-  window.closeSheets = function () {
-    for (var i = 0; i < scrims.length; i++) {
-      var close = scrims[i].querySelector('.close');
-      if (!scrims[i].hidden && close) close.click();
-    }
-  };
-
   /* Editor links go through the app: WebKit can drop a click on a scheme it can't load. */
   document.addEventListener('click', function (e) {
     var link = e.target.closest ? e.target.closest('a[href^="vscode:"], a[href^="cursor:"], a[href^="windsurf:"], a[href^="zed:"]') : null;

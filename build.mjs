@@ -568,8 +568,21 @@ const quiz = (() => {
     const remote = q.commit && web ? { href: fileUrl(web, q.commit, q.file, q.line), via: isGitHub(web) ? "GitHub" : "GitLab" } : null;
     return { ...q, link: local ?? remote ?? (web ? { href: fileUrl(web, "HEAD", q.file, q.line), via: "web" } : null) };
   });
+  // The last 60 days' questions, newest first, to look back over: not today's, nor
+  // one marked bad.
+  const PAST_DAYS = 60;
+  const from = new Date(Date.now() - PAST_DAYS * 86400 * 1000).toLocaleDateString("en-CA");
+  const past = (readJson(join(here, "quiz-history.json"), {}).asked ?? [])
+    .filter((q) => q.day && q.day !== todayIs && q.day >= from && !q.flagged && Array.isArray(q.choices))
+    .reverse().slice(0, 150)
+    .map((q) => {
+      const web = repos.find((r) => r.name === q.repo)?.web;
+      return { day: q.day, repo: q.repo, question: q.question, choices: q.choices, answer: q.answer, chosen: q.chosen ?? null,
+        right: q.right ?? null, explanation: q.explanation, file: q.file, line: q.line,
+        href: web && q.file ? fileUrl(web, q.commit ?? "HEAD", q.file, q.line) : null };
+    });
   // "unlockAllDecorations": true in settings.json -- every decoration, for looking them over
-  return { claude, count: sync.quizCount ?? 3, today: today ? { ...today, questions } : null, stats,
+  return { claude, count: sync.quizCount ?? 3, today: today ? { ...today, questions } : null, stats, past,
     unlockAll: sync.unlockAllDecorations === true };
 })();
 
