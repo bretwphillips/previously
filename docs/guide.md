@@ -62,7 +62,9 @@ Optional, for Sync: `glab` (`glab auth login`) for repos on GitLab, `gh`
 asked through its host, worked out from its remote; nothing is configured. A
 space talks to one GitLab -- the one most of its clones use -- and to github.com;
 repos on any other host still get `git fetch`, just not comments, reviews or
-merge-request state.
+merge-request state. On Windows the installer offers to install `gh` and log it
+in. If a sync finds repos on a host whose tool isn't installed, the Overview says
+which, and how to get it, until a sync finds it.
 
 Branches named `<ticket>-<title>` (GitLab's default) are what tie a branch to a
 ticket. Each space keeps its `worklog.json`, `tasks.json` and `notes.md` in

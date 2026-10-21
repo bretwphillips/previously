@@ -653,6 +653,7 @@ body.halloween .tally-hoard .tally-n { color: #c4641a; }
 .quote .by { display: block; margin-top: 2px; font-size: 11.5px; font-style: normal; opacity: 0.75; }
 .sync-due { color: var(--muted); font-size: 12.5px; margin: -12px 0 22px; }
 .sync-due button.mini { margin-left: 6px; }
+.sync-warn { color: var(--muted); font-size: 12.5px; margin: -12px 0 22px; padding-left: 10px; border-left: 2px solid var(--mark-amber); }
 button.mini { font: inherit; font-size: 11px; padding: 3px 10px; cursor: pointer;
               border: 1px solid var(--line); background: var(--bg); color: var(--ink);
               border-radius: 5px; text-transform: none; letter-spacing: 0; font-weight: 500; }

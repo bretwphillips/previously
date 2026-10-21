@@ -5,6 +5,8 @@
 //   node sync.mjs hosts      what a clone can't see: GitLab through glab, GitHub through gh
 // QUICK=1 in the environment asks the hosts for only the urgent part; FULL=1, for
 // everything again rather than what changed.
+import { rmSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { git, has, node } from "./proc.mjs";
 import { reposOf, spaceFor } from "./spaces.mjs";
@@ -69,9 +71,28 @@ export async function github(space, env = {}) {
   return done.code;
 }
 
+/** The host tools a sync needs but can't find: gh for repos on github.com, glab
+    for those on any other host. Written to the space's sync-missing.json for the
+    Overview to warn about, and removed once nothing is missing, so a sync that
+    skipped a host says so instead of looking like it worked. */
+async function checkTools(space) {
+  const { data } = spaceFor(space);
+  const need = { gh: [], glab: [] };
+  for (const r of reposOf(spaceFor(space))) {
+    const url = await git(["-C", r.path, "config", "--get", "remote.origin.url"]);
+    const at = url && parseRemote(url);
+    if (at) need[at.host === "github.com" ? "gh" : "glab"].push(r.name);
+  }
+  const missing = Object.entries(need).filter(([tool, repos]) => repos.length && !has(tool))
+    .map(([tool, repos]) => ({ tool, repos }));
+  const file = join(data, "sync-missing.json");
+  if (missing.length) writeFileSync(file, JSON.stringify(missing, null, 2) + "\n");
+  else rmSync(file, { force: true });
+}
+
 /** Both hosts side by side. Fails only if every host that ran failed. */
 export async function hosts(space, env = {}) {
-  const [a, b] = await Promise.all([gitlab(space, env), github(space, env)]);
+  const [a, b] = await Promise.all([gitlab(space, env), github(space, env), checkTools(space)]);
   return a === 0 || b === 0 ? 0 : 1;
 }
 

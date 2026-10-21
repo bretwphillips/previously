@@ -589,6 +589,9 @@ const quiz = (() => {
 const html = renderPage({
   update,
   aiNotes,
+  // Host tools the last sync needed and couldn't find (sync.mjs writes it).
+  syncMissing: readJson(join(here, "sync-missing.json"), []),
+  windows: process.platform === "win32",
   // Every space, for the switcher and Settings; each one's sync from its own settings.
   spaces: {
     current: space.id, companion: space.config.companion, menubar: space.config.menubar,

@@ -385,6 +385,21 @@ const RECENT_MESSAGES = 2 * 86400;
 
 const STALE_AFTER = 14 * 86400;
 
+// The last sync skipped a host because its tool isn't installed: say which,
+// for which repos, and how to get it.
+const TOOLS = {
+  gh: { host: "GitHub", what: "pull requests, reviews and issues", win: "winget install GitHub.cli", mac: "brew install gh" },
+  glab: { host: "GitLab", what: "merge requests, comments and tickets", win: "winget install GLab.GLab", mac: "brew install glab" },
+};
+function syncMissing(data) {
+  return (data.syncMissing ?? []).filter((m) => TOOLS[m.tool]).map((m) => {
+    const t = TOOLS[m.tool];
+    return `<p class="sync-warn">Sync skipped ${t.host}: <code>${m.tool}</code> isn't installed, so ${esc(m.repos.join(", "))}
+      ${m.repos.length === 1 ? "has" : "have"} no ${t.what}. Install it (<code>${data.windows ? t.win : t.mac}</code>),
+      run <code>${m.tool} auth login</code>, then restart Previously and sync again.</p>`;
+  }).join("");
+}
+
 function overview(data) {
   CURRENT_WEB = null;
   const all = data.repos.flatMap((r) => r.alerts);
@@ -415,6 +430,7 @@ function overview(data) {
 
     <p class="sync-due" id="sync-due" hidden><span></span>
       <button class="mini" data-sync-now>Sync now</button></p>
+    ${syncMissing(data)}
 
     <h3 data-fold="goals" data-edit="goals" data-count="${(data.goals ?? []).length}">Goals${PENCIL}</h3>
     ${linkEpics(list(data.goals, "No goals recorded."), data.epicLinks)}
