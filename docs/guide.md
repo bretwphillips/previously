@@ -181,9 +181,11 @@ tasks go with it.
   and potions. What you've seen is kept per window, like the theme, and a repo
   you've never opened starts out read rather than everything bold at once.
   Settings → Markers has the legend. The board beneath it lays the
-  triggers out as pills in columns -- Empty, then blue, amber, green, purple,
+  triggers out as pills in columns -- Ignore, then blue, amber, green, purple,
   red, least to most urgent -- to drag between colours; a colour's heading drags
   to change its priority, and each pill's bell also puts it in the menu bar.
+  Anything under Ignore never lights a marker and stays off the Overview's
+  Needs you and Good to know; it still shows on its repo's pane.
   Whether a marker stays until fixed or clears once seen belongs to the trigger,
   whatever its colour. Reset puts it all back; the layout is kept in the app's
   settings, so the menu bar follows it. Clicking a line's marker acknowledges it -- handled, or

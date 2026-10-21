@@ -536,6 +536,8 @@ p { margin: 8px 0; }
 .alerts li > button.clear:hover { background: var(--sel); color: var(--ink); }
 .alerts li.cleared { display: none; }
 .alerts.show-cleared li.cleared { display: flex; opacity: .55; }
+.alerts li.ignored, .alerts.show-cleared li.ignored { display: none; }
+.alerts[hidden], #pane-overview h3[hidden], #pane-overview p.empty[hidden] { display: none; }
 .cleared-note { font: inherit; font-size: 12px; color: var(--muted); background: none; border: 0; padding: 4px 0; cursor: pointer; }
 .cleared-note:hover { color: var(--ink); text-decoration: underline; }
 .cleared-note[hidden] { display: none; }
