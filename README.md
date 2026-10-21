@@ -1001,7 +1001,8 @@ two, a tray of food from 100 that fills and piles up, and takeout bags from 700.
 trail's last three stops are home, the car and the restaurant where you are now, on
 a road with a dashed line. The monsters are food, smaller to bigger -- nuggets,
 fries, a drink, a dipped cone, a burger, a kids' meal and a challenge burger -- and
-one beaten bursts into crumbs. The markers are ball-pit balls, and they don't
+one beaten is eaten, two bites out of it (a drink or a kids' meal isn't bitten), then
+bursts into ball-pit balls. The markers are ball-pit balls, and they don't
 drain.
 
 **None.** The companion as pixel art, its decoration and a hoard of pet toys --

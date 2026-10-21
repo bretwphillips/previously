@@ -299,9 +299,19 @@ function monsterOn(host, weight) {
       g.appendChild(fg);
     });
   }
+  if (play && BITTEN[m.kind]) {
+    wrap.classList.add('eats');
+    bites(rows, w, h).forEach(function (bitten, i) {
+      var bg = el('g', { class: 'bite bite' + (i + 1) });
+      bitten.forEach(function (row, y) { for (var x = 0; x < w; x++) { var c = row[x];
+        if (c !== '.') bg.appendChild(el('rect', { x: x, y: y, width: 1, height: 1, fill: m.pal[c] })); } });
+      svg.appendChild(bg);
+    });
+  }
   wrap.appendChild(svg);
   if (muertos) sendOff(wrap, w * m.px, h * m.px, tier);
   else if (spooky) candyBurst(wrap, w * m.px, h * m.px, weight);
+  else if (play) ballBurst(wrap, w * m.px, h * m.px, weight, BITTEN[m.kind] ? 0.85 : 0.7);
   else for (var i = 0; i < 8; i++) {
     var b = document.createElement('i'); b.className = 'bit';
     b.style.background = m.pal[i % 2 ? '#' : 'o'];
@@ -513,7 +523,48 @@ var ALEBRIJES = {
 };
 /* ---- the play place ----------------------------------------------------------
    Food for the tiers, a few nuggets up to the challenge burger. Beaten, it's
-   eaten: it bursts into crumbs of its own colour. */
+   eaten: two bites go out of it, then it bursts into ball-pit balls, up in an
+   arc and falling past the tab, more the heavier it was. A drink and a kids'
+   meal aren't bitten, only burst. */
+var PIT_BALLS = [['#e53935', '#ff9a90'], ['#ffc928', '#fff0a0'], ['#2f7fe0', '#9cc8ff'], ['#2eae5a', '#8fe0a8'], ['#ff6fae', '#ffd0e4']];
+function ballBurst(wrap, w, h, weight, late) {
+  var n = candyFor(weight), mid = (n - 1) / 2, seed = n * 7919, px = 1.5;
+  var jitter = function (spread) { seed = (seed * 16807) % 2147483647; return (seed / 2147483647 - 0.5) * 2 * spread; };
+  for (var i = 0; i < n; i++) {
+    var c = PIT_BALLS[i % PIT_BALLS.length], a = -Math.PI / 2 + ((i - mid) / mid) * 1.35 + jitter(0.22);
+    var reach = (10 + w * 0.6 + (n - 4) * 0.7) * (1 + jitter(0.3));
+    var piece = document.createElement('i'); piece.className = 'candy';
+    piece.style.left = (w / 2 - 3) + 'px'; piece.style.top = (h / 2 - 2) + 'px';
+    piece.style.setProperty('--dx', Math.round(Math.cos(a) * reach) + 'px');
+    piece.style.setProperty('--up', Math.round(Math.sin(a) * reach * (0.8 + jitter(0.25))) + 'px');
+    piece.style.setProperty('--fall', Math.round(h + 16 + jitter(8)) + 'px');
+    piece.style.setProperty('--r', '0deg');
+    piece.style.setProperty('--late', (late + Math.abs(jitter(0.12))).toFixed(2) + 's');
+    piece.style.setProperty('--dur', (1 + jitter(0.15)).toFixed(2) + 's');
+    var svg = el('svg', { width: 4 * px, height: 4 * px, viewBox: '0 0 4 4' });
+    ['.cc.', 'clcc', 'cccc', '.cc.'].forEach(function (row, y) { for (var x = 0; x < 4; x++) { var k = row[x];
+      if (k !== '.') svg.appendChild(el('rect', { x: x, y: y, width: 1, height: 1, fill: k === 'l' ? c[1] : c[0] })); } });
+    piece.appendChild(svg);
+    wrap.appendChild(piece);
+  }
+}
+var BITTEN = { nuggets: 1, fries: 1, cone: 1, burger: 1, giant: 1 };
+// The drawing twice more: one bite out of its right side, then a second from its
+// top, each bitten edge drawn dark.
+function bites(rows, w, h) {
+  var r = Math.max(2.2, Math.min(w, h) * 0.28), out = [], gone = {};
+  [[w - 0.5, h * 0.35], [w * 0.55, 0]].forEach(function (c) {
+    for (var y = 0; y < h; y++) for (var x = 0; x < w; x++)
+      if (Math.hypot(x + 0.5 - c[0], y + 0.5 - c[1]) <= r) gone[x + ',' + y] = 1;
+    out.push(rows.map(function (row, y) { return row.split('').map(function (ch, x) {
+      if (ch === '.' || gone[x + ',' + y]) return '.';
+      var edge = gone[(x + 1) + ',' + y] || gone[(x - 1) + ',' + y] || gone[x + ',' + (y + 1)] || gone[x + ',' + (y - 1)];
+      return edge ? 'o' : ch;
+    }).join(''); }));
+  });
+  return out;
+}
+
 var PLAY_FOOD = {
   slime: { kind: 'nuggets', px: 1.5, pal: {"o":"#3a2418","N":"#e8a85a","h":"#ffd08a","n":"#c47c30","d":"#b06a28","#":"#e8a85a"}, rows: [
     '......oooo...',
