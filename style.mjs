@@ -906,12 +906,25 @@ nav .space-switch select { width: 100%; font: inherit; font-size: 12.5px; font-w
 .themes button[aria-pressed="true"] { background: var(--sel); border-color: var(--muted); font-weight: 600; }
 .themes.deco-specials { margin-top: 10px; align-items: center; }
 /* The companion quiz, under the races. */
-.pick-quiz-open { font: inherit; font-size: 12px; color: var(--muted); background: none; border: 0; padding: 6px 0 0; cursor: pointer; }
-.pick-quiz-open:hover { color: var(--ink); text-decoration: underline; }
+.pick-quiz-open { font: inherit; font-size: 12px; margin: 0 0 10px; padding: 5px 11px; cursor: pointer; color: var(--ink);
+  border: 1px solid var(--line); border-radius: 6px; background: var(--bg); }
+.pick-quiz-open:hover { border-color: var(--muted); }
 .pick-quiz-open[hidden], .pick-quiz[hidden] { display: none; }
-.pick-quiz { margin-top: 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); }
+.pick-quiz { margin: 0 0 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); }
 .pick-quiz .pick-q { margin: 0 0 8px; font-size: 13px; }
-.deco-specials-label { font-size: 11px; color: var(--muted); width: 100%; }
+/* six answers, as an even three by two */
+.pick-quiz .pick-answers { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.pick-quiz .pick-answers button { text-align: left; }
+.pick-result { display: flex; gap: 14px; align-items: center; margin-bottom: 8px; }
+.pick-result svg { flex: none; }
+.pick-result .pick-q { margin: 0; }
+.deco-specials-label { font-size: 11px; color: #b8860b; width: 100%; font-weight: 600; letter-spacing: .02em; }
+/* The streak specials are a reward of their own: gold, starred. */
+#decoration-specials button { border-color: #e0b84a; }
+#decoration-specials button::before { content: "✦"; margin-right: 5px; color: #e0b84a; }
+#decoration-specials button[aria-pressed="true"] { background: #fbf0cf; border-color: #b8860b; color: #4a3a10; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) #decoration-specials button[aria-pressed="true"] { background: #4a3a10; color: #fbf0cf; } }
+:root[data-theme="dark"] #decoration-specials button[aria-pressed="true"] { background: #4a3a10; color: #fbf0cf; }
 .themes button.locked { cursor: default; color: var(--muted); }
 .themes button[data-deco-lock] { position: relative; overflow: visible; }
 table.keys { width: 100%; border-collapse: collapse; font-size: 12.5px; }

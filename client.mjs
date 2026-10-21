@@ -1053,6 +1053,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // wears only in fantasy mode, the one place it wears anything.
     var petOn = store.get('worklog.pet', 'off') === 'on', questOn = store.get('worklog.quest', 'off') === 'on';
     document.getElementById('race-choice').closest('.srow').hidden = !petOn;
+    document.getElementById('pick-quiz-open').closest('.srow').hidden = !petOn;
     // Coat only shows in the pixel companion; as text it's just the animal.
     document.getElementById('coat-choice').closest('.srow').hidden = !petOn || !questOn;
     document.getElementById('text-colour-choice').closest('.srow').hidden = !petOn || questOn;
@@ -1081,36 +1082,59 @@ document.addEventListener('DOMContentLoaded', function () {
     document.dispatchEvent(new Event('companionchange'));
   }
   /* Not sure which animal? Four questions, each answer leaning toward a few of
-     them; the one with the most points is suggested, to take or not. */
+     them, and a fifth that quietly picks a colour: the animal with the most
+     points, in its nearest coat, is shown as a preview, to switch to or not. */
   var PICK_QUIZ = [
     ['Your ideal Saturday?', [
-      ['Curled up with a good book', { cat: 2, bear: 1, hamster: 1 }],
-      ['Out on a long walk', { pug: 2, fox: 1, penguin: 1 }],
+      ['Curled up with a good book', { cat: 2, hamster: 1 }],
+      ['Out on a long walk', { fox: 2, pug: 1, penguin: 1 }],
       ['Tinkering on a side project', { raccoon: 2, mouse: 1, fox: 1 }],
-      ['Snacks and a nap', { pig: 2, hamster: 1, bear: 1 }]]],
+      ['Snacks and a nap', { pig: 2, hamster: 1, bear: 1 }],
+      ['Hosting friends for dinner', { bunny: 2, pug: 1, pig: 1 }],
+      ['A swim somewhere cold', { penguin: 2, frog: 1 }]]],
     ['A build breaks. You\u2026', [
-      ['Calmly read the logs', { penguin: 2, cat: 1, frog: 1 }],
+      ['Calmly read the logs', { penguin: 2, frog: 1 }],
       ['Try something clever', { fox: 2, raccoon: 1 }],
       ['Ask for a second pair of eyes', { bunny: 2, pug: 1 }],
-      ['Get a snack first', { bear: 2, pig: 1, hamster: 1 }]]],
+      ['Get a snack first', { bear: 2, pig: 1, hamster: 1 }],
+      ['Write a test that catches it', { mouse: 2, hamster: 1 }],
+      ['Take a walk and come back to it', { pug: 2, frog: 1 }]]],
     ['On your desk?', [
-      ['A plant', { frog: 2, bunny: 1 }],
-      ['A big mug of coffee', { bear: 1, raccoon: 1, cat: 1 }],
-      ['A pile of stickers', { mouse: 2, hamster: 1 }],
-      ['Noise-cancelling headphones', { penguin: 1, fox: 1, cat: 1 }]]],
+      ['A plant', { frog: 2, mouse: 1 }],
+      ['A big mug of coffee', { bear: 2, raccoon: 1 }],
+      ['A pile of stickers', { hamster: 2, mouse: 1 }],
+      ['Noise-cancelling headphones', { cat: 2, penguin: 1 }],
+      ['A rubber duck', { penguin: 1, pug: 1, pig: 1 }],
+      ['Snacks in a drawer', { raccoon: 2, pig: 1 }]]],
     ['Your code, in a word?', [
       ['Tidy', { hamster: 2, mouse: 1 }],
-      ['Quick', { bunny: 2, fox: 1 }],
-      ['Steady', { pug: 2, bear: 1 }],
-      ['Inventive', { raccoon: 2, pig: 1, frog: 1 }]]],
+      ['Quick', { fox: 2, bunny: 1 }],
+      ['Steady', { bear: 2, pug: 1 }],
+      ['Inventive', { raccoon: 2, pig: 1, frog: 1 }],
+      ['Playful', { bunny: 1, pig: 1, frog: 1 }],
+      ['Thorough', { mouse: 2, cat: 1 }]]],
+    // the last picks a coat, not an animal, without saying so
+    ['Your favourite time of day?', [['Golden hour', { coat: 0 }], ['A rainy afternoon', { coat: 1 }], ['A bright, early morning', { coat: 2 }],
+      ['Late at night', { coat: 3 }], ['A misty dawn', { coat: 4 }], ['Any time at all', { coat: 'any' }]]],
   ];
+  // each animal's coat for each time of day, chosen by hand; any time at all is any coat
+  var PICK_COATS = {
+    cat: ['tabby', 'brown', 'cream', 'black', 'grey'], pug: ['apricot', 'blue', 'fawn', 'black', 'silver'],
+    frog: ['yellow', 'blue', 'green', 'purple', 'red'], bunny: ['brown', 'grey', 'white', 'black', 'lavender'],
+    pig: ['ginger', 'mint', 'pink', 'black', 'grey'], fox: ['red', 'silver', 'fennec', 'violet', 'arctic'],
+    bear: ['brown', 'panda', 'pink', 'black', 'polar'], mouse: ['brown', 'grey', 'white', 'black', 'lilac'],
+    hamster: ['golden', 'mint', 'white', 'black', 'grey'], raccoon: ['rusty', 'blue', 'brown', 'plum', 'grey'],
+    penguin: ['pink', 'teal', 'chick', 'classic', 'blue']
+  };
+  // coats whose names read oddly as a description
+  var PICK_WORDS = { 'penguin classic': 'tuxedo', 'penguin chick': 'fluffy' };
   var PICK_SAYS = {
-    cat: 'Independent, curious, and happiest somewhere comfortable.', pug: 'Loyal and steady \u2014 always up for the walk.',
-    frog: 'Calm, patient, and at home anywhere green.', bunny: 'Quick on your feet and quicker to ask for help.',
-    pig: 'Clever and easy-going, with a snack never far away.', fox: 'Clever, quick, and fond of a smart shortcut.',
-    bear: 'Strong and steady, refuelled by snacks and coffee.', mouse: 'Small, tidy, and into every detail.',
-    hamster: 'Organised, busy, and cheek-full of ideas.', raccoon: 'Inventive and resourceful \u2014 whatever works.',
-    penguin: 'Cool under pressure, and fine in a crowd.'
+    cat: 'Independent, curious, and happiest somewhere comfortable.', pug: 'Loyal, steady, and always up for a walk.',
+    frog: 'Calm, patient, and at home anywhere.', bunny: 'Quick on your feet and happy to share the work.',
+    pig: 'Easy-going and sharp, with a snack never far away.', fox: 'Clever, quick, and fond of a smart shortcut.',
+    bear: 'Strong and steady, refuelled by snacks and coffee.', mouse: 'Small, tidy, and careful with every detail.',
+    hamster: 'Organised, busy, and stuffed with ideas.', raccoon: 'Inventive, resourceful, and happy with whatever works.',
+    penguin: 'Cool under pressure and at ease in a crowd.'
   };
   var pickQuiz = document.getElementById('pick-quiz');
   var pickOpen = document.getElementById('pick-quiz-open');
@@ -1124,13 +1148,14 @@ document.addEventListener('DOMContentLoaded', function () {
         q.textContent = (step + 1) + ' of ' + PICK_QUIZ.length + ' \u00b7 ' + PICK_QUIZ[step][0];
         pickQuiz.appendChild(q);
         var answers = document.createElement('div');
-        answers.className = 'themes';
+        answers.className = 'themes pick-answers';
         PICK_QUIZ[step][1].forEach(function (a) {
           var b = document.createElement('button');
           b.type = 'button';
           b.textContent = a[0];
           b.addEventListener('click', function () {
-            for (var k in a[1]) scores[k] = (scores[k] || 0) + a[1][k];
+            if ('coat' in a[1]) scores.coat = a[1].coat;
+            else for (var k in a[1]) scores[k] = (scores[k] || 0) + a[1][k];
             step++;
             ask();
           });
@@ -1142,19 +1167,33 @@ document.addEventListener('DOMContentLoaded', function () {
       // the most points wins; a tie goes to the one listed first
       var best = window.COMPANION.RACES.reduce(function (top, r) { return (scores[r] || 0) > (scores[top] || 0) ? r : top; }, window.COMPANION.RACES[0]);
       var name = best[0].toUpperCase() + best.slice(1);
+      var coats = window.COMPANION.COATS[best], names = Object.keys(coats);
+      var coat = scores.coat === 'any' ? names[Math.floor(Math.random() * names.length)] : (PICK_COATS[best] || [])[scores.coat || 0];
+      if (!coats[coat]) coat = Object.keys(coats)[0];
+      // a little preview of it, in your outfit, before anything changes
+      var look = document.createElement('div');
+      look.className = 'pick-result';
+      var v = window.COMPANION.companion(Object.assign({}, companionPick(), { race: best, coat: coat }), 'happy');
+      var shown = v.rows.slice(0, -4), px = 3, art = '';
+      shown.forEach(function (row, y) { for (var x = 0; x < row.length; x++) if (row[x] !== '.' && v.pal[row[x]]) art += '<rect x="' + x + '" y="' + y + '" width="1" height="1" fill="' + v.pal[row[x]] + '"/>'; });
+      look.innerHTML = '<svg viewBox="0 0 ' + shown[0].length + ' ' + shown.length + '" width="' + shown[0].length * px + '" height="' + shown.length * px + '" shape-rendering="crispEdges">' + art + '</svg>';
       var result = document.createElement('p');
       result.className = 'pick-q';
-      result.innerHTML = 'You\u2019re a <b></b> \u2014 ';
-      result.querySelector('b').textContent = name.toLowerCase();
+      // two sentences: who you are, then what that says about you
+      var word = PICK_WORDS[best + ' ' + coat] || coat;
+      result.innerHTML = 'You\u2019re ' + (/^[aeiou]/.test(word) ? 'an' : 'a') + ' <b></b>! ';
+      result.querySelector('b').textContent = (PICK_WORDS[best + ' ' + coat] || coat) + ' ' + name.toLowerCase();
       result.appendChild(document.createTextNode(PICK_SAYS[best] || ''));
-      pickQuiz.appendChild(result);
+      look.appendChild(result);
+      pickQuiz.appendChild(look);
       var actions = document.createElement('div');
       actions.className = 'themes';
       var take = document.createElement('button');
       take.type = 'button';
-      take.textContent = 'Be a ' + name.toLowerCase();
+      take.textContent = 'Switch to it';
       take.addEventListener('click', function () {
         store.set('worklog.pet.race', best);
+        store.set('worklog.pet.coat.' + best, coat);
         pickQuiz.hidden = true;
         pickOpen.hidden = false;
         paintBuilder();
@@ -1172,6 +1211,12 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     pickQuiz.hidden = false;
     pickOpen.hidden = true;
+    // one size throughout, the tallest of its steps, so it doesn't jump between questions
+    pickQuiz.style.minHeight = '';
+    var tallest = 0;
+    for (step = 0; step <= PICK_QUIZ.length; step++) { ask(); tallest = Math.max(tallest, pickQuiz.offsetHeight); }
+    scores = {}; step = 0;
+    pickQuiz.style.minHeight = tallest + 'px';
     ask();
   }
   if (pickOpen) pickOpen.addEventListener('click', runPickQuiz);
