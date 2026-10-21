@@ -213,6 +213,13 @@ tasks go with it.
   not relevant any more: it empties and stops counting, click again to undo. The
   acknowledgement is forgotten once the line goes away, so the same thing
   coming back shows again.
+- **Clearing a line.** Every line in the Overview's *Needs you* and *Good to
+  know* has an × on hover: read it, it's yours to deal with on your own time, or
+  it doesn't matter -- it leaves the Overview and stops counting, and stays on
+  its repo's pane. It's back if it changes or goes away and returns. *N cleared --
+  show* under a list brings them back to see, each with **Restore**. A stash or
+  an unpushed side branch untouched for two weeks leaves *Good to know* on its
+  own, also staying on its repo's pane.
 - The menu-bar item keeps working when the window is closed. Click any row to jump
   to that repo.
 - The window keeps itself current: a rebuild from anywhere else (a session
@@ -501,7 +508,8 @@ does every space in turn.
 **Hourly** adds a sync of GitLab and GitHub (no git fetch) once an hour on top of
 the daily one, and **Every 15 min** adds, between those, just what someone
 may be waiting on you for -- your events (comments, approvals) and review
-requests, two small calls. They run only while you're there: the screen
+requests, two small calls -- plus any ticket it has never seen, such as a branch just
+cut, so its tab has its title and weight. They run only while you're there: the screen
 unlocked and awake, the keyboard or mouse used in the last 15 minutes, and the
 window showing. One that comes due while you're away waits for you, then a
 random 0-5 minutes more (up to one for the quick check) so people arriving

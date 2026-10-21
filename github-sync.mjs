@@ -219,9 +219,11 @@ const refIn = (slug, item) => (item.repository.nameWithOwner.toLowerCase() === s
 // One query for all of them, each by its repo and number; a number that turns
 // out to be a pull request is left alone. "Blocked by" links are newer than some
 // GitHub installs, so a query refused for them is asked again without.
-if (!quick && issues.length) {
+// A quick check asks only about issues never seen before, as on GitLab.
+const asking = quick ? issues.filter((t) => !cache.issues[`${t.slug}#${t.number}`]) : issues;
+if (asking.length) {
   const bySlug = new Map();
-  for (const t of issues) (bySlug.get(t.slug) ?? bySlug.set(t.slug, []).get(t.slug)).push(t.number);
+  for (const t of asking) (bySlug.get(t.slug) ?? bySlug.set(t.slug, []).get(t.slug)).push(t.number);
   const ask = (deps) => graphql(`query { ${[...bySlug].map(([slug, numbers], i) => {
     const [owner, name] = slug.split("/");
     return `r${i}: repository(owner: ${JSON.stringify(owner)}, name: ${JSON.stringify(name)}) { ${numbers.map((n) =>

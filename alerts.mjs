@@ -15,7 +15,8 @@ export function alertsFor(repo, narrative = {}) {
   const out = [];
   // `unfinished` marks work that is yours and not done -- uncommitted, unpushed,
   // stashed, or noted as blocked or waiting. The markers count those.
-  const add = (severity, text, source, unfinished = false) => out.push({ severity, text, source, repo: repo.name, unfinished });
+  // at: when the thing it's about was last touched, for lines that go stale (see render.mjs)
+  const add = (severity, text, source, unfinished = false, at) => out.push({ severity, text, source, repo: repo.name, unfinished, ...(at ? { at } : {}) });
 
   for (const text of narrative.blocked ?? []) add("blocked", text, "narrative", true);
 
@@ -44,9 +45,9 @@ export function alertsFor(repo, narrative = {}) {
     return days === 0 ? "today" : days === 1 ? "yesterday" : `${age(at)} ago`;
   };
   for (const b of repo.unpushedBranches ?? [])
-    add("info", `${b.branch} has ${plural(b.commits, "commit")} on no remote, the last ${ago(b.at)}`, "git", true);
+    add("info", `${b.branch} has ${plural(b.commits, "commit")} on no remote, the last ${ago(b.at)}`, "git", true, b.at);
   if (repo.stashTimes?.length)
-    add("info", `${repo.stashTimes.length} stash${repo.stashTimes.length === 1 ? "" : "es"}, oldest ${ago(Math.min(...repo.stashTimes))}`, "git", true);
+    add("info", `${repo.stashTimes.length} stash${repo.stashTimes.length === 1 ? "" : "es"}, oldest ${ago(Math.min(...repo.stashTimes))}`, "git", true, Math.max(...repo.stashTimes));
 
   if (!repo.isDefault && repo.days !== null && repo.days > STALE_DAYS)
     add("quiet", `no commits in ${plural(repo.days, "day")}`, "git");
