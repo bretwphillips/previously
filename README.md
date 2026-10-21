@@ -362,8 +362,15 @@ to change something.
   work first, and nothing that has already merged. Filled in priority order until the tickets' GitLab weights
   reach a limit (Settings → General, 5 by default); a ticket with no weight counts
   as 1, one too big for what is left is skipped so a smaller one can fit, and the
-  first always goes in. Merge requests waiting on your review are added after,
-  whatever the limit.
+  first always goes in. Then, while there's room, what you haven't started, in the
+  epics your started work belongs to: your open tickets there (assigned to you, no
+  thread yet), then the next ones nobody is assigned to (on GitHub, a parent
+  issue's sub-issues), from the repo you've committed to most recently, each epic
+  in its own order. A ticket nobody has touched in 30 days waits behind those, and
+  tickets assigned to you in other epics come last. A blocked ticket goes in only
+  with its blocker: one of these is pulled in ahead of it; someone else's, and it
+  waits. Merge
+  requests waiting on your review are added after, whatever the limit.
 - **Blockers** — `blocked` entries from the narrative.
 - **Needs review** — merge requests recorded as `rfr`, and only those.
 

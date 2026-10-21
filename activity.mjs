@@ -97,7 +97,7 @@ const epicOf = (e) => {
 
 const issues = parse(process.env.ISSUES)
   .filter((t) => t.issue?.iid)
-  .map(({ path, issue, links }) => {
+  .map(({ path, issue, links, assigned }) => {
     const repo = folderOf(path);
     const blockedBy = new Map();
     for (const link of Array.isArray(links) ? links : []) {
@@ -112,6 +112,10 @@ const issues = parse(process.env.ISSUES)
       title: issue.title ?? "",
       state: issue.state ?? null,
       weight: issue.weight ?? null,
+      // assigned to you, open: what the standup's Today can plan beyond your threads
+      assigned: Boolean(assigned),
+      // when it last changed: the standup puts long-quiet tickets after fresh ones
+      updatedAt: issue.updated_at ? Date.parse(issue.updated_at) / 1000 : null,
       // The epic the ticket belongs to, on tiers that have epics.
       epic: issue.epic?.iid ? epicOf(issue.epic) : null,
       blockedBy: [...blockedBy].map(([ref, source]) => ({ ref, source })),
@@ -119,6 +123,13 @@ const issues = parse(process.env.ISSUES)
       description: issue.description ?? "",
     };
   });
+
+// The open tickets in the epics your tickets belong to, each epic in its own
+// order: the standup's next work when your own leaves room.
+const epicIssues = parse(process.env.EPIC_ISSUES).map((i) => ({
+  repo: folderOf(i.path), ticket: `#${i.iid}`, title: i.title ?? "", weight: i.weight ?? null,
+  assigned: Boolean(i.assigned), order: i.order ?? 0, epic: epicOf(i.epic), updatedAt: i.updatedAt ?? null,
+}));
 
 // Comments from other people on your tickets and merge requests, counted by
 // gitlab-sync.mjs as they arrive.
@@ -153,7 +164,7 @@ const problems = parse(process.env.PROBLEMS).map(({ path, iid, title, url, kind 
 
 process.stdout.write(
   JSON.stringify(
-    { fetchedAt: Math.floor(Date.now() / 1000), mrsFetchedAt: Math.floor(Date.now() / 1000), comments, approvals, mrs, issues, messages, reviews, problems },
+    { fetchedAt: Math.floor(Date.now() / 1000), mrsFetchedAt: Math.floor(Date.now() / 1000), comments, approvals, mrs, issues, epicIssues, messages, reviews, problems },
     null,
     2,
   ),

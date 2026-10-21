@@ -23,7 +23,7 @@ const VERSION = 1;
 const EVENT_DAYS = 21;
 const PR_DAYS = 14;
 const BRANCH_DAYS = 14;
-const MAX_ISSUES = 40;
+const MAX_ISSUES = 60;
 const CACHE_FILE = join(DATA, "sync-cache-github.json");
 const OUT_FILE = join(DATA, "activity-github.json");
 
@@ -207,6 +207,20 @@ for (const e of Object.values(cache.events)) if (e.at >= standupFrom && e.kind =
     for (const t of project.threads ?? []) for (const ref of t.blockedBy ?? []) blocker(holder, ref);
   }
 }
+// Your open issues, started or not, so the standup can plan past what you've
+// begun -- last, so what you've touched keeps its place under the cap.
+if (!quick) {
+  const answer = await graphql(`query { search(query: "is:issue is:open assignee:@me", type: ISSUE, first: 50) {
+    nodes { ... on Issue { number repository { nameWithOwner } } } } }`);
+  const found = answer?.data?.search?.nodes;
+  if (Array.isArray(found)) cache.assigned = found.filter((i) => i?.number).map((i) => ({ slug: i.repository.nameWithOwner.toLowerCase(), number: i.number }));
+}
+const assignedKeys = new Set();
+for (const a of cache.assigned ?? []) {
+  if (!repos.has(a.slug)) continue;
+  assignedKeys.add(`${a.slug}#${a.number}`);
+  want(a.slug, a.number, 0);
+}
 const issues = [...wanted.values()].sort((a, b) => b.at - a.at).slice(0, MAX_ISSUES);
 if (!quick) {
   const keep = new Set(issues.map((t) => `${t.slug}#${t.number}`));
@@ -231,7 +245,7 @@ if (asking.length) {
         timelineItems(itemTypes: [CLOSED_EVENT], last: 1) { nodes { ... on ClosedEvent { actor { login ... on User { name } } } } }
         ${deps ? `blockedBy(first: 20) { nodes { number state repository { name nameWithOwner } } }
           parent { number title state url repository { name nameWithOwner } }
-          subIssues(first: 50) { nodes { number title state repository { name nameWithOwner } } }` : ""} } }`).join(" ")} }`;
+          subIssues(first: 50) { nodes { number title state updatedAt assignees(first: 1) { totalCount } repository { name nameWithOwner } } }` : ""} } }`).join(" ")} }`;
   }).join(" ")} }`);
   let answer = cache.noDeps ? null : await ask(true);
   if (!answer?.data) { cache.noDeps = Boolean(answer?.errors); answer = await ask(false); }
@@ -242,12 +256,14 @@ if (asking.length) {
       heard(`issue ${key}`, slug, `#${issue.number}`, issue.title, before?.comments, issue.comments.totalCount, mineSince(slug, "#", issue.number, last));
       settled(`issue-state ${key}`, slug, `#${issue.number}`, issue.title, before?.state, issue.state, issue.timelineItems?.nodes?.[0]?.actor);
       cache.issues[key] = {
-        slug, number: issue.number, title: issue.title, state: issue.state, body: issue.body ?? "",
+        slug, number: issue.number, title: issue.title, state: issue.state, body: issue.body ?? "", updatedAt: issue.updatedAt ? secondsOf(issue.updatedAt) : null,
         comments: issue.comments.totalCount,
         blockedBy: (issue.blockedBy?.nodes ?? []).filter((b) => b.state === "OPEN").map((b) => refIn(slug, b)),
         // Sub-issues: GitHub's parent and children, the closest it has to an epic.
         parent: issue.parent ? { ref: refIn(slug, issue.parent), title: issue.parent.title, url: issue.parent.url, open: issue.parent.state === "OPEN" } : null,
-        children: (issue.subIssues?.nodes ?? []).map((c) => ({ ref: refIn(slug, c), title: c.title, open: c.state === "OPEN" })),
+        children: (issue.subIssues?.nodes ?? []).map((c) => ({ ref: refIn(slug, c), title: c.title, open: c.state === "OPEN",
+          assigned: (c.assignees?.totalCount ?? 0) > 0, repo: repos.get(c.repository.nameWithOwner.toLowerCase()) ?? c.repository.name, number: c.number,
+          updatedAt: c.updatedAt ? secondsOf(c.updatedAt) : null })),
       };
     }
   });
@@ -339,6 +355,7 @@ const activity = {
       const listed = checklist(t.body, repo);
       return {
         repo, ticket: `#${t.number}`, title: t.title ?? "", state: t.state === "OPEN" ? "opened" : "closed", weight: null,
+        assigned: assignedKeys.has(`${t.slug}#${t.number}`), updatedAt: t.updatedAt ?? null,
         epic: t.parent ? { ...t.parent, source: "GitHub", parent: true } : null,
         children: t.children?.length ? t.children : listed.map(({ ref, open }) => ({ ref, title: "", open })),
         blockedBy: [...blockedBy].map(([ref, source]) => ({ ref, source })), description: t.body,
@@ -358,6 +375,13 @@ const activity = {
     }
     return out;
   })(),
+  // An open parent's open sub-issues, in its order: the standup's next work when
+  // your own leaves room, as an epic's tickets are on GitLab.
+  epicIssues: Object.values(cache.issues).filter((t) => t.state === "OPEN" && t.children?.length).flatMap((t) =>
+    t.children.filter((c) => c.open && c.number).map((c, order) => ({
+      repo: c.repo, ticket: `#${c.number}`, title: c.title ?? "", weight: null, assigned: Boolean(c.assigned), order, updatedAt: c.updatedAt ?? null,
+      epic: { ref: `#${t.number}`, title: t.title, url: `https://github.com/${t.slug}/issues/${t.number}`, open: true, source: "GitHub", parent: true },
+    }))),
   messages: Object.values(cache.messages).map(({ kind, repo, ref, title, count, who, at }) => ({ kind, repo, ref, title, count, who, at })),
   reviews: cache.reviews.map(({ repo, number, title, who, url }) => ({ repo, number, title, who, url })),
   problems: cache.problems,

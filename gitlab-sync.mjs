@@ -28,7 +28,7 @@ const EPIC_EVERY = DAY;
 const EVENT_DAYS = 21;
 const MR_DAYS = 14;
 const BRANCH_DAYS = 14;
-const MAX_TICKETS = 40;
+const MAX_TICKETS = 60;
 
 const CACHE_FILE = join(DATA, "sync-cache.json");
 
@@ -129,10 +129,13 @@ const reviewsCall = cache.user?.username
 // Your open merge requests, whole each time: a conflict or a pipeline result
 // doesn't touch a merge request's updated time, so "changed since" can't see it.
 const openCall = quick ? Promise.resolve(null) : pages("merge_requests?scope=created_by_me&state=opened");
-const [newEvents, newMrs, reviewing, openMrs] = await Promise.all([eventsCall, mrsCall, reviewsCall, openCall]);
+// Your open tickets, started or not, so the standup can plan past what you've begun.
+const assignedCall = quick ? Promise.resolve(null) : pages("issues?scope=assigned_to_me&state=opened");
+const [newEvents, newMrs, reviewing, openMrs, assignedIssues] = await Promise.all([eventsCall, mrsCall, reviewsCall, openCall, assignedCall]);
 // Without events GitLab didn't answer; leave everything as it was, so the next
 // sync still asks from the last good one.
 if (!newEvents) process.exit(0);
+if (assignedIssues) cache.assigned = assignedIssues.map((i) => ({ project_id: i.project_id, iid: i.iid }));
 
 for (const e of newEvents) {
   cache.events[e.id] = {
@@ -259,6 +262,14 @@ const stateOnly = new Set();
     for (const t of project.threads ?? []) for (const ref of t.blockedBy ?? []) blocker(holder, ref);
   }
 }
+// Your open tickets last: what you've touched keeps its place under the cap.
+const assignedKeys = new Set();
+for (const a of cache.assigned ?? []) {
+  const path = pathOf.get(a.project_id);
+  if (!path) continue;
+  assignedKeys.add(`${path}#${a.iid}`);
+  want(path, a.iid, 0);
+}
 const tickets = [...wanted.entries()].sort((a, b) => b[1].at - a[1].at).slice(0, MAX_TICKETS);
 const keep = new Set(tickets.map(([key]) => key));
 if (!quick) for (const key of Object.keys(cache.issues)) if (!keep.has(key)) delete cache.issues[key];
@@ -342,6 +353,20 @@ if (!quick) await Promise.all(
   }),
 );
 if (!quick) for (const key of Object.keys(cache.epics)) if (!epicKeys.has(key)) delete cache.epics[key];
+// The open tickets in each open epic, in the epic's own order, so the standup can
+// pick up the next one nobody has started when your own work leaves room.
+if (!quick) await Promise.all(
+  Object.values(cache.epics).map(async (c) => {
+    if (c.epic.state === "closed") { c.issues = []; return; }
+    const list = await pages(`groups/${c.epic.group_id}/epics/${c.epic.iid}/issues?state=opened`);
+    if (Array.isArray(list)) {
+      c.issues = list.filter((i) => i.state === "opened").map((i, order) => ({
+        project_id: i.project_id, iid: i.iid, title: i.title, weight: i.weight ?? null, assigned: (i.assignees ?? []).length > 0, order,
+        updatedAt: i.updated_at ? secondsOf(i.updated_at) : null,
+      }));
+    }
+  }),
+);
 
 // A review request is news once, when it first appears; the list itself is
 // whatever is still open and waiting on you.
@@ -410,9 +435,13 @@ const env = {
   EVENTS: JSON.stringify(Object.values(cache.events).sort((a, b) => b.id - a.id)),
   MRS: JSON.stringify(Object.values(cache.mrs)),
   ISSUES: JSON.stringify(
-    tickets.filter(([key]) => cache.issues[key]).map(([key]) => ({ path: cache.issues[key].path, issue: cache.issues[key].issue, links: cache.issues[key].links ?? [] })),
+    tickets.filter(([key]) => cache.issues[key]).map(([key]) => ({ path: cache.issues[key].path, issue: cache.issues[key].issue, links: cache.issues[key].links ?? [],
+      assigned: assignedKeys.has(key) })),
   ),
   EPICS: JSON.stringify(Object.values(cache.epics).map((e) => e.epic)),
+  EPIC_ISSUES: JSON.stringify(Object.values(cache.epics).flatMap((c) => (c.issues ?? [])
+    .map((i) => ({ ...i, path: pathOf.get(i.project_id), epic: { iid: c.epic.iid, group_id: c.epic.group_id, title: c.epic.title } }))
+    .filter((i) => i.path))),
   MESSAGES: JSON.stringify(Object.values(cache.messages)),
   REVIEWS: JSON.stringify(cache.reviews ?? []),
   PROBLEMS: JSON.stringify(cache.problems ?? []),

@@ -78,7 +78,7 @@ const activity = (() => {
   const when = (k) => Math.max(lab[k] ?? 0, hub[k] ?? 0) || null;
   return {
     fetchedAt: when("fetchedAt"), mrsFetchedAt: when("mrsFetchedAt"), comments,
-    approvals: list("approvals"), mrs: list("mrs"), issues: list("issues"),
+    approvals: list("approvals"), mrs: list("mrs"), issues: list("issues"), epicIssues: list("epicIssues"),
     messages: list("messages"), reviews: list("reviews"), problems: list("problems"),
   };
 })();

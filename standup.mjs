@@ -14,6 +14,8 @@ const stamp = (now) =>
 const WEIGHT_LIMIT = 5;
 // A ticket with no recorded weight is counted as the smallest there is.
 const UNWEIGHED = 1;
+// Not touched in this long, a ticket waits behind ones that are moving.
+const STALE_DAYS = 30;
 
 // Monday looks back to Friday. Any other day looks back to yesterday.
 export function since(now = new Date()) {
@@ -143,7 +145,8 @@ export function standup(repos, tasks, activity, now = new Date(), { weightLimit 
 
       // Today is the plan, and a ticket that has landed is not in it.
       if ((repo.group === "active" || touched) && goal && !finished(thread)) {
-        today.push({ text: goal, ref, epic, touched, at: repo.committedAt ?? 0, weight: thread.weight?.value ?? UNWEIGHED });
+        today.push({ text: goal, ref, epic, touched, at: repo.committedAt ?? 0, weight: thread.weight?.value ?? UNWEIGHED,
+          key: thread.ticket ? `${repo.name}${thread.ticket}` : null });
       }
 
       for (const line of thread.blocked ?? []) blockers.push({ text: text(line), ref });
@@ -209,6 +212,53 @@ export function standup(repos, tasks, activity, now = new Date(), { weightLimit 
     plan.push(entry);
     load += entry.weight;
   }
+  // Then what you haven't started, while it fits. The epics your started work
+  // belongs to come first: your open tickets in them (assigned to you, no thread
+  // yet), then the next ones nobody has taken there, from the repo you've been
+  // busiest in, each epic in its own order. A ticket nobody has touched in a month
+  // waits behind those, and tickets assigned to you in other epics come last. One
+  // blocked by a ticket still open goes in only with its blocker: one of these
+  // is pulled in ahead of it; someone else's, and it waits.
+  const working = new Set(plan.flatMap((e) => [e.epic?.url, e.epic?.ref]).filter(Boolean));
+  const inWork = (epic) => Boolean(epic) && (working.has(epic.url) || working.has(epic.ref));
+  const busiest = (name) => repos.find((r) => r.name === name)?.committedAt ?? 0;
+  const openTicket = new Set((activity.issues ?? []).filter((i) => i.state === "opened").map((i) => `${i.repo}${i.ticket}`));
+  // The tickets still open that block one, as "repo#n".
+  const blockersOf = (i) => ((activity.issues ?? []).find((x) => x.repo === i.repo && x.ticket === i.ticket)?.blockedBy ?? [])
+    .map((b) => ({ ...b, key: b.ref.startsWith("#") ? `${i.repo}${b.ref}` : b.ref }))
+    .filter((b) => b.source !== "description" || openTicket.has(b.key)).map((b) => b.key);
+  const fresh = (list) => list
+    .map((issue) => ({ issue, repo: repos.find((r) => r.name === issue.repo) }))
+    .filter(({ issue, repo }) => repo?.inStandup && repo.onWorkHost && !repo.threads.some((t) => t.ticket === issue.ticket));
+  const number = (i) => Number(i.ticket.slice(1));
+  const stale = (i) => (i.updatedAt ?? nowSeconds) < nowSeconds - STALE_DAYS * DAY;
+  const mine = fresh((activity.issues ?? []).filter((i) => i.assigned && i.state === "opened"));
+  const free = fresh((activity.epicIssues ?? []).filter((i) => !i.assigned && inWork(i.epic)))
+    .sort((a, b) => busiest(b.issue.repo) - busiest(a.issue.repo) || a.issue.order - b.issue.order);
+  const ours = mine.filter(({ issue }) => inWork(issue.epic)).sort((a, b) => number(a.issue) - number(b.issue));
+  const moving = ({ issue }) => !stale(issue), quiet = ({ issue }) => stale(issue);
+  const queue = [
+    ...ours.filter(moving), ...free.filter(moving),
+    ...ours.filter(quiet), ...free.filter(quiet),
+    ...mine.filter(({ issue }) => !inWork(issue.epic)).sort((a, b) => busiest(b.issue.repo) - busiest(a.issue.repo) || number(a.issue) - number(b.issue)),
+  ];
+  const inPlan = new Set(plan.map((e) => e.key).filter(Boolean));
+  const byKey = new Map(queue.map((c) => [`${c.issue.repo}${c.issue.ticket}`, c]));
+  // Plan one if it fits, its blockers first; false when it can't go in today.
+  const take = (c, seen = new Set()) => {
+    const key = `${c.issue.repo}${c.issue.ticket}`;
+    if (inPlan.has(key)) return true;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    for (const b of blockersOf(c.issue)) if (!inPlan.has(b) && !(byKey.has(b) && take(byKey.get(b), seen))) return false;
+    const weight = c.issue.weight ?? UNWEIGHED;
+    if (load + weight > limit) return false;
+    plan.push({ text: brief(c.issue.title), ref: c.repo.web ? urlFor(c.repo.web, c.issue.ticket) : c.issue.ticket, epic: c.issue.epic ?? null, key });
+    inPlan.add(key);
+    load += weight;
+    return true;
+  };
+  for (const c of queue) take(c);
   // Merge requests waiting on your review are on today's plan whatever the
   // weight limit -- someone is waiting -- unless a review thread covers them.
   for (const review of activity.reviews ?? []) {
