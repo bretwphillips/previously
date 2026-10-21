@@ -14,90 +14,86 @@ const svg = (rows, pal, s = 1.6, cls = "") => {
 };
 const grid = (w, h) => Array.from({ length: h }, () => Array(w).fill("."));
 
-// ---------- the banner: tubes in four colours, each segment a run of plastic
-// with a highlight along the top and a shade beneath, joined by rings, with round
-// windows here and there and, now and then, a slide curling down out of a tube.
-const TUBES = [["R", "r", "S"], ["Y", "y", "T"], ["B", "b", "U"], ["G", "g", "V"]]; // body, light, shade
+// ---------- the banner: a red-and-yellow striped awning along the top, its edge
+// scalloped, with balloons tied under it here and there.
 const BANNER_PAL = {
-  o: "var(--play-o, #3a2a30)", J: "var(--play-J, #e8e2d6)", j: "var(--play-j, #b8b0a2)", W: "var(--play-W, #cfe9f7)", w: "#ffffff", n: "var(--play-n, #c0392b)",
-  R: "#e53935", r: "#ff7a6e", S: "#a8231f", Y: "#ffc928", y: "#ffe58a", T: "#d99a00",
-  B: "#2f7fe0", b: "#7fb6ff", U: "#1c56a8", G: "#2eae5a", g: "#7fe0a0", V: "#1d7a3e",
+  o: "var(--play-o, #3a2a30)", K: "#7a3a1e", R: "#e53935", r: "#ff7a6e", S: "#b8271f", Y: "#ffc928", y: "#ffe58a", T: "#d99a00",
+  l: "var(--play-l, #8a7f78)", w: "#ffffff",
+  1: "#ff3b7a", 2: "#2f7fe0", 3: "#2eae5a", 4: "#ffc928", 5: "#8e44ad",
+  a: "#ffb0cc", b: "#9fc8ff", c: "#98e8b0", d: "#fff0a0", e: "#d4a8f0",
 };
-function tubes(w) {
-  const h = 40, g = grid(w, h);
+const BALLOON = ["...oooo...", ".ooCCCCoo.", ".oCHCCCCo.", "oCHHCCCCCo", "oCHCCCCCCo", "oCCCCCCCCo", "oCCCCCCCCo", ".oCCCCCCo.", ".ooCCCCoo.", "...oCCo...", "....oo....", ".....l....", "....l.....", ".....l...."];
+function awning(w) {
+  const h = 40, g = grid(w, h), SW = 12, DEPTH = 9;
   const put = (x, y, c) => { if (x >= 0 && x < w && y >= 0 && y < h) g[y][x] = c; };
-  const stamp = (x0, y0, rows) => rows.forEach((r, dy) => [...r].forEach((c, dx) => c !== "." && put(x0 + dx, y0 + dy, c)));
-  // a tube fourteen rows deep: outline, highlight, body, shade, outline
-  const band = (C, L, D) => ["o", L, L, L, C, C, C, C, C, C, D, D, D, "o"];
-  const T = 14;
-  let x = 0, seg = 0;
-  while (x < w) {
-    const len = 46 + ((seg * 37) % 27), [C, L, D] = TUBES[seg % 4], col = band(C, L, D);
-    for (let i = 0; i < len && x + i < w; i++) col.forEach((c, y) => put(x + i, y, c));
-    // a round window looking into the tube
-    if (seg % 3 !== 2) stamp(x + Math.floor(len / 2) - 5, 1, ["...oooo...", ".ooWWWWoo.", ".oWwWWWWo.", "oWwWWWWWWo", "oWWWWWWWWo", "oWWWWWWWWo", "oWWWWWWWWo", ".oWWWWWWo.", ".ooWWWWoo.", "...oooo..."]);
-    // a slide curling out of the tube and back up into the next
-    if (seg % 4 === 1) {
-      const sx = x + 8, span = 40;
-      for (let t = 0; t <= span; t++) {
-        const px = sx + t, py = T - 1 + Math.round(18 * Math.sin((t / span) * Math.PI));
-        put(px, py - 1, "o"); put(px, py, "y"); put(px, py + 1, "Y"); put(px, py + 2, "Y"); put(px, py + 3, "Y"); put(px, py + 4, "T"); put(px, py + 5, "o");
-      }
+  // the rod it hangs from
+  for (let x = 0; x < w; x++) { put(x, 0, "o"); put(x, 1, "K"); put(x, 2, "o"); }
+  for (let x = 0; x < w; x++) {
+    const k = Math.floor(x / SW), red = k % 2 === 0, at = x % SW;
+    // each stripe ends in a scallop: a half circle hanging below the straight part
+    const dx = at + 0.5 - SW / 2, drop = Math.round(Math.sqrt(Math.max(0, (SW / 2) ** 2 - dx * dx)));
+    const bottom = 3 + DEPTH + drop;
+    for (let y = 3; y < bottom; y++) {
+      const shade = y >= bottom - 2 ? (red ? "S" : "T") : y === 3 ? (red ? "r" : "y") : (red ? "R" : "Y");
+      put(x, y, shade);
     }
-    // a cargo net hanging under the odd tube
-    if (seg % 4 === 3) {
-      for (let dy = T; dy < T + 12; dy++) for (let dx = 6; dx < len - 6; dx++) {
-        if ((dx - 6) % 5 === 0 || (dy - T) % 4 === 0) put(x + dx, dy, "n");
-      }
-    }
-    x += len;
-    // a joint: a collar a little proud of the tube, with a bolt
-    for (const dx of [0, 1, 2, 3, 4]) {
-      const cx = x + dx;
-      for (let y = 0; y < T; y++) put(cx, y, y === 0 || y === T - 1 ? "o" : dx === 0 || dx === 4 ? "j" : "J");
-    }
-    put(x + 2, 6, "o"); put(x + 2, 7, "o");
-    x += 5; seg++;
+    put(x, bottom, "o");
+    if (at === 0) for (let y = 3; y < bottom; y++) put(x, y, "o");
+  }
+  // balloons tied under the awning, every few stripes, in turn of colour
+  for (let n = 0, x = 30; x < w - 10; x += 118 + (n * 41) % 60, n++) {
+    const C = "12345"[n % 5], H = "abcde"[n % 5], y0 = 15 + (n % 3) * 2;
+    BALLOON.forEach((row, dy) => [...row].forEach((c, dx) => {
+      if (c === ".") return;
+      put(x + dx, y0 + dy, c === "C" ? C : c === "H" ? "w" : c);
+    }));
+    for (let y = 3 + DEPTH + 6; y < y0; y++) put(x + 5, y, "l");
   }
   return g.map((r) => r.join(""));
 }
-export const PLAY_BANNER = `<div class="tubes" aria-hidden="true">${svg(tubes(1800), BANNER_PAL)}</div>`;
+export const PLAY_BANNER = `<div class="awning" aria-hidden="true">${svg(awning(1800), BANNER_PAL)}</div>`;
 
-// ---------- the hoard: burgers, fries, toy balls and sodas in Halloween's candy
-// places, a kids' meal box from 100, a ball pit from 700.
+// ---------- the hoard: food only -- burgers, fries, sodas, nuggets and soft-serve in
+// Halloween's candy places, a tray of it from 100, a takeout bag from 700.
 const FLAVOURS = {
-  red: { X: "#e53935", h: "#ff8a80", d: "#a8231f" }, yellow: { X: "#ffc928", h: "#ffe58a", d: "#d99a00" },
-  blue: { X: "#2f7fe0", h: "#7fb6ff", d: "#1c56a8" }, green: { X: "#2eae5a", h: "#7fe0a0", d: "#1d7a3e" },
-  purple: { X: "#8e44ad", h: "#c39be0", d: "#5e2d78" }, orange: { X: "#f28c28", h: "#ffc07a", d: "#c4641a" },
+  red: { C: "#e53935", c: "#ff8a80" }, blue: { C: "#2f7fe0", c: "#7fb6ff" }, green: { C: "#2eae5a", c: "#7fe0a0" },
+  orange: { C: "#f28c28", c: "#ffc07a" }, purple: { C: "#8e44ad", c: "#c39be0" },
 };
-const FIXED = { o: "#3a2418", B: "#e0a050", b: "#fff2c8", L: "#5cc04a", Y: "#ffd23f", P: "#6b3a1e", F: "#ffd84a", f: "#e8a800",
-  R: "#e53935", W: "#ffffff", s: "#ffffff", C: "#e53935", c: "#ffffff", N: "#2f7fe0", n: "#1c56a8", M: "#ffc928", m: "#d99a00" };
+const FIXED = { o: "#3a2418", B: "#e0a050", b: "#c47c30", s: "#fff6dc", L: "#5cc04a", Q: "#ffcc33", P: "#6b3a1e", p: "#8a4e2a",
+  F: "#ffd84a", f: "#e8a800", R: "#e53935", W: "#ffffff", N: "#e8a85a", n: "#c47c30", I: "#fff8ec", i: "#f0e0c8", K: "#d99050",
+  T: "#e53935", t: "#b8271f", G: "#c49a6a", g: "#a87a48", Y: "#ffc928" };
 const SPRITES = {
-  burger: [".ooooooo.", "oBbBBBbBo", "oLYLLLYLo", "oPPPPPPPo", ".oBBBBBo."],
-  fries: ["F.F.F", "FfFFf", "oRRRo", "oRWRo", ".ooo."],
-  ball: [".ooo.", "ohXXo", "oXXXo", "oXXdo", ".ooo."],
-  soda: ["...s.", "..s..", "ooooo", "oWWWo", "oCCCo", "oCcCo", "oCCCo", ".ooo."],
-  handle: ["...ooo...ooo...", "..oMMo...oMMo..", "..oMo.....oMo..", "..oMo.....oMo.."],
-  box: ["ooooooooooooooo", "oRRRRRRRRRRRRRo", "oRRRRRRRRRRRRRo", "oMMMMMMMMMMMMMo", "oRRRRRRRRRRRRRo",
-    "oRRWRRRWRRRWRRo", "oRRRRRRRRRRRRRo", ".oRRRRRRRRRRRo.", "..ooooooooooo.."],
-  pitBack: [".ooooooooooooooo.", "oNNNNNNNNNNNNNNNo"],
-  pitFront: ["ooooooooooooooooo", "oMMMMMMMMMMMMMMMo", "oNnNNnNNnNNnNNnNo", "oNNNNNNNNNNNNNNNo", "oNnNNnNNnNNnNNnNo",
-    "oNNNNNNNNNNNNNNNo", "oNnNNnNNnNNnNNnNo", "oNNNNNNNNNNNNNNNo", "oNnNNnNNnNNnNNnNo", "oNNNNNNNNNNNNNNNo", "oMMMMMMMMMMMMMMMo",
-    "oNNNNNNNNNNNNNNNo", "ooooooooooooooooo"],
+  // a domed bun with seeds, lettuce frilling out past it with cheese, the patty, a flat bottom bun
+  burger: ["..ooooo..", ".oBsBBsBo", "oBBBsBBBo", "LLLQQQLLL", "oPPPPPPPo", "obbbbbbbo", ".ooooooo."],
+  fries: ["F.F.F", "FfFfF", "oRRRo", "oRWRo", "oRRRo", ".ooo."],
+  nuggets: [".ooo.", "oNNno", "oNnNo", ".ooo."],
+  soda: ["...W.", "..W..", "ooooo", "oWWWo", "oCCCo", "oCcCo", "oCCCo", ".ooo."],
+  cone: [".ooo.", "oIIIo", "oIiIo", ".oKo.", "..o.."],
+  // a red serving tray under the food
+  handle: [],
+  tray: ["ooooooooooooooo", "oTTTTTTTTTTTTTo", "otttttttttttttto".slice(0, 14) + "o", ".ooooooooooooo."],
+  // a takeout bag: its open top behind the food, the rest in front
+  bagBack: ["...ooooooooooo...", "..ogggggggggggo.."],
+  bagFront: ["..ooooooooooooo..", "..oGGGGGGGGGGGo..", "..oGGGGGGGGGGGo..", "..oGGGGYYYGGGGo..", "..oGGGYYYYYGGGo..",
+    "..oGGGGYYYGGGGo..", "..oGGGGGGGGGGGo..", "..oGGGGGGGGGGGo..", "..ogGGGGGGGGGgo..", "..ooooooooooooo.."],
 };
-const AS = { wrapped: "burger", corn: "fries", drop: "ball", pop: "soda", handle: "handle", pail: "box", sackBack: "pitBack", sackFront: "pitFront" };
-const NAMES = ["a burger", "burgers to share", "a meal", "a small spread", "a kids' meal box", "a box filling up", "a full box",
-  "a box spilling over", "an overflowing box", "a ball pit", "a ball pit overflowing"];
-const BALLS = ["red", "yellow", "blue", "green", "purple", "orange"];
-export const PLAY = CANDY.map(([from, , w, h, items], i) =>
-  [from, NAMES[i], w, h, items.map(([name, x, y], k) => [AS[name], x, y, BALLS[(i * 2 + k) % BALLS.length]])]);
-// the ball pit's steps are balls, heaped in the pit and spilling round it
-const heap = (spots) => spots.map(([x, y], k) => ["ball", x, y, BALLS[k % BALLS.length]]);
-PLAY[9][4] = [["pitBack", 7, 4], ...heap([[8, 1], [12, 0], [16, 1], [20, 0], [10, 3], [14, 2], [18, 3]]), ["pitFront", 7, 6],
-  ...heap([[1, 14], [25, 14], [3, 12]])];
-PLAY[10][4] = [["pitBack", 10, 5], ...heap([[10, 1], [14, 0], [18, 0], [22, 1], [12, 3], [16, 2], [20, 3], [24, 3], [15, -1]]), ["pitFront", 10, 7],
-  ...heap([[0, 15], [4, 13], [5, 15], [27, 15], [31, 13], [32, 15], [2, 11], [29, 11], [8, 15]])];
-
+// how tall each candy place is, so a food sits on its bottom -- a taller burger
+// grows up rather than losing its bun off the bottom
+const SLOT = { wrapped: 5, corn: 6, drop: 5, pop: 8, pail: 6 }; // the tray sits right under the food
+const RISE = 3; // room added above, for what grows up
+// each candy place takes a food of its size, in turn, so a pile is a mix
+const AS = { wrapped: ["burger"], corn: ["fries", "cone"], drop: ["nuggets"], pop: ["soda"], handle: ["handle"], pail: ["tray"], sackBack: ["bagBack"], sackFront: ["bagFront"] };
+const NAMES = ["a burger", "burgers to share", "a meal", "a small spread", "a tray of food", "a tray filling up", "a full tray",
+  "a tray piled high", "an overflowing tray", "a takeout bag", "a takeout bag overflowing"];
+const CUPS = ["red", "blue", "green", "orange", "purple"];
+export const PLAY = CANDY.map(([from, , w, h, items], i) => {
+  const turn = {};
+  return [from, NAMES[i], w, h, items.map(([name, x, y], k) => {
+    const kinds = AS[name], n = (turn[name] = (turn[name] ?? -1) + 1);
+    const kind = kinds[n % kinds.length], tall = SPRITES[kind].length;
+    return [kind, x, y + RISE + (SLOT[name] ? SLOT[name] - tall : 0), CUPS[(i + k) % CUPS.length]];
+  })].concat([]).map((v, idx) => (idx === 3 ? v + RISE : v));
+});
 function pile(w, h, items) {
   const g = Array.from({ length: h }, () => Array(w).fill(null));
   for (const [name, x0, y0, flavour] of items) {
