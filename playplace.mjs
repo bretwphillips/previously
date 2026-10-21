@@ -70,18 +70,22 @@ const FLAVOURS = {
 };
 const FIXED = { o: "#3a2418", B: "#e0a050", b: "#c47c30", s: "#fff6dc", L: "#5cc04a", Q: "#ffcc33", P: "#6b3a1e", p: "#8a4e2a",
   F: "#ffd84a", f: "#e8a800", R: "#e53935", W: "#ffffff", N: "#e8a85a", n: "#c47c30", I: "#fff8ec", i: "#f0e0c8", K: "#d99050",
-  T: "#e53935", t: "#b8271f", G: "#c49a6a", g: "#a87a48", Y: "#ffc928" };
+  T: "#e53935", t: "#b8271f", G: "#c49a6a", g: "#a87a48", Y: "#ffc928", l: "#9be07a",
+  V: "#3d7be0", v: "#2a5bb0", D: "#ffe14a", d: "#e8b400", A: "#ff8a1e" };
 const SPRITES = {
-  // a domed bun with seeds, lettuce frilling out past it with cheese, the patty, a flat bottom bun
-  burger: ["..ooooo..", ".oBsBBsBo", "oBBBsBBBo", "LLLQQQLLL", "oPPPPPPPo", "obbbbbbbo", ".ooooooo."],
-  fries: ["F.F.F", "FfFfF", "oRRRo", "oRWRo", "oRRRo", ".ooo."],
-  nuggets: [".ooo.", "oNNno", "oNnNo", ".ooo."],
-  soda: ["...W.", "..W..", "ooooo", "oWWWo", "oCCCo", "oCcCo", "oCCCo", ".ooo."],
-  cone: [".ooo.", "oIIIo", "oIiIo", ".oKo.", "..o.."],
+  // a domed bun with seeds, lettuce frilling out past it, cheese dripping onto a grilled patty, a flat bottom bun
+  burger: ["..ooooo..", ".oBsBBsBo", "oBBBsBBBo", "LlLLLlLLL", "oQQQQQQQo", "oPQpPPpPo", "obbbbbbbo", ".ooooooo."],
+  fries: ["F.F.F", "FfFFf", "fFfFF", "oRRRo", "oRWRo", "oRRRo", ".ooo."],
+  nuggets: [".ooo.", "oNnNo", "onNNo", ".ooo."],
+  // a striped straw, a lid, a band round the cup
+  soda: ["..R..", "..R..", ".ooo.", "oiiio", "oCCCo", "oWWWo", "oCcCo", ".ooo."],
+  cone: ["..o..", ".oIo.", "oIIio", "oiIIo", "oKKKo", ".oKo.", "..o.."],
   // wide ones, taking turns with the burger
   nuggetbox: [".oNo.oNo.", "oNnNoNnNo", "oRWRWRWRo", "oRWRWRWRo", "oRWRWRWRo", ".ooooooo."],
-  bigfries: ["F.F.F.F.F", "FfFFfFFfF", ".oRRRRRo.", ".oRRWRRo.", ".oRRRRRo.", "..ooooo.."],
-  bigsoda: ["......W..", ".....W...", ".ooooooo.", ".oWWWWWo.", ".oCCCCCo.", ".oCCcCCo.", ".oCCCCCo.", "..ooooo.."],
+  // a kids' meal: a box with a carry handle and a heart, its rubber duck toy out in front
+  kidsbox: [".....oooo..", ".....o..o..", "...oooooooo", "...oVVRVRVo", ".DDoVVRRRVo", "AoDoVVVRVVo", ".DDDdVVVVVo", ".dDDdvvvvvo", ".ooooooooo."],
+  bigfries: ["F.F.F.F.F", "FfFFfFFfF", "fFfFFfFfF", ".oRRRRRo.", ".oRRWRRo.", ".oRRRRRo.", "..ooooo.."],
+  bigsoda: ["....R....", "....R....", "..ooooo..", ".oiiiiio.", ".oCCCCCo.", ".oWWWWWo.", ".oCCcCCo.", ".oCCCCCo.", "..ooooo.."],
   // a red serving tray under the food
   handle: [],
   tray: ["ooooooooooooooo", "oTTTTTTTTTTTTTo", "otttttttttttttto".slice(0, 14) + "o", ".ooooooooooooo."],
@@ -93,9 +97,9 @@ const SPRITES = {
 // how tall each candy place is, so a food sits on its bottom -- a taller burger
 // grows up rather than losing its bun off the bottom
 const SLOT = { wrapped: 5, corn: 6, drop: 5, pop: 8, pail: 6 }; // the tray sits right under the food
-const RISE = 3; // room added above, for what grows up
+const RISE = 4; // room added above, for what grows up
 // each candy place takes a food of its size, in turn, so a pile is a mix
-const AS = { wrapped: ["burger", "nuggetbox", "bigfries", "bigsoda"], corn: ["fries", "cone"], drop: ["nuggets"], pop: ["soda"], handle: ["handle"], pail: ["tray"], sackBack: ["bagBack"], sackFront: ["bagFront"] };
+const AS = { wrapped: ["burger", "kidsbox", "nuggetbox", "bigfries", "bigsoda"], corn: ["fries", "cone"], drop: ["nuggets"], pop: ["soda"], handle: ["handle"], pail: ["tray"], sackBack: ["bagBack"], sackFront: ["bagFront"] };
 const NAMES = ["a burger", "burgers to share", "a meal", "a small spread", "a tray of food", "a tray filling up", "a full tray",
   "a tray piled high", "an overflowing tray", "a takeout bag", "a takeout bag overflowing"];
 const CUPS = ["red", "blue", "green", "orange", "purple"];
