@@ -470,7 +470,9 @@ companion measures momentum rather than reportable output.
 With AI writing much of the code, it is easy to lose track of how your projects
 actually work. **Quiz**, beside Standup, asks a few multiple-choice questions on code
 you've been near: the repo you've committed to most recently (every fourth quiz, the
-one you last reviewed), from changes it hasn't quizzed you on yet. When a repo has
+one you last reviewed), from changes it hasn't quizzed you on yet -- only code that
+has landed on the default branch (`main` or `master`, as last fetched), never a
+branch still in review. When a repo has
 none left it moves to the next most active, and to older code when nothing is
 recent. A new question is never one it has asked before.
 
@@ -479,9 +481,8 @@ recent. A new question is never one it has asked before.
   without Claude Code installed there's no button.
 - **Only checkable facts**: where something lives, what calls what, what a change did.
   Each question quotes the code it rests on, and one whose quote isn't in the file it
-  cites -- in your copy, the default branch, or the commit it was written from, which
-  may be on a branch you haven't checked out -- is dropped before you see it; the
-  line is wherever the quote actually is.
+  cites on the default branch is dropped before you see it; the line is wherever the
+  quote actually is.
 - **Each answer points at its line**: your editor opens there (Settings → General →
   Editor: VS Code, Cursor, Windsurf or Zed) when your copy has that code, otherwise
   the commit on GitLab or GitHub -- code you reviewed may be newer than your clone.

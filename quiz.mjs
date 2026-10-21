@@ -112,7 +112,7 @@ function make() {
   try {
     const again = count > 1 && history.asked.length >= REPEAT_AFTER && !history.lastRepeated ? repeat(history) : null;
     const { repo, source, diff, shas, reviewed } = pick(history);
-    const questions = ask(repo, source, diff, again ? count - 1 : count, history, shas)
+    const questions = ask(repo, source, diff, again ? count - 1 : count, history)
       .map((q, i) => ({ ...q, repo: repo.name, id: `${today()}-${i}` }));
     if (!questions.length) throw new Error("No question could be checked against the code. Try again later.");
     history.asked.push(...questions.map(({ id, ...q }) => ({ ...q, key: id, day: today() })));
@@ -213,7 +213,8 @@ function changes(repo, window, git, me, quizzed) {
   const since = `--since=${Math.round(window / DAY)} days ago`;
   const head = git(repo, "symbolic-ref", "--short", "refs/remotes/origin/HEAD").trim() || "HEAD";
   const shas = [
-    ...git(repo, "log", "--all", `--author=${me}`, since, "--no-merges", "--format=%H").split("\n"),
+    // only what's on the default branch: your commits there first, then everyone's
+    ...git(repo, "log", head, `--author=${me}`, since, "--no-merges", "--format=%H").split("\n"),
     ...git(repo, "log", head, since, "--no-merges", "--format=%H").split("\n"),
   ].filter((sha) => sha && !quizzed.has(sha));
   let diff = "";
@@ -235,11 +236,14 @@ function changes(repo, window, git, me, quizzed) {
 
 // Nothing recent: some of the repo's source files, the most recently changed first.
 function code(repo, git) {
-  const files = git(repo, "log", "--format=", "--name-only", "-200", "--", "*.ts", "*.tsx", "*.js", "*.mjs", "*.svelte", "*.go", "*.py", "*.swift", "*.kt", "*.java", "*.rs")
-    .split("\n").filter((f) => f && existsSync(join(repo.path, f)));
+  // the files as they are on the default branch, not whatever branch is checked out
+  const head = git(repo, "symbolic-ref", "--short", "refs/remotes/origin/HEAD").trim() || "HEAD";
+  const files = git(repo, "log", head, "--format=", "--name-only", "-200", "--", "*.ts", "*.tsx", "*.js", "*.mjs", "*.svelte", "*.go", "*.py", "*.swift", "*.kt", "*.java", "*.rs")
+    .split("\n").filter(Boolean);
   let out = "";
   for (const f of [...new Set(files)]) {
-    const text = readFileSync(join(repo.path, f), "utf8");
+    const text = git(repo, "show", `${head}:${f}`);
+    if (!text) continue;
     if (out.length + text.length > BUDGET) continue;
     out += `--- ${f}\n${text}\n`;
     if (out.length > BUDGET * 0.8) break;
@@ -263,13 +267,13 @@ function gitOf(repo) {
   return { git, fetched: head ? git("rev-parse", head)?.trim() : null };
 }
 
-function ask(repo, source, material, count, history, shas = []) {
+function ask(repo, source, material, count, history) {
   const { git, fetched } = gitOf(repo);
   const before = history.asked.filter((a) => a.repo === repo.name).slice(-40).map((a) => `- ${a.question}`).join("\n");
   const prompt = `You are writing a short quiz to help a developer keep up with code in this repository -- largely
 written by an AI, so they may not know it well. Below is ${source === "changes" ? "recent commits and their diffs" : "some of its source files"}.
-You may read files in the repository to check facts, but do not change anything. The copy on disk may be behind:
-where it differs from the diffs, the diffs are the current code.
+You may read files in the repository to check facts, but do not change anything. The copy on disk may be on
+another branch or behind: the code to ask about is the default branch's, which is what's below.
 
 Write exactly ${count + 2} multiple-choice questions (a couple spare, in case one can't be checked). Rules:
 - Only questions whose answer is a plain fact readable in the CURRENT code: where something lives, what calls
@@ -293,7 +297,7 @@ ${material}`;
   );
   const text = JSON.parse(raw).result ?? "";
   const json = JSON.parse(text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1));
-  const found = (json.questions ?? []).map((q) => ({ q, at: checks(repo, q, git, fetched, shas) }));
+  const found = (json.questions ?? []).map((q) => ({ q, at: checks(repo, q, git, fetched) }));
   if (process.env.QUIZ_DEBUG) {
     console.error(repo.name, source, `${material.length} chars`);
     for (const { q, at } of found) console.error(at ? `ok ${at.commit ? "fetched" : "local"}` : "drop", q.file, q.line, JSON.stringify(q.quote));
@@ -302,11 +306,11 @@ ${material}`;
     .map(({ q: { question, choices, answer, explanation, file, line, quote }, at }) => ({ question, choices, answer, explanation, file, line, quote, ...at }));
 }
 
-// The quote has to be in the cited file: in your own copy (the link opens your
-// editor there), else in the fetched default branch (the link opens that commit on
-// the web, as your copy is behind). Its line is where the quote is -- the nearest to
-// the cited one -- as Claude may have counted lines in an older copy.
-function checks(repo, q, git, fetched, shas = []) {
+// The quote has to be in the cited file on the fetched default branch: the quiz is
+// only on code that has landed. The link opens your editor when your own copy has
+// the line too, else that commit on the web. Its line is where the quote is -- the
+// nearest to the cited one -- as Claude may have counted lines in an older copy.
+function checks(repo, q, git, fetched) {
   if (!Array.isArray(q.choices) || q.choices.length < 2 || !(q.answer >= 0 && q.answer < q.choices.length)) return null;
   if (!q.file || q.file.startsWith("/") || q.file.includes("..")) return null;
   const quote = (q.quote ?? "").trim();
@@ -323,16 +327,13 @@ function checks(repo, q, git, fetched, shas = []) {
   };
   const path = join(repo.path, q.file);
   const mine = existsSync(path) ? find(readFileSync(path, "utf8")) : null;
-  if (mine) return { local: true, line: mine };
-  const theirs = fetched ? find(git("show", `${fetched}:${q.file}`)) : null;
-  if (theirs) return { local: false, commit: fetched, line: theirs };
-  // Or in one of the commits it was written from: the changes take in every
-  // branch, and one not checked out or merged yet is in neither copy above.
-  for (const sha of shas) {
-    const there = find(git("show", `${sha}:${q.file}`));
-    if (there) return { local: false, commit: sha, line: there };
-  }
-  return null;
+  // A repo with no remote has only your copy to go by.
+  if (!fetched) return mine ? { local: true, line: mine } : null;
+  // Otherwise it has to be on the default branch; your copy is used for the link
+  // only when it has the line too.
+  const there = find(git("show", `${fetched}:${q.file}`));
+  if (!there) return null;
+  return mine ? { local: true, line: mine } : { local: false, commit: fetched, line: there };
 }
 
 const [action, ...rest] = process.argv.slice(2);
