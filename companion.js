@@ -4272,7 +4272,7 @@ const DECORATION_LADDERS = {
   muertos: [["sugarskull", "Sugar skull", 0], ["veladoras", "Veladoras", 1], ["pan", "Pan de muerto", 3],
     ["marigolds", "Marigolds", 6], ["guitar", "Guitar", 12], ["jarrito", "Jarrito", 20],
     ["papel", "Papel picado", 25], ["copal", "Copal", 30], ["alebrije", "Alebrije", 50]],
-  play: [["duck", "Rubber duck", 0], ["balloons", "Balloons", 1], ["condiments", "Condiments", 3], ["cake", "Party cake", 6],
+  play: [["duck", "Kids\u2019 meal", 0], ["balloons", "Balloons", 1], ["condiments", "Condiments", 3], ["cake", "Party cake", 6],
     ["cubby", "Shoe cubby", 12], ["grill", "Grill", 20], ["ride", "Kiddie ride", 25], ["drivethru", "Drive-thru", 30], ["claw", "Claw machine", 50]],
 };
 const DECORATION_STREAKS = [["gumball", "Gumball machine", 5], ["lavalamp", "Lava lamp", 10], ["robot", "Robot buddy", 15],
