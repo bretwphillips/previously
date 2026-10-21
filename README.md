@@ -119,21 +119,16 @@ to check before you act on it.**
 
 ## Optional extras
 
-All off until you turn them on:
+All off until you turn them on in Settings:
 
-- **A terminal drawer** along the bottom of the window, with tabs and splits
-  (Settings → General → Terminal), and **auto-resume**, which brings a Claude Code
-  session back in its tab after the app quits.
-- **A daily code quiz** — a few questions, made by Claude Code, on code you've been
-  working in, each pointing at the line it comes from (Settings → A.I.).
-- **A companion** in the sidebar — pick an animal and coat, or take the quiz —
-  whose mood follows how your work is going.
-- **Quest mode** turns tickets into a small game: locks and keys on blocked tickets,
-  monsters sized to each ticket's weight, a trail through your commits, a hoard
-  that grows with them, and themes — fantasy, a fast-food play place, Halloween,
-  Día de los Muertos.
+- **A terminal drawer** along the bottom of the window, for Claude Code sessions
+  that pick up where they left off.
+- **A daily code quiz** on the code you've been working in.
+- **A companion** in the sidebar whose mood follows how your work is going.
+- **Quest mode**, which turns your tickets and commits into a small game, with
+  themes to choose from.
 
-![Quest mode in its fantasy theme: an ivy banner, gem markers, the companion with its hoard](docs/images/quest.png)
+![Quest mode with the companion turned on](docs/images/quest.png)
 
 ---
 
