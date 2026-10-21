@@ -429,7 +429,8 @@ section[hidden] { display: none; }
 .review-local[hidden], .review-remove[hidden] { display: none; }
 .quiz-list { margin: 8px 0 0; padding-left: 22px; }
 .quiz-list[hidden], .quiz-past[hidden] { display: none; }
-.quiz-past { max-height: 60vh; overflow-y: auto; }
+/* the score at the far end from the buttons */
+#quiz-status { margin-left: auto; }
 .quiz-missed { color: var(--mark-other); font-weight: 600; }
 .quiz-past h3 { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 14px 0 6px; }
 .quiz-q { margin: 0 0 18px; }
