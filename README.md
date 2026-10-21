@@ -479,7 +479,9 @@ recent. A new question is never one it has asked before.
   without Claude Code installed there's no button.
 - **Only checkable facts**: where something lives, what calls what, what a change did.
   Each question quotes the code it rests on, and one whose quote isn't in the file it
-  cites is dropped before you see it; the line is wherever the quote actually is.
+  cites -- in your copy, the default branch, or the commit it was written from, which
+  may be on a branch you haven't checked out -- is dropped before you see it; the
+  line is wherever the quote actually is.
 - **Each answer points at its line**: your editor opens there (Settings → General →
   Editor: VS Code, Cursor, Windsurf or Zed) when your copy has that code, otherwise
   the commit on GitLab or GitHub -- code you reviewed may be newer than your clone.

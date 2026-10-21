@@ -112,7 +112,7 @@ function make() {
   try {
     const again = count > 1 && history.asked.length >= REPEAT_AFTER && !history.lastRepeated ? repeat(history) : null;
     const { repo, source, diff, shas, reviewed } = pick(history);
-    const questions = ask(repo, source, diff, again ? count - 1 : count, history)
+    const questions = ask(repo, source, diff, again ? count - 1 : count, history, shas)
       .map((q, i) => ({ ...q, repo: repo.name, id: `${today()}-${i}` }));
     if (!questions.length) throw new Error("No question could be checked against the code. Try again later.");
     history.asked.push(...questions.map(({ id, ...q }) => ({ ...q, key: id, day: today() })));
@@ -263,7 +263,7 @@ function gitOf(repo) {
   return { git, fetched: head ? git("rev-parse", head)?.trim() : null };
 }
 
-function ask(repo, source, material, count, history) {
+function ask(repo, source, material, count, history, shas = []) {
   const { git, fetched } = gitOf(repo);
   const before = history.asked.filter((a) => a.repo === repo.name).slice(-40).map((a) => `- ${a.question}`).join("\n");
   const prompt = `You are writing a short quiz to help a developer keep up with code in this repository -- largely
@@ -293,7 +293,7 @@ ${material}`;
   );
   const text = JSON.parse(raw).result ?? "";
   const json = JSON.parse(text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1));
-  const found = (json.questions ?? []).map((q) => ({ q, at: checks(repo, q, git, fetched) }));
+  const found = (json.questions ?? []).map((q) => ({ q, at: checks(repo, q, git, fetched, shas) }));
   if (process.env.QUIZ_DEBUG) {
     console.error(repo.name, source, `${material.length} chars`);
     for (const { q, at } of found) console.error(at ? `ok ${at.commit ? "fetched" : "local"}` : "drop", q.file, q.line, JSON.stringify(q.quote));
@@ -306,7 +306,7 @@ ${material}`;
 // editor there), else in the fetched default branch (the link opens that commit on
 // the web, as your copy is behind). Its line is where the quote is -- the nearest to
 // the cited one -- as Claude may have counted lines in an older copy.
-function checks(repo, q, git, fetched) {
+function checks(repo, q, git, fetched, shas = []) {
   if (!Array.isArray(q.choices) || q.choices.length < 2 || !(q.answer >= 0 && q.answer < q.choices.length)) return null;
   if (!q.file || q.file.startsWith("/") || q.file.includes("..")) return null;
   const quote = (q.quote ?? "").trim();
@@ -326,6 +326,12 @@ function checks(repo, q, git, fetched) {
   if (mine) return { local: true, line: mine };
   const theirs = fetched ? find(git("show", `${fetched}:${q.file}`)) : null;
   if (theirs) return { local: false, commit: fetched, line: theirs };
+  // Or in one of the commits it was written from: the changes take in every
+  // branch, and one not checked out or merged yet is in neither copy above.
+  for (const sha of shas) {
+    const there = find(git("show", `${sha}:${q.file}`));
+    if (there) return { local: false, commit: sha, line: there };
+  }
   return null;
 }
 
