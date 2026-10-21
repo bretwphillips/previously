@@ -27,6 +27,10 @@
   #split { color: var(--muted); padding: 3px 6px; margin-left: auto; border: 0; display: flex;
            background: none; cursor: pointer; border-radius: 4px; line-height: 0; }
   #split:hover { color: var(--ink); background: var(--sel); }
+  /* hides the drawer, as the toolbar's button does: every shell keeps running */
+  #hide { color: var(--muted); font: inherit; font-size: 15px; padding: 1px 6px; border: 0; background: none;
+          cursor: pointer; border-radius: 4px; line-height: 1; }
+  #hide:hover { color: var(--ink); background: var(--sel); }
   .box { position: absolute; top: 30px; left: 0; right: 0; bottom: 0; display: flex; }
   .box[hidden] { display: none; }
   .pane { position: relative; flex: 1 1 0; min-width: 0; }
@@ -70,7 +74,7 @@
 </style>
 </head>
 <body>
-<div id="tabs" role="tablist"><button id="new" title="New terminal" aria-label="New terminal">+</button><button id="split" title="Split side by side (⌘D)" aria-label="Split side by side"><svg viewBox="0 0 14 12" width="14" height="12" aria-hidden="true"><rect x="0.75" y="0.75" width="12.5" height="10.5" rx="1.8" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M7 1v10" stroke="currentColor" stroke-width="1.3"/></svg></button></div>
+<div id="tabs" role="tablist"><button id="new" title="New terminal" aria-label="New terminal">+</button><button id="split" title="Split side by side (⌘D)" aria-label="Split side by side"><svg viewBox="0 0 14 12" width="14" height="12" aria-hidden="true"><rect x="0.75" y="0.75" width="12.5" height="10.5" rx="1.8" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M7 1v10" stroke="currentColor" stroke-width="1.3"/></svg></button><button id="hide" title="Hide the terminal (its shells keep running)" aria-label="Hide the terminal">&times;</button></div>
 <script src="vendor/xterm.js"></script>
 <script src="vendor/addon-fit.js"></script>
 <script src="vendor/addon-webgl.js"></script>
@@ -727,6 +731,7 @@ window.termRequestSplit = function () {
 
 newButton.addEventListener('click', function () { app.termNew.postMessage(''); });
 splitButton.addEventListener('click', window.termRequestSplit);
+document.getElementById('hide').addEventListener('click', function () { app.termHide.postMessage(''); });
 
 app.termReady.postMessage('');
 </script>
