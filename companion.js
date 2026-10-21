@@ -279,7 +279,7 @@ const ANIMALS = {
   },
   // a white face and belly, a beak and flippers; D the feet
   penguin: {
-    headTop: 2, eyes: 6, neck: 12, hatDrop: 1,
+    headTop: 2, eyes: 6, neck: 11, hatDrop: 1,
     rows: [
       ".................",
       ".................",
