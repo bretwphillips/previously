@@ -537,7 +537,7 @@ p { margin: 8px 0; }
 /* The marker sits on the middle of the first line of text, whatever its size. */
 .alerts .dot { position: relative; top: 0; align-self: flex-start; margin-top: calc(0.65em - 2px); }
 body.quest:not(.quest-none) .alerts .dot { margin-top: calc(0.65em - 3.5px); }
-body.quest.halloween .alerts .dot, body.quest.muertos .alerts .dot { margin-top: calc(0.65em - 4.5px); }
+body.quest.halloween .alerts .dot, body.quest.muertos .alerts .dot, body.quest.play .alerts .dot { margin-top: calc(0.65em - 4.5px); }
 .alerts .who { font-family: var(--mono); font-size: 11.5px; color: var(--muted);
                flex: none; width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .alerts .what { flex: 1; }
@@ -793,16 +793,16 @@ body.quest:not(.quest-none) .thread-tabs .mark { display: none; }
 .alerts li[data-key] > .dot::after { content: ""; position: absolute; inset: -6px -8px; }
 /* Empty markers recede, so a page of them stays quiet and the lit ones show. */
 .dot.none { opacity: .7; }
-body.quest:not(.quest-none) .dot.none, body.quest.halloween .dot.none, body.quest.muertos .dot.none { opacity: 1; }
+body.quest:not(.quest-none) .dot.none, body.quest.halloween .dot.none, body.quest.muertos .dot.none, body.quest.play .dot.none { opacity: 1; }
 /* A click shows in each style its own way: a dot just changes; an orb lets out
    a faint light as its energy is spent (or gathers it back); potions drink. */
-body.quest:not(.quest-none):not(.halloween):not(.muertos) .dot.drinking { animation: gem-release .6s ease-out forwards; }
-body.quest:not(.quest-none):not(.halloween):not(.muertos) .dot.filling { animation: gem-gather .6s ease-out; }
-body.quest:not(.quest-none):not(.halloween):not(.muertos) .dot.waiting { --gem-light: rgba(255,90,106,.55); }
-body.quest:not(.quest-none):not(.halloween):not(.muertos) .dot.action, body.quest:not(.quest-none):not(.halloween):not(.muertos) .dot.blocked { --gem-light: rgba(192,138,255,.55); }
-body.quest:not(.quest-none):not(.halloween):not(.muertos) .dot.news { --gem-light: rgba(94,224,143,.55); }
-body.quest:not(.quest-none):not(.halloween):not(.muertos) .dot.blue { --gem-light: rgba(90,160,255,.55); }
-body.quest:not(.quest-none):not(.halloween):not(.muertos) .dot.amber { --gem-light: rgba(255,190,70,.55); }
+body.quest:not(.quest-none):not(.halloween):not(.muertos):not(.play) .dot.drinking { animation: gem-release .6s ease-out forwards; }
+body.quest:not(.quest-none):not(.halloween):not(.muertos):not(.play) .dot.filling { animation: gem-gather .6s ease-out; }
+body.quest:not(.quest-none):not(.halloween):not(.muertos):not(.play) .dot.waiting { --gem-light: rgba(255,90,106,.55); }
+body.quest:not(.quest-none):not(.halloween):not(.muertos):not(.play) .dot.action, body.quest:not(.quest-none):not(.halloween):not(.muertos):not(.play) .dot.blocked { --gem-light: rgba(192,138,255,.55); }
+body.quest:not(.quest-none):not(.halloween):not(.muertos):not(.play) .dot.news { --gem-light: rgba(94,224,143,.55); }
+body.quest:not(.quest-none):not(.halloween):not(.muertos):not(.play) .dot.blue { --gem-light: rgba(90,160,255,.55); }
+body.quest:not(.quest-none):not(.halloween):not(.muertos):not(.play) .dot.amber { --gem-light: rgba(255,190,70,.55); }
 @keyframes gem-release {
   0% { filter: drop-shadow(0 0 0 transparent); }
   35% { filter: drop-shadow(0 0 2px var(--gem-light)); }

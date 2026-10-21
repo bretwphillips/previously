@@ -64,7 +64,7 @@ const flies = Array.from({ length: 26 }, (_, i) => {
 export const IVY = `<div class="ivy" aria-hidden="true"><span class="vine">${svg(ivy(1800), PAL)}</span>${flies}</div>`;
 
 // Fantasy is quest mode in neither holiday's dress, nor the plain theme.
-const FANTASY = "body.quest:not(.halloween):not(.muertos):not(.quest-none)";
+const FANTASY = "body.quest:not(.halloween):not(.muertos):not(.play):not(.quest-none)";
 export const IVY_CSS = `
 .top .ivy { display: none; }
 ${FANTASY} .top .ivy { display: block; position: absolute; top: 100%; left: 0; right: 0; height: 44px; overflow: hidden; pointer-events: none; }

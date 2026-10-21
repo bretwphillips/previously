@@ -20,6 +20,7 @@ import { OFRENDA, ofrendaArt, DOTD_STOPS, PAPEL_PICADO, MUERTOS_CSS } from "./mu
 import { COBWEB, COBWEB_CSS } from "./cobweb.mjs";
 import { IVY, IVY_CSS } from "./ivy.mjs";
 import { TOYS, toysArt } from "./toys.mjs";
+import { PLAY, playArt, PLAY_BANNER, PLAY_CSS, PLAY_STOPS } from "./playplace.mjs";
 import { TRIGGERS, COLOURS, DEFAULT_MARKERS, readMarkers, triggerOf } from "./markers.mjs";
 import { HOLIDAYS } from "./holidays.mjs";
 
@@ -795,9 +796,9 @@ function tallyMark(tally) {
     const next = steps.find(([from]) => from > count);
     return `${count} commit${count === 1 ? "" : "s"} since ${day}${next ? ` \u00b7 ${next[1]} at ${next[0]}` : ""}`;
   };
-  return `<div class="tally" title="${esc(titleFor(HOARD))}" data-title-gold="${esc(titleFor(HOARD))}" data-title-candy="${esc(titleFor(CANDY))}" data-title-ofrenda="${esc(titleFor(OFRENDA))}" data-title-toys="${esc(titleFor(TOYS))}">
+  return `<div class="tally" title="${esc(titleFor(HOARD))}" data-title-gold="${esc(titleFor(HOARD))}" data-title-candy="${esc(titleFor(CANDY))}" data-title-ofrenda="${esc(titleFor(OFRENDA))}" data-title-toys="${esc(titleFor(TOYS))}" data-title-play="${esc(titleFor(PLAY))}">
       <div class="tally-text"><span class="tally-label">commit${count === 1 ? "" : "s"}</span><span class="tally-n">${count}</span></div>
-      <div class="tally-hoard">${hoardArt(count)}${candyArt(count)}${ofrendaArt(count)}${toysArt(count)}<span class="tally-n">${count}</span></div>
+      <div class="tally-hoard">${hoardArt(count)}${candyArt(count)}${ofrendaArt(count)}${toysArt(count)}${playArt(count)}<span class="tally-n">${count}</span></div>
     </div>`;
 }
 
@@ -812,7 +813,7 @@ function nav(data) {
           ["Your latest commit", "Your commit before that", "An earlier commit"][r.trail]
         }"><span class="feet">\u{1F463}</span><span class="paws">\u{1F43E}</span>${WEB_PRINTS}${
           r.trail === 0 ? TENT : CAMP_STOP
-        }${HAUNTS[r.trail] ?? ""}${DOTD_STOPS[r.trail] ?? ""}</span>`;
+        }${HAUNTS[r.trail] ?? ""}${DOTD_STOPS[r.trail] ?? ""}${PLAY_STOPS[r.trail] ?? ""}</span>`;
   // Unfinished work, the same as a purple marker; tasks have their own section.
   // The page swaps in someone else's and new counts when those are what show.
   const pendingOf = (r) => r.alerts.filter((a) => a.unfinished).length;
@@ -1134,6 +1135,7 @@ function settingsPane(userName, weightLimit = 5, terminals = [], update = null, 
               `<div class="themes" id="overlay-choice">
                 <button data-overlay="none">None</button>
                 <button data-overlay="quest">Fantasy</button>
+                <button data-overlay="play">Play place</button>
                 <button data-overlay="halloween">Halloween</button>
                 <button data-overlay="muertos">Día de los Muertos</button>
               </div>
@@ -1195,6 +1197,23 @@ function settingsPane(userName, weightLimit = 5, terminals = [], update = null, 
               "What it wears in fantasy mode during Día de los Muertos.",
             )}
             ${row(
+              "Outfit",
+              `<div class="themes" id="play-look-choice">${[
+                ["crew", "Crew"], ["birthday", "Birthday"], ["playkid", "Play kid"], ["cook", "Grill cook"], ["mascot", "Mascot"], ["messy", "Messy eater"],
+              ]
+                .map(([c, label]) => `<button data-play-look="${c}">${label}</button>`)
+                .join("")}</div>`,
+              "What it wears in fantasy mode at the play place.",
+            )}
+            ${row(
+              "Party hat",
+              `<div class="themes" id="party-hat-choice"><button data-hat="pink">Pink</button><button data-hat="blue">Blue</button></div>`,
+            )}
+            ${row(
+              "Bow tie",
+              `<div class="themes" id="bowtie-choice"><button data-bowtie="on">On</button><button data-bowtie="off">Off</button></div>`,
+            )}
+            ${row(
               "Face paint",
               `<div class="themes" id="paint-choice"><button data-paint="off">None</button><button data-paint="on">Sugar skull</button></div>`,
               "A sugar skull painted on, or its own face. La Catrina and El Catrín are always calaveras.",
@@ -1244,11 +1263,12 @@ export function renderPage(data) {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Previously</title>
 <style>${CSS}</style>
-<style>${QUEST_CSS}${POTION_CSS}${MUERTOS_CSS}${COBWEB_CSS}${IVY_CSS}</style>
+<style>${QUEST_CSS}${POTION_CSS}${MUERTOS_CSS}${PLAY_CSS}${COBWEB_CSS}${IVY_CSS}</style>
 </head>
 <body>
 <div class="top">
   ${PAPEL_PICADO}
+  ${PLAY_BANNER}
   ${COBWEB}
   ${IVY}
   <span class="lede" id="lede">

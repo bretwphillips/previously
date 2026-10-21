@@ -1,8 +1,11 @@
-// The Happiest Play Place on Earth: a fast-food play place. Its banner is a run of
-// coloured play tubes along the top -- joints, round windows, a slide dipping out of
-// it -- and its hoard grows from a burger to a kids' meal box to a ball pit, laid out
-// as Halloween's candy is. Nothing here is anyone's brand: primary-coloured plastic,
-// burgers, fries and balls belong to every play place.
+// The Happiest Play Place on Earth: a fast-food play place in quest mode. A striped
+// awning for the banner, a hoard of food from one burger to takeout bags, soda cups for
+// the markers, the restaurant, its sign and a slide on the trail. The food on the tabs
+// and its eating are in quest.js; the outfits and decorations in companion.js. Nothing
+// here is anyone's brand: its H is its own, and primary-coloured plastic, burgers and
+// fries belong to every play place.
+
+import { DARK_ROOT } from "./style.mjs";
 
 
 const rects = (rows, pal) => rows.flatMap((r, y) => [...r].map((c, x) =>
@@ -14,7 +17,7 @@ const svg = (rows, pal, s = 1.6, cls = "") => {
 const grid = (w, h) => Array.from({ length: h }, () => Array(w).fill("."));
 
 // ---------- the banner: a red-and-yellow striped awning along the top, its edge
-// scalloped, with balloons tied under it here and there.
+// scalloped, marquee bulbs twinkling along it.
 const BANNER_PAL = {
   o: "var(--play-o, #3a2a30)", K: "#7a3a1e", R: "#e53935", r: "#ff7a6e", S: "#b8271f", Y: "#ffc928", y: "#ffe58a", T: "#d99a00",
   l: "var(--play-l, #8a7f78)", w: "#ffffff",
@@ -55,11 +58,7 @@ const sockets = BULBS.map(([x, y]) =>
 const bulbSet = (set) => `<g class="bulbs b${set}">${BULBS.filter((b) => b[2] === set).map(([x, y]) =>
   `<rect x="${x}" y="${y}" width="2" height="2" fill="#fff3a8"/><rect x="${x}" y="${y}" width="1" height="1" fill="#ffffff"/>`).join("")}</g>`;
 export const PLAY_BANNER = `<div class="awning" aria-hidden="true">${svg(awningRows, BANNER_PAL).replace("</svg>", sockets + bulbSet(0) + bulbSet(1) + "</svg>")}</div>`;
-export const PLAY_CSS = `
-.awning .bulbs { animation: bulb 1.2s steps(1, end) infinite; }
-.awning .bulbs.b1 { animation-delay: -.6s; }
-@keyframes bulb { 0% { opacity: 1; } 50% { opacity: 0; } }
-@media (prefers-reduced-motion: reduce) { .awning .bulbs { animation: none; } }`;
+
 
 // ---------- the hoard: food only -- burgers, fries, nuggets, drinks, soft-serve and a kids' meal,
 // on a tray from 100, takeout bags from 700.
@@ -141,3 +140,83 @@ export function playArt(count) {
   const rows = pile(w, h, items).flatMap((row, y) => row.map((c, x) => (c ? `<rect x="${x}" y="${y}" width="1" height="1" fill="${c}"/>` : "")));
   return `<svg class="hoard play" viewBox="0 0 ${w} ${h}" width="${w * scale}" height="${h * scale}" shape-rendering="crispEdges">${rows.join("")}</svg>`;
 }
+
+// ---------- the trail: the restaurant, its sign by the road, the slide out back, newest first.
+const STOP_PAL = { o: "var(--play-o, #3a2418)", R: "#e53935", r: "#ff8a80", Y: "#ffc928", y: "#ffe58a", C: "#2f7fe0", c: "#7fb6ff", G: "#2eae5a",
+  W: "#f7f2e8", w: "#bfe3ff", D: "#7a4a2a", S: "#9aa0a8", B: "#e0a050", b: "#c47c30", L: "#5cc04a", P: "#6b3a1e" };
+const STOPS = [
+  // the restaurant: a striped awning, big windows, a play tube winding down its side
+  [["............ooo....", "...........oCCCo...", "..ooooooooooCcCCo..", ".oRRRRRRRRRoCCCCo..", "oRRRRRRRRRRRoYYYo..", "oYRYRYRYRYRYoYyYo..",
+    ".oYoYoYoYoYooYYYo..", ".oWWWWWWWWWWoGGGGo.", ".oWwwWWWWwwWoGGGGo.", ".oWwwWDDWwwWo.oGGo.", ".oWWWWDDWWWWo..oRRo", ".oWWWWDDWWWWo...oRo", "oooooooooooooooooo."], 1.2],
+  // its sign by the road: a burger on a pole
+  [["..ooooooooo..", ".oRRRRRRRRRo.", "oRRoooooooRRo", "oRoBBBBBBBoRo", "oRoLLLLLLLoRo", "oRoPPPPPPPoRo", "oRRobbbbboRRo", ".oRRRRRRRRRo.",
+    "..ooooooooo..", ".....oSo.....", ".....oSo.....", ".....oSo.....", "....ooSoo....", "...ooooooo..."], 1.3],
+  // the playground: a slide down from a little tower
+  [["..ooooo........", ".oYYYYYo.......", "oYYYYYYYo......", ".oSoooSoo......", ".oS...SRRo.....", ".oSSSSSoRRo....", ".oS...S.oRRo...",
+    ".oSSSSS..oRRo..", ".oS...S...oRRo.", ".oSSSSS....oRRo", ".oS...S.....oRo", "ooooooooooooooo"], 1.2],
+];
+export const PLAY_STOPS = STOPS.map(([rows, scale]) => svg(rows, STOP_PAL, scale, "play-stop"));
+
+// ---------- markers: soda cups, a red straw through the lid, the drink the
+// markers' colours -- red someone else, purple unfinished, green new. Read, a
+// marker is sipped down a row at a time until the cup is empty.
+const CUP = [".....R...", ".....R...", "..KKKRK..", ".KsssssK.", ".KlllllK.", ".KsLLLLK.",
+  ".KsLLLdK.", "..KLLdK..", "..KLLdK..", "..KdddK..", "..KKKKK..", "........."];
+const DRINK_ROWS = [4, 5, 6, 7, 8, 9];
+const DRINKS = {
+  blocked: { L: "#9b4de0", l: "#d9b3ff", d: "#6a2fa3" }, action: { L: "#9b4de0", l: "#d9b3ff", d: "#6a2fa3" },
+  waiting: { L: "#e0283a", l: "#ff9a9a", d: "#a3121f" }, news: { L: "#4cc23a", l: "#b6f0a4", d: "#2e8a24" },
+  blue: { L: "#3a86e8", l: "#9cc8ff", d: "#1f5cb8" }, amber: { L: "#f0a020", l: "#ffd98a", d: "#b06f0a" },
+  info: { L: "#b8b2a6", l: "#dcd6ca", d: "#8c867b" }, quiet: { L: "#b8b2a6", l: "#dcd6ca", d: "#8c867b" },
+};
+const CUP_GLASS = { light: { K: "#3a3640", g: "#e4e8ee", s: "#ffffff" }, dark: { K: "#8a8496", g: "#3a3f48", s: "#6a7280" } };
+const cupUri = (drink, glass, gone = 0) => {
+  const rows = CUP.map((row, y) => (!drink || (DRINK_ROWS.indexOf(y) >= 0 && DRINK_ROWS.indexOf(y) < gone) ? row.replace(/[Lld]/g, "g") : row));
+  const body = rects(rows, { ...glass, R: "#e53935", ...(drink || {}) });
+  return `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 9 12" shape-rendering="crispEdges">${body}</svg>`)}")`;
+};
+const cupRules = (prefix, glass, tag) => {
+  const at = `${prefix} body.quest.play`;
+  const out = [`${at} .dot, ${at} .dot.none { background-image: ${cupUri(null, glass)}; }`];
+  for (const [kind, drink] of Object.entries(DRINKS)) {
+    const f = [0, 1, 2, 3, 4, 6].map((gone) => cupUri(drink, glass, gone)), name = `${kind}-${tag}`;
+    // sipping is the potions' five steps, the last draining the cup; a refill the same backwards
+    out.push(`@keyframes sip-${name} { ${f.slice(1).map((u, i) => `${i * 20}% { background-image: ${u}; }`).join(" ")} 100% { background-image: ${f[5]}; } }
+@keyframes pour-${name} { ${f.slice(0, 5).reverse().map((u, i) => `${i * 20}% { background-image: ${u}; }`).join(" ")} 100% { background-image: ${f[0]}; } }
+${at} .dot.${kind} { background-image: ${f[0]}; }
+${at} .dot.drinking.${kind} { animation: sip-${name} 1.4s steps(1, end) forwards; }
+${at} .dot.filling.${kind} { animation: pour-${name} 1.4s steps(1, end) forwards; }`);
+  }
+  return out.join("\n");
+};
+
+export const PLAY_CSS = `
+/* the markers */
+body.quest.play .dot { width: 9px; height: 12px; background-color: transparent; background-size: 9px 12px; background-repeat: no-repeat; box-shadow: none; border-radius: 0; }
+${cupRules("", CUP_GLASS.light, "light")}
+@media (prefers-color-scheme: dark) {
+${cupRules(":root:not([data-theme])", CUP_GLASS.dark, "dark")}
+}
+${cupRules(DARK_ROOT, CUP_GLASS.dark, "dark")}
+@media (prefers-reduced-motion: reduce) { body.quest.play .dot { animation: none !important; } }
+
+/* the banner: hung from the bottom edge of the bar, over the page as it scrolls */
+.top .awning { display: none; }
+body.quest.play .top .awning { display: block; position: absolute; top: 100%; left: 0; right: 0; height: 39px; overflow: hidden; pointer-events: none; }
+body.quest.play .awning svg { display: block; }
+.awning .bulbs { animation: bulb 1.2s steps(1, end) infinite; }
+.awning .bulbs.b1 { animation-delay: -.6s; }
+@keyframes bulb { 0% { opacity: 1; } 50% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .awning .bulbs { animation: none; } }
+body.quest.play nav .nav-scroll { padding-top: 34px; }
+body.quest.play main { padding-top: 42px; }
+
+/* the trail */
+nav .trail .play-stop { display: none; }
+body.quest.play nav .trail .camp, body.quest.play nav .trail .haunt { display: none; }
+body.quest.play nav .trail .play-stop { display: inline; }
+
+/* the hoard */
+body:not(.play) .hoard.play, body.play .hoard:not(.play) { display: none; }
+body.play .tally-hoard .tally-n, body.play.quest .pet.pixel .deco-n { color: #d03a2a; }
+`;
