@@ -918,6 +918,7 @@ function pastList(past) {
       <p class="quiz-ask">${esc(q.question)}</p>
       <div class="quiz-choices">${q.choices.map((c, i) => `<button disabled${i === q.answer ? ' class="is-answer"' : i === q.chosen ? ' class="is-chosen"' : ""}><b>${letter(i)}</b> ${esc(c)}</button>`).join("")}</div>
       <div class="quiz-why">
+        ${q.right === false && q.chosen == null ? `<p class="quiz-missed">You missed this one.</p>` : ""}
         <p>${esc(q.explanation ?? "")}</p>
         ${q.href ? `<a class="quiz-code" href="${esc(q.href)}">${esc(q.file)}:${q.line}</a>` : q.file ? `<span class="quiz-code">${esc(q.file)}:${q.line}</span>` : ""}
       </div>
