@@ -51,6 +51,8 @@ struct CoreState: Codable {
     var pending = 0
     var needs: [Alert] = []
     var paths: [String: String] = [:]
+    /// Settings -> Terminal: "off", "app" for the drawer, or a terminal app's id.
+    var terminal = "off"
 }
 
 /// The last state the core sent.
@@ -74,6 +76,8 @@ final class Core {
     private var quitting = false
     /// One of the core's instructions: an op and its arguments, with an id when it wants an answer.
     var onOp: ((String, Any?, Int?) -> Void)?
+    private var asked = 0
+    private var answers: [Int: (Any?) -> Void] = [:]
 
     func start() {
         let task = Process()
@@ -116,6 +120,10 @@ final class Core {
             guard let json = try? JSONSerialization.jsonObject(with: line) as? [String: Any],
                   let op = json["op"] as? String
             else { continue }
+            if op == "answer", let id = json["id"] as? Int {
+                answers.removeValue(forKey: id)?(json["args"] is NSNull ? nil : json["args"])
+                continue
+            }
             onOp?(op, json["args"], json["id"] as? Int)
         }
     }
@@ -134,6 +142,15 @@ final class Core {
     }
 
     func reply(_ id: Int, _ value: Bool) { write(["reply": id, "value": value]) }
+
+    /// A question for the core; its answer comes back on the main queue.
+    func ask(_ name: String, _ body: Any? = nil, answer: @escaping (Any?) -> Void) {
+        asked += 1
+        answers[asked] = answer
+        var line: [String: Any] = ["message": name, "id": asked]
+        if let body, JSONSerialization.isValidJSONObject([body]) { line["body"] = body }
+        write(line)
+    }
 }
 
 final class Model: ObservableObject {
@@ -533,6 +550,9 @@ final class TerminalDrawer: NSObject, WKScriptMessageHandler, WKNavigationDelega
     var onEmpty: (() -> Void)?
     var onHide: (() -> Void)?
     var onDrag: ((CGFloat) -> Void)?
+    /// The core keeps the tabs' layout and their Claude sessions.
+    var tell: ((String, Any) -> Void)?
+    var ask: ((String, @escaping (Any?) -> Void) -> Void)?
 
     var isEmpty: Bool { shells.isEmpty }
 
@@ -664,10 +684,8 @@ final class TerminalDrawer: NSObject, WKScriptMessageHandler, WKNavigationDelega
 
     // MARK: Layout across launches
 
-    /// Kept as folders and widths: the shells themselves end with the app, so
-    /// the next launch starts fresh ones where these were.
-    private static let layoutKey = "TerminalLayout"
-
+    /// Kept by the core as folders and widths: the shells themselves end with the
+    /// app, so the next launch starts fresh ones where these were.
     private func saveLayout(_ body: [String: Any]) {
         guard let tabs = body["tabs"] as? [[String: Any]] else { return }
         var saved: [[String: Any]] = []
@@ -683,55 +701,44 @@ final class TerminalDrawer: NSObject, WKScriptMessageHandler, WKNavigationDelega
             let focused = (tab["focused"] as? Int).flatMap { ids.firstIndex(of: $0) } ?? 0
             saved.append(["panes": panes, "focused": focused])
         }
-        UserDefaults.standard.set(
-            ["tabs": saved, "current": body["current"] as? Int ?? 0], forKey: Self.layoutKey)
+        tell?("termLayout", ["tabs": saved, "current": body["current"] as? Int ?? 0])
     }
 
-    /// Rebuilds the last layout with new shells. A folder that has gone since
-    /// falls back to the projects folder. False when there was nothing to rebuild.
-    func restore() -> Bool {
-        guard let saved = UserDefaults.standard.dictionary(forKey: Self.layoutKey),
-              let tabs = saved["tabs"] as? [[String: Any]], !tabs.isEmpty
-        else { return false }
-        // Tabs Claude was running in when the app last stopped, quit or crashed.
-        let running = Set(UserDefaults.standard.stringArray(forKey: Self.claudeKey) ?? [])
-        let resuming = autoResume()
-        var focusedIds: [Int] = []
-        for tab in tabs {
-            var previous: Int?
-            var ids: [Int] = []
-            for pane in tab["panes"] as? [[String: Any]] ?? [] {
-                var dir = projectsDir
-                var isDir: ObjCBool = false
-                if let path = pane["dir"] as? String,
-                   FileManager.default.fileExists(atPath: path, isDirectory: &isDir), isDir.boolValue
-                {
-                    dir = URL(fileURLWithPath: path)
+    /// Rebuilds the last layout with new shells, as the core plans it: where each
+    /// tab was, and the Claude session to resume in it. False when there was
+    /// nothing to rebuild.
+    func restore(done: @escaping (Bool) -> Void) {
+        guard let ask else { done(false); return }
+        ask("termRestore") { [weak self] answer in
+            guard let self, self.shells.isEmpty,
+                  let plan = answer as? [String: Any], let tabs = plan["tabs"] as? [[String: Any]]
+            else { done(false); return }
+            var focusedIds: [Int] = []
+            for tab in tabs {
+                var previous: Int?
+                var ids: [Int] = []
+                for pane in tab["panes"] as? [[String: Any]] ?? [] {
+                    guard let path = pane["dir"] as? String else { continue }
+                    let dir = URL(fileURLWithPath: path)
+                    guard let id = self.open(in: dir, repo: self.repoName(for: dir), beside: previous,
+                                             key: pane["key"] as? String, resume: pane["resume"] as? String)
+                    else { continue }
+                    if pane["stale"] as? Bool == true {
+                        self.note("Claude was running here, but its session couldn't be found to resume.", in: id)
+                    }
+                    if let grow = pane["grow"] as? Double, grow > 0 {
+                        self.call("window.termGrow(\(id), \(grow))")
+                    }
+                    ids.append(id)
+                    previous = id
                 }
-                let key = pane["key"] as? String
-                var resume: String?
-                var stale = false
-                if resuming, let key, running.contains(key) {
-                    resume = sessionId(for: key, in: dir)
-                    stale = resume == nil
-                }
-                guard let id = open(in: dir, repo: repoName(for: dir), beside: previous, key: key, resume: resume)
-                else { continue }
-                if stale {
-                    note("Claude was running here, but its session couldn't be found to resume.", in: id)
-                }
-                if let grow = pane["grow"] as? Double, grow > 0 {
-                    call("window.termGrow(\(id), \(grow))")
-                }
-                ids.append(id)
-                previous = id
+                if !ids.isEmpty { focusedIds.append(ids[min(tab["focused"] as? Int ?? 0, ids.count - 1)]) }
             }
-            if !ids.isEmpty { focusedIds.append(ids[min(tab["focused"] as? Int ?? 0, ids.count - 1)]) }
+            guard !focusedIds.isEmpty else { done(false); return }
+            let current = min(max(plan["current"] as? Int ?? 0, 0), focusedIds.count - 1)
+            self.call("window.termActivate(\(focusedIds[current]))")
+            done(true)
         }
-        guard !focusedIds.isEmpty else { return false }
-        let current = min(max(saved["current"] as? Int ?? 0, 0), focusedIds.count - 1)
-        call("window.termActivate(\(focusedIds[current]))")
-        return true
     }
 
     /// When the app is quitting, the tabs Claude was running in are kept for
@@ -778,48 +785,16 @@ final class TerminalDrawer: NSObject, WKScriptMessageHandler, WKNavigationDelega
         }
     }
 
-    /// The keys of tabs Claude Code is running in, kept as it changes, so a
-    /// crash leaves the last word.
-    private static let claudeKey = "TerminalClaude"
     private var quitting = false
 
-    private func autoResume() -> Bool {
-        let file = codeDir.appendingPathComponent("settings.json")
-        let settings = (try? JSONSerialization.jsonObject(with: Data(contentsOf: file))) as? [String: Any]
-        return settings?["autoResume"] as? String == "on"
-    }
-
+    /// The keys of tabs Claude Code is running in, as it changes -- but not as
+    /// they end with the app quitting, which keeps them for next time.
     private func saveClaudeTabs() {
         guard !quitting else { return }
-        UserDefaults.standard.set(shells.values.filter(\.claude).map(\.key), forKey: Self.claudeKey)
+        tell?("termClaude", shells.values.filter(\.claude).map(\.key))
     }
 
-    private func forgetSession(_ key: String) {
-        try? FileManager.default.removeItem(at: codeDir.appendingPathComponent("terminal-sessions/\(key)"))
-    }
-
-    /// The session a tab was running: what the hook filed under its key, else
-    /// the newest in that folder. Only one Claude Code still has on disk.
-    private func sessionId(for key: String, in dir: URL) -> String? {
-        let folder = FileManager.default.homeDirectoryForCurrentUser
-            .appendingPathComponent(".claude/projects")
-            .appendingPathComponent(String(dir.standardizedFileURL.path.map { $0.isLetter || $0.isNumber ? $0 : "-" }))
-        let exists = { (id: String) in
-            FileManager.default.fileExists(atPath: folder.appendingPathComponent("\(id).jsonl").path)
-        }
-        let filed = (try? String(contentsOf: codeDir.appendingPathComponent("terminal-sessions/\(key)"), encoding: .utf8))?
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-        if let filed, !filed.isEmpty { return exists(filed) ? filed : nil }
-        let newest = (try? FileManager.default.contentsOfDirectory(
-            at: folder, includingPropertiesForKeys: [.contentModificationDateKey]))?
-            .filter { $0.pathExtension == "jsonl" }
-            .max { a, b in
-                let da = (try? a.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate ?? .distantPast
-                let db = (try? b.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate ?? .distantPast
-                return da < db
-            }
-        return newest.map { $0.deletingPathExtension().lastPathComponent }
-    }
+    private func forgetSession(_ key: String) { tell?("termForget", key) }
 
     /// A folder opens in Finder, and a plain document -- image, PDF, text, audio,
     /// video -- in its own app. Anything else is only shown in Finder: a list of
@@ -1124,11 +1099,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, WKN
         watchPresence()
         core.onOp = { [weak self] op, args, id in self?.perform(op, args, id) }
         core.start()
-        // Open again if it was open when the app last quit, as it was laid out.
-        if UserDefaults.standard.bool(forKey: "TerminalOpen") && terminalChoice() == "app" {
-            showTerminal()
+        drawer.tell = { [weak self] name, body in self?.core.send(name, body) }
+        drawer.ask = { [weak self] name, answer in self?.core.ask(name, answer: answer) }
+        // The layout used to be kept in this app's preferences: handed to the core once.
+        let defaults = UserDefaults.standard
+        if let layout = defaults.dictionary(forKey: "TerminalLayout") {
+            core.send("termImport", ["layout": layout, "claude": defaults.stringArray(forKey: "TerminalClaude") ?? []])
+            defaults.removeObject(forKey: "TerminalLayout")
+            defaults.removeObject(forKey: "TerminalClaude")
         }
     }
+
+    /// Whether the first state has come: the terminal reopens once it says how.
+    private var started = false
 
     func applicationWillTerminate(_ notification: Notification) {
         drawer.terminateAll(quitting: true)
@@ -1145,6 +1128,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, WKN
             else { return }
             coreState = state
             model.summary = state
+            if !started {
+                started = true
+                // Open again if it was open when the app last quit, as it was laid out.
+                if UserDefaults.standard.bool(forKey: "TerminalOpen") && terminalChoice() == "app" { showTerminal() }
+            }
         case "show":
             guard let page = body["page"] as? String else { return }
             show(page: URL(fileURLWithPath: page), standup: body["standup"] as? String, rebuilt: body["rebuilt"] as? Bool == true)
@@ -1317,11 +1305,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, WKN
     @objc private func refreshCommand() { core.send("refresh") }
 
     /// Settings → Terminal: "off", "app" for the drawer, or a terminal app's id.
-    private func terminalChoice() -> String {
-        let file = codeDir.appendingPathComponent("settings.json")
-        let settings = (try? JSONSerialization.jsonObject(with: Data(contentsOf: file))) as? [String: Any]
-        return settings?["terminal"] as? String ?? "off"
-    }
+    private func terminalChoice() -> String { coreState.terminal }
 
     @objc private func toggleTerminal() {
         switch terminalChoice() {
@@ -1346,9 +1330,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, WKN
         switch terminalChoice() {
         case "off": return
         case "app":
-            showTerminal(startPlain: false)
-            drawer.open(repo: repo)
-            drawer.focus()
+            showTerminal(startPlain: false) { [weak self] in
+                self?.drawer.open(repo: repo)
+                self?.drawer.focus()
+            }
         case let other:
             guard let path = repoPaths()[repo] else { return }
             let dir = URL(fileURLWithPath: path)
@@ -1362,9 +1347,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, WKN
         switch terminalChoice() {
         case "off": return
         case "app":
-            showTerminal(startPlain: false)
-            drawer.open(dir: dir, label: label)
-            drawer.focus()
+            showTerminal(startPlain: false) { [weak self] in
+                self?.drawer.open(dir: dir, label: label)
+                self?.drawer.focus()
+            }
         case let other:
             openExternal(other, in: dir)
         }
@@ -1396,7 +1382,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, WKN
         }
     }
 
-    private func showTerminal(startPlain: Bool = true) {
+    /// `then` runs once the last layout is back, so a tab asked for joins it rather than racing it.
+    private func showTerminal(startPlain: Bool = true, then: (() -> Void)? = nil) {
         showWindow(pane: nil)
         drawerShown = true
         drawer.view.isHidden = false
@@ -1406,8 +1393,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, WKN
         tellPageDrawerHeight()
         matchTheme()
         UserDefaults.standard.set(true, forKey: "TerminalOpen")
-        if drawer.isEmpty && !drawer.restore() && startPlain { drawer.openPlain() }
-        drawer.focus()
+        guard drawer.isEmpty else {
+            drawer.focus()
+            then?()
+            return
+        }
+        drawer.restore { [weak self] restored in
+            guard let self else { return }
+            if !restored && startPlain && self.drawer.isEmpty { self.drawer.openPlain() }
+            self.drawer.focus()
+            then?()
+        }
     }
 
     /// A tracking area on a hidden view never fires, so the drawer's is made

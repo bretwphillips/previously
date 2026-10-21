@@ -39,3 +39,6 @@ terminal-sessions/
 
 # Local copies of merge requests checked out for review (review.sh).
 reviews/
+
+# Where the terminal drawer's tabs were, and which ran Claude, for the next launch.
+terminal-layout.json

@@ -15,15 +15,19 @@
 //   host.settingsSaved({ terminal })
 //   await host.present()     someone is at the computer, with the window in view
 //   await host.canFollow()   the window is showing and the page isn't mid-edit
+//
+// A shell's question gets its answer as message()'s result: termRestore, for one.
 import { spawn } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync, renameSync, statSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { join, resolve } from "node:path";
 import { homedir } from "node:os";
 import { CODE } from "./spaces.mjs";
 
 const SPACES = join(CODE, "spaces.json");
 const APP_SETTINGS = join(CODE, "settings.json");
 const UPDATE = join(CODE, "update.json");
+const TERMINAL = join(CODE, "terminal-layout.json");
+const SESSIONS = join(CODE, "terminal-sessions");
 
 const readJson = (file, fallback = null) => {
   try { return JSON.parse(readFileSync(file, "utf8")); } catch { return fallback; }
@@ -94,6 +98,7 @@ export function createCore(host) {
       page: join(spaceDir(current), "worklog.html"),
       notes: join(spaceDir(current), "notes.md"),
       projects: first ?? join(homedir(), "Projects"),
+      terminal: readJson(APP_SETTINGS, {})?.terminal ?? "off",
       pending: needs.length,
       needs,
       paths,
@@ -369,6 +374,74 @@ export function createCore(host) {
     refresh();
   }
 
+  // ---------- the terminal drawer's tabs across launches
+  //
+  // The shell owns the shells themselves; this keeps where its tabs were, so the
+  // next launch starts fresh ones there, and which ones Claude Code was running
+  // in, so auto-resume can bring those sessions back. A tab's key stays with it
+  // across launches; Claude Code's session hook files the session it starts under
+  // it (PREVIOUSLY_TERM, in terminal-sessions/).
+  const isKey = (key) => typeof key === "string" && /^[A-Za-z0-9-]+$/.test(key);
+  const isDir = (path) => {
+    try { return statSync(path).isDirectory(); } catch { return false; }
+  };
+  const terminal = () => readJson(TERMINAL, {}) ?? {};
+  const saveTerminal = (change) => writeJson(TERMINAL, { ...terminal(), ...change });
+
+  /** Kept as folders and widths: {tabs: [{panes: [{dir, grow, key}], focused}], current}. */
+  function saveLayout(body) {
+    if (!Array.isArray(body?.tabs)) return;
+    const tabs = body.tabs.map((tab) => ({
+      panes: (Array.isArray(tab?.panes) ? tab.panes : [])
+        .filter((p) => typeof p?.dir === "string" && isKey(p.key))
+        .map((p) => ({ dir: p.dir, grow: typeof p.grow === "number" ? p.grow : 1, key: p.key })),
+      focused: Number.isInteger(tab?.focused) ? tab.focused : 0,
+    })).filter((tab) => tab.panes.length);
+    saveTerminal({ tabs, current: Number.isInteger(body.current) ? body.current : 0 });
+  }
+
+  /** The session a tab was running: what the hook filed under its key, else the
+      newest in that folder. Only one Claude Code still has on disk. */
+  function sessionId(key, dir) {
+    const folder = join(homedir(), ".claude", "projects", resolve(dir).replace(/[^\p{L}\p{N}]/gu, "-"));
+    const exists = (id) => existsSync(join(folder, `${id}.jsonl`));
+    let filed = "";
+    try { filed = readFileSync(join(SESSIONS, key), "utf8").trim(); } catch {}
+    if (filed) return exists(filed) ? filed : null;
+    let newest = null, newestAt = -1;
+    try {
+      for (const name of readdirSync(folder)) {
+        if (!name.endsWith(".jsonl")) continue;
+        const at = mtime(join(folder, name)) ?? 0;
+        if (at > newestAt) { newest = name.slice(0, -6); newestAt = at; }
+      }
+    } catch {}
+    return newest;
+  }
+
+  /** What to rebuild: the last layout, a folder that has gone since falling back to
+      the projects folder, and with auto-resume on, the session to resume in each tab
+      Claude was running in -- or stale, when it can't be found. Null when there's
+      nothing to rebuild. */
+  function restorePlan() {
+    const saved = terminal();
+    if (!saved.tabs?.length) return null;
+    const running = new Set(saved.claude ?? []);
+    const resuming = readJson(APP_SETTINGS, {})?.autoResume === "on";
+    const first = spacesConfig()?.spaces?.find((s) => s.id === currentSpace())?.folders?.[0];
+    const projects = first ?? join(homedir(), "Projects");
+    const tabs = saved.tabs.map((tab) => ({
+      focused: tab.focused ?? 0,
+      panes: (tab.panes ?? []).map((pane) => {
+        const dir = isDir(pane.dir) ? pane.dir : projects;
+        const key = isKey(pane.key) ? pane.key : null;
+        const resume = resuming && key && running.has(key) ? sessionId(key, dir) : null;
+        return { dir, key, grow: pane.grow ?? 1, resume, stale: Boolean(resuming && key && running.has(key) && !resume) };
+      }),
+    })).filter((tab) => tab.panes.length);
+    return tabs.length ? { tabs, current: saved.current ?? 0 } : null;
+  }
+
   // ---------- messages from the page, and from the shell
 
   async function message(name, body) {
@@ -426,6 +499,26 @@ export function createCore(host) {
       case "refresh":
         return refresh();
       case "away": return cancelPending();
+
+      // From the terminal drawer.
+      case "termLayout": return saveLayout(parse(body));
+      // The keys of tabs Claude Code is running in, kept as it changes, so a crash
+      // leaves the last word.
+      case "termClaude":
+        if (Array.isArray(body)) saveTerminal({ claude: body.filter(isKey) });
+        return;
+      // A tab closed by hand, or Claude left: its session isn't coming back.
+      case "termForget":
+        if (isKey(text)) rmSync(join(SESSIONS, text), { force: true });
+        return;
+      case "termRestore": return restorePlan();
+      // Once, from a shell that kept the layout in its own preferences before.
+      case "termImport":
+        if (!existsSync(TERMINAL) && body && typeof body === "object") {
+          saveLayout(body.layout);
+          if (Array.isArray(body.claude)) saveTerminal({ claude: body.claude.filter(isKey) });
+        }
+        return;
     }
   }
 

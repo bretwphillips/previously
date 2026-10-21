@@ -1,6 +1,8 @@
 // The core (core.mjs) for a shell that can't load JavaScript itself -- the Mac
 // app -- talking JSON, one object per line, over stdin and stdout:
 //   in   {"message": name, "body": ...}      a page or shell message
+//        {"message": name, "id": n, ...}     the shell's question; answered with
+//                                            {"op": "answer", "id": n, "args": ...}
 //        {"reply": id, "value": ...}         the shell's answer to a question
 //   out  {"op": name, "args": ...}           something for the shell to do
 //        {"op": name, "id": n}               a question; answer with that id
@@ -40,7 +42,8 @@ createInterface({ input: process.stdin }).on("line", (line) => {
     const done = waiting.get(msg.reply);
     if (done) { waiting.delete(msg.reply); done(msg.value === true); }
   } else if (typeof msg?.message === "string") {
-    core.message(msg.message, msg.body);
+    const answer = core.message(msg.message, msg.body);
+    if (Number.isInteger(msg.id)) answer.then((value) => send({ op: "answer", id: msg.id, args: value ?? null }));
   }
 }).on("close", () => process.exit(0));
 
