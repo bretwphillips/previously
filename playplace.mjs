@@ -4,7 +4,6 @@
 // as Halloween's candy is. Nothing here is anyone's brand: primary-coloured plastic,
 // burgers, fries and balls belong to every play place.
 
-import { CANDY } from "./halloween.mjs";
 
 const rects = (rows, pal) => rows.flatMap((r, y) => [...r].map((c, x) =>
   pal[c] ? `<rect x="${x}" y="${y}" width="1" height="1" fill="${pal[c]}"/>` : "")).join("");
@@ -62,8 +61,8 @@ export const PLAY_CSS = `
 @keyframes bulb { 0% { opacity: 1; } 50% { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .awning .bulbs { animation: none; } }`;
 
-// ---------- the hoard: food only -- burgers, fries, sodas, nuggets and soft-serve in
-// Halloween's candy places, a tray of it from 100, a takeout bag from 700.
+// ---------- the hoard: food only -- burgers, fries, nuggets, drinks, soft-serve and a kids' meal,
+// on a tray from 100, takeout bags from 700.
 const FLAVOURS = {
   red: { C: "#e53935", c: "#ff8a80" }, blue: { C: "#2f7fe0", c: "#7fb6ff" }, green: { C: "#2eae5a", c: "#7fe0a0" },
   orange: { C: "#f28c28", c: "#ffc07a" }, purple: { C: "#8e44ad", c: "#c39be0" },
@@ -86,31 +85,41 @@ const SPRITES = {
   kidsbox: [".....oooo..", ".....o..o..", "...oooooooo", "...oVVRVRVo", ".DDoVVRRRVo", "AoDoVVVRVVo", ".DDDdVVVVVo", ".dDDdvvvvvo", ".ooooooooo."],
   bigfries: ["F.F.F.F.F", "FfFFfFFfF", "fFfFFfFfF", ".oRRRRRo.", ".oRRWRRo.", ".oRRRRRo.", "..ooooo.."],
   bigsoda: ["....R....", "....R....", "..ooooo..", ".oiiiiio.", ".oCCCCCo.", ".oWWWWWo.", ".oCCcCCo.", ".oCCCCCo.", "..ooooo.."],
-  // a red serving tray under the food
-  handle: [],
-  tray: ["ooooooooooooooo", "oTTTTTTTTTTTTTo", "otttttttttttttto".slice(0, 14) + "o", ".ooooooooooooo."],
   // a takeout bag: its open top behind the food, the rest in front
   bagBack: ["...ooooooooooo...", "..ogggggggggggo.."],
   bagFront: ["..ooooooooooooo..", "..oGGGGGGGGGGGo..", "..oGGGGGGGGGGGo..", "..oGGGGYYYGGGGo..", "..oGGGYYYYYGGGo..",
     "..oGGGGYYYGGGGo..", "..oGGGGGGGGGGGo..", "..oGGGGGGGGGGGo..", "..ogGGGGGGGGGgo..", "..ooooooooooooo.."],
 };
-// how tall each candy place is, so a food sits on its bottom -- a taller burger
-// grows up rather than losing its bun off the bottom
-const SLOT = { wrapped: 5, corn: 6, drop: 5, pop: 8, pail: 6 }; // the tray sits right under the food
-const RISE = 4; // room added above, for what grows up
-// each candy place takes a food of its size, in turn, so a pile is a mix
-const AS = { wrapped: ["burger", "kidsbox", "nuggetbox", "bigfries", "bigsoda"], corn: ["fries", "cone"], drop: ["nuggets"], pop: ["soda"], handle: ["handle"], pail: ["tray"], sackBack: ["bagBack"], sackFront: ["bagFront"] };
-const NAMES = ["a burger", "burgers to share", "a meal", "a small spread", "a tray of food", "a tray filling up", "a full tray",
-  "a tray piled high", "an overflowing tray", "a takeout bag", "a takeout bag overflowing"];
+// a red serving tray, as wide as its meal
+const tray = (n) => ["o".repeat(n), "o" + "T".repeat(n - 2) + "o", "o" + "t".repeat(n - 2) + "o", "." + "o".repeat(n - 2) + "."];
+for (const n of [27, 31]) SPRITES[`tray${n}`] = tray(n);
+// Each step laid out by hand so it always looks like more food than the one
+// before: [food, x, the row under it, cup]. Food on a tray stands on its rim
+// (one row into it); the back row stands four rows higher, peeking over.
+const LAYOUT = [
+  [0, "a burger", 9, 8, [["burger", 0, 8]]],
+  [25, "two burgers", 14, 10, [["burger", 0, 8], ["burger", 5, 10]]],
+  [50, "a meal", 20, 11, [["soda", 0, 9], ["fries", 15, 9], ["burger", 3, 11], ["burger", 10, 11]]],
+  [75, "a meal for two", 26, 12, [["soda", 0, 9], ["bigfries", 14, 9], ["soda", 21, 9], ["burger", 3, 12], ["burger", 10, 12], ["nuggets", 19, 12]]],
+  [100, "a tray of food", 27, 16, [["tray27", 0, 16], ["bigsoda", 1, 9], ["bigfries", 9, 9], ["soda", 20, 9], ["burger", 2, 13], ["nuggetbox", 10, 13], ["burger", 18, 13]]],
+  [150, "a tray filling up", 31, 16, [["tray27", 0, 16], ["bigsoda", 1, 9], ["kidsbox", 9, 9], ["soda", 21, 9], ["burger", 2, 13], ["nuggetbox", 10, 13], ["burger", 18, 13], ["fries", 26, 16]]],
+  [200, "a full tray", 31, 21, [["tray27", 0, 21], ["bigsoda", 1, 14], ["kidsbox", 9, 14], ["bigfries", 19, 14], ["burger", 2, 18], ["burger", 3, 11],
+    ["nuggetbox", 10, 18], ["burger", 18, 18], ["fries", 26, 21], ["nuggets", 26, 15]]],
+  [300, "a tray piled high", 35, 22, [["tray31", 2, 22], ["bigsoda", 3, 15], ["kidsbox", 11, 15], ["bigfries", 22, 15], ["burger", 4, 19], ["burger", 5, 12],
+    ["nuggetbox", 13, 19], ["burger", 22, 19], ["burger", 21, 12], ["fries", 0, 22], ["soda", 30, 22], ["nuggets", 30, 15]]],
+  [500, "an overflowing tray", 39, 24, [["tray31", 4, 24], ["bigsoda", 5, 17], ["kidsbox", 13, 17], ["bigfries", 24, 17], ["cone", 18, 10], ["burger", 6, 21], ["burger", 7, 14],
+    ["nuggetbox", 15, 21], ["bigfries", 14, 14], ["burger", 24, 21], ["burger", 23, 14], ["fries", 0, 24], ["soda", 34, 24], ["nuggets", 34, 17], ["nuggets", 0, 18], ["cone", 30, 24]]],
+  [700, "a stuffed takeout bag", 39, 24, [["tray27", 12, 22], ["bigsoda", 26, 15], ["burger", 28, 19], ["bigfries", 18, 15],
+    ["bagBack", 0, 10], ["bigfries", 2, 13], ["burger", 6, 11], ["bigsoda", 9, 13], ["bagFront", 0, 20],
+    ["kidsbox", 1, 24], ["nuggetbox", 12, 24], ["burger", 21, 24], ["soda", 30, 24], ["fries", 34, 24], ["nuggets", 34, 17]]],
+  [1000, "takeout bags overflowing", 43, 26, [["tray27", 16, 24], ["bigsoda", 30, 17], ["burger", 32, 21], ["bigfries", 22, 17], ["cone", 38, 15],
+    ["bagBack", 0, 12], ["bigfries", 2, 15], ["burger", 6, 13], ["bigsoda", 9, 15], ["bagFront", 0, 22],
+    ["bagBack", 13, 13], ["bigsoda", 15, 16], ["nuggetbox", 19, 15], ["fries", 25, 16], ["bagFront", 13, 23],
+    ["kidsbox", 0, 26], ["burger", 10, 26], ["nuggetbox", 18, 26], ["burger", 26, 26], ["soda", 34, 26], ["fries", 38, 26], ["nuggets", 38, 20]]],
+];
 const CUPS = ["red", "blue", "green", "orange", "purple"];
-export const PLAY = CANDY.map(([from, , w, h, items], i) => {
-  const turn = {};
-  return [from, NAMES[i], w, h, items.map(([name, x, y], k) => {
-    const kinds = AS[name], n = (turn[name] = (turn[name] ?? -1) + 1);
-    const kind = kinds[n % kinds.length], tall = SPRITES[kind].length;
-    return [kind, x, y + RISE + (SLOT[name] ? SLOT[name] - tall : 0), CUPS[(i + k) % CUPS.length]];
-  })].concat([]).map((v, idx) => (idx === 3 ? v + RISE : v));
-});
+export const PLAY = LAYOUT.map(([from, name, w, h, items], i) =>
+  [from, name, w, h, items.map(([kind, x, under], k) => [kind, x, under - SPRITES[kind].length, CUPS[(i + k) % CUPS.length]])]);
 function pile(w, h, items) {
   const g = Array.from({ length: h }, () => Array(w).fill(null));
   for (const [name, x0, y0, flavour] of items) {
@@ -125,7 +134,8 @@ function pile(w, h, items) {
 export function playArt(count) {
   const step = PLAY.findLastIndex(([from]) => count >= from);
   const [, , w, h, items] = PLAY[step];
-  const scale = step >= PLAY.length - 2 ? 1.6 : step < 2 ? 2.6 : 2;
+  // one size throughout (bar the lone burger), so a bigger step never draws smaller
+  const scale = step === 0 ? 2.6 : 2;
   const rows = pile(w, h, items).flatMap((row, y) => row.map((c, x) => (c ? `<rect x="${x}" y="${y}" width="1" height="1" fill="${c}"/>` : "")));
   return `<svg class="hoard play" viewBox="0 0 ${w} ${h}" width="${w * scale}" height="${h * scale}" shape-rendering="crispEdges">${rows.join("")}</svg>`;
 }
