@@ -21,7 +21,7 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, s
 import { join, resolve } from "node:path";
 import { homedir } from "node:os";
 import { node } from "./proc.mjs";
-import { CODE } from "./spaces.mjs";
+import { CODE, shownSpace } from "./spaces.mjs";
 
 const SPACES = join(CODE, "spaces.json");
 const APP_SETTINGS = join(CODE, "settings.json");
@@ -50,7 +50,11 @@ const parse = (text) => {
   try { return JSON.parse(text); } catch { return null; }
 };
 
-const spacesConfig = () => readJson(SPACES);
+const spacesConfig = () => {
+  const config = readJson(SPACES);
+  if (config?.spaces?.length) config.current = shownSpace(config);
+  return config;
+};
 const currentSpace = () => spacesConfig()?.current ?? "work";
 const spaceDir = (id = currentSpace()) => join(CODE, "spaces", id);
 const now = () => Date.now() / 1000;
@@ -146,6 +150,7 @@ export function createCore(host) {
       writeJson(file, { ...readJson(file, {}), sync: s.sync });
       delete s.sync;
     }
+    config.current = shownSpace(config);
     writeJson(SPACES, config);
     // Folders moved between spaces change every space's page.
     await script("refresh.mjs", { args: ["--all", "--cached"] });

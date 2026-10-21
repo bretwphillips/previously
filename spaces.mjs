@@ -77,8 +77,18 @@ export function readSpaces() {
   }
   config.companion = config.companion === "each" ? "each" : "shared";
   config.menubar = config.menubar === "current" ? "current" : "all";
-  if (!config.spaces.some((s) => s.id === config.current)) config.current = config.spaces[0].id;
+  config.current = shownSpace(config);
   return config;
+}
+
+// The space the app opens on: the current one, unless it is gone or has no
+// folders while another has some -- an empty Work with everything in Personal
+// opens Personal, since with one space in use there is no select to switch.
+export function shownSpace(config) {
+  const spaces = config?.spaces ?? [];
+  const current = spaces.find((s) => s.id === config.current);
+  if (current?.folders?.length) return current.id;
+  return (spaces.find((s) => s.folders?.length) ?? current ?? spaces[0])?.id ?? "work";
 }
 
 export function writeSpaces(config) {

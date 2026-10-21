@@ -129,7 +129,8 @@ standup and sync schedule. Settings → Spaces shows them as columns: add the
 folders a space tracks (a folder of projects or a single project, anywhere on
 the Mac), drag a folder from one to another, set how often each syncs, and add
 more spaces. Once more than one space has folders, a select at the top of the
-sidebar switches between them. Two
+sidebar switches between them; until then the app opens on whichever space has
+folders, so moving everything out of Work leaves you looking at Personal. Two
 choices sit under the columns: whether the companion and its hoard are shared or
 one per space, and whether the menu bar lists what needs you in every space or
 only the one you're viewing. Each space keeps its data in `spaces/<id>/`; your
