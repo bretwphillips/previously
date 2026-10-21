@@ -702,6 +702,14 @@ the crown and the fedora, which keep their marigolds; La Catrina and El Catrín
 are calaveras, so they always wear it.
 See *Día de los Muertos in fantasy mode* below.
 
+**Happiest place of all the places** (Settings → Extras → Quest mode on, Theme → Happiest place of all the places)
+puts it in a fast-food play place's **Outfit**: the crew's paper cap and polo with a
+name tag, a birthday party hat, a propeller beanie and striped tee, a chef's hat and
+apron, a burger hat and the mascot's yellow suit, or the messy eater's cup worn as a
+hat, a stained bib, ketchup and mustard on its face and a fry dropped at its feet.
+The party hat comes pink or blue (**Party hat**), its bow tie on or off (**Bow tie**).
+See *The happiest place of all the places in fantasy mode* below.
+
 Outside fantasy mode the companion is a few lines of text; with fantasy mode on it is
 drawn as pixel art in its costume -- see *Fantasy mode* below -- and it hops when
 it dances and bobs when it is happy. Every part follows the mood: faces, tails,
@@ -777,6 +785,7 @@ the rest sit beside the code. None of them are tracked by git.
 | `halloween.mjs` | Halloween's candy hoard and haunted houses, drawn at build time; the monsters and their candy are in `quest.js`. |
 | `toys.mjs` | The None theme's hoard of pet toys, laid out at the gold's steps. |
 | `ivy.mjs`, `cobweb.mjs` | The banners along the top: Fantasy's ivy, Halloween's cobwebs. |
+| `playplace.mjs` | The play place's awning, food hoard, ball-pit markers and trail stops, drawn at build time; the food on tickets is in `quest.js`, the outfits and decorations in `companion.js`. |
 | `spaces.mjs` | The spaces: which folders each tracks (`spaces.json`), each one's data folder, and a small CLI the scripts use to find them. |
 | `muertos.mjs` | Día de los Muertos' candles, ofrenda, trail stops and papel picado, drawn at build time; the alebrijes are in `quest.js`. |
 | `companion.js` | The companion's art: each animal, costume and colour as layers that change with mood. Inlined at build time. |
@@ -891,7 +900,7 @@ page, standup and companion all work with no model involved.
 
 ## Fantasy mode (optional, off by default)
 
-Settings → Extras → **Quest mode** turns the thread tabs into a small game, dressed by its **Theme**: Fantasy, Halloween or Día de los Muertos -- or **None**, which keeps the page as it is out of quest mode and only draws the companion, its decoration and its hoard (see *None* below).
+Settings → Extras → **Quest mode** turns the thread tabs into a small game, dressed by its **Theme**: Fantasy, the happiest place of all the places, Halloween or Día de los Muertos -- or **None**, which keeps the page as it is out of quest mode and only draws the companion, its decoration and its hoard (see *None* below).
 
 **Holidays** (under Theme) lets the theme follow the calendar. **Switch** changes
 it when a holiday is near and back afterwards; **Ask** asks first, with **Switch**,
@@ -985,9 +994,19 @@ hummingbird, an axolotl, an iguana, an owl, a Xolo, a winged jaguar and a dragon
 smallest to most fearsome -- and one befriended brightens and rises into a warm
 light, letting go of marigold petals and papel picado. The markers are veladoras.
 
+**The happiest place of all the places in fantasy mode.** A fast-food play place,
+nobody's brand -- its H is its own. A red-and-yellow striped awning hangs across the
+top, swaying in a breeze. The hoard is food: a burger, then two, a meal, a meal for
+two, a tray of food from 100 that fills and piles up, and takeout bags from 700. The
+trail's last three stops are home, the car and the restaurant where you are now, on
+a road with a dashed line. The monsters are food, smaller to bigger -- nuggets,
+fries, a drink, a dipped cone, a burger, a kids' meal and a challenge burger -- and
+one beaten bursts into crumbs. The markers are ball-pit balls, and they don't
+drain.
+
 **None.** The companion as pixel art, its decoration and a hoard of pet toys --
-and nothing else: no banner along the top (Fantasy hangs ivy there, Halloween
-cobwebs, Día de los Muertos papel picado), round markers, the plain padlock and
+and nothing else: no banner along the top (Fantasy hangs ivy there, the play place an awning,
+Halloween cobwebs, Día de los Muertos papel picado), round markers, the plain padlock and
 key on tabs, and the trail as it is out of quest mode. The toys grow at the gold's steps: a ball, then a mouse
 beside it, a mixed pile (bones, fish, a plush carrot, a duck, a heart, yarn,
 tennis balls, a squeaky ring, a rope toy, a feather wand), a wicker basket from
@@ -999,7 +1018,8 @@ until you pick one). Each theme has
 its own seven and remembers its pick -- a food bowl, yarn, a dog house, a fish tank
 for None; potions, a campfire, a sword in the stone, a spellbook for Fantasy; a
 jack-o'-lantern, a cauldron, a ghost, a coffin for Halloween; veladoras, pan de
-muerto, marigolds, copal for Día de los Muertos -- and a few move. The first of each is
+muerto, marigolds, copal for Día de los Muertos; a kids' meal, balloons, a grill, a
+kiddie ride, a claw machine for the play place -- and a few move. The first of each is
 free; the rest unlock with right answers in the *Code quiz*, at 1, 3, 6, 12, 20 and
 30, and two specials, a gumball machine and a lava lamp, with a 5- and a 10-day
 quiz streak -- days in a row with a quiz finished, right or wrong. The count under the decoration is your right answers. **Without Claude Code**

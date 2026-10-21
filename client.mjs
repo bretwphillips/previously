@@ -96,16 +96,21 @@ function companionPick() {
   var look = store.get('worklog.pet.look', 'catrina');
   if (C.LOOKS.indexOf(look) < 0) look = 'catrina';
   var facePaint = store.get('worklog.pet.facePaint', 'on') !== 'off';
+  var play = !halloween && !muertos && store.get('worklog.questTheme', 'quest') === 'play';
+  var playLook = store.get('worklog.pet.playLook', 'crew');
+  if (C.PLAY_LOOKS.indexOf(playLook) < 0) playLook = 'crew';
+  var playHat = store.get('worklog.pet.playHat', 'pink') === 'blue' ? 'blue' : 'pink';
+  var playBowtie = store.get('worklog.pet.playBowtie', 'on') !== 'off';
   // Each quest theme has its own decorations, and remembers its own pick. With no
   // theme the companion is just itself: no class to wear.
-  var theme = halloween ? 'halloween' : muertos ? 'muertos' : store.get('worklog.questTheme', 'quest') === 'none' ? 'none' : 'quest';
+  var theme = halloween ? 'halloween' : muertos ? 'muertos' : play ? 'play' : store.get('worklog.questTheme', 'quest') === 'none' ? 'none' : 'quest';
   if (theme === 'none') cls = 'none';
   var decoration = store.get(decorationKey(theme), 'none');
   var have = C.decorationsFor(theme, quizRight(), quizRun(), byCommits(), commitDaysBest()).filter(function (d) { return d.unlocked; })
     .map(function (d) { return d.name; });
   if (have.indexOf(decoration) < 0) decoration = 'none';
   return { race: race, coat: coat, cls: cls, colour: colour, halloween: halloween, costume: costume, muertos: muertos, look: look,
-    theme: theme, decoration: decoration, facePaint: facePaint };
+    theme: theme, decoration: decoration, facePaint: facePaint, play: play, playLook: playLook, playHat: playHat, playBowtie: playBowtie };
 }
 // Right quiz answers, and the best run of them, as the page was built with.
 // With everything unlocked for a look (settings.json), they count as reached.
@@ -137,9 +142,12 @@ function applyHalloween() {
   document.body.classList.toggle('muertos', muertos);
   var plain = !on && !muertos && store.get('worklog.questTheme', 'quest') === 'none';
   document.body.classList.toggle('quest-none', plain);
+  var play = !on && !muertos && store.get('worklog.questTheme', 'quest') === 'play';
+  document.body.classList.toggle('play', play);
   var tally = document.querySelector('.tally');
   if (tally && tally.dataset.titleGold) {
-    tally.title = on ? tally.dataset.titleCandy : muertos ? tally.dataset.titleOfrenda : plain ? tally.dataset.titleToys : tally.dataset.titleGold;
+    tally.title = on ? tally.dataset.titleCandy : muertos ? tally.dataset.titleOfrenda : plain ? tally.dataset.titleToys
+      : play ? tally.dataset.titlePlay : tally.dataset.titleGold;
   }
   document.dispatchEvent(new Event('halloweenchange'));
 }
@@ -299,7 +307,8 @@ document.addEventListener('DOMContentLoaded', function () {
   // How long a drain or refill plays: a potion's liquid, a gem's light, a dot's blink.
   function drainMs() {
     var b = document.body.classList;
-    return b.contains('quest') ? (b.contains('halloween') || b.contains('muertos') ? 1450 : 600) : 0;
+    // the play place's balls don't animate
+    return b.contains('quest') && !b.contains('play') ? (b.contains('halloween') || b.contains('muertos') ? 1450 : 600) : 0;
   }
   // A marker mid-drain or mid-fill is left alone until it's done -- by time,
   // not by its class, so it can't get stuck if a repaint comes late.
@@ -1040,6 +1049,9 @@ document.addEventListener('DOMContentLoaded', function () {
     mark('#costume-choice', 'costume', pick.costume);
     mark('#look-choice', 'look', pick.look);
     mark('#paint-choice', 'paint', pick.facePaint ? 'on' : 'off');
+    mark('#play-look-choice', 'playLook', pick.playLook);
+    mark('#party-hat-choice', 'hat', pick.playHat);
+    mark('#bowtie-choice', 'bowtie', pick.playBowtie ? 'on' : 'off');
     paintDecorations(pick);
     mark('#halloween-toggle', 'halloween', pick.halloween ? 'on' : 'off');
     swatches(document.getElementById('coat-choice'), Object.keys(C.COATS[pick.race]).map(function (n) {
@@ -1057,12 +1069,16 @@ document.addEventListener('DOMContentLoaded', function () {
     // Coat only shows in the pixel companion; as text it's just the animal.
     document.getElementById('coat-choice').closest('.srow').hidden = !petOn || !questOn;
     document.getElementById('text-colour-choice').closest('.srow').hidden = !petOn || questOn;
-    var dressed = pick.halloween || pick.muertos;
+    var dressed = pick.halloween || pick.muertos || pick.play;
     if (colourRow) colourRow.hidden = !petOn || !questOn || dressed || pick.cls === 'none';
     document.getElementById('class-choice').closest('.srow').hidden = !petOn || !questOn || dressed || pick.theme === 'none';
     document.getElementById('costume-choice').closest('.srow').hidden = !petOn || !questOn || !pick.halloween;
     document.getElementById('look-choice').closest('.srow').hidden = !petOn || !questOn || !pick.muertos;
     document.getElementById('paint-choice').closest('.srow').hidden = !petOn || !questOn || !pick.muertos || C.LOOKS_PAINTED.indexOf(pick.look) >= 0;
+    document.getElementById('play-look-choice').closest('.srow').hidden = !petOn || !questOn || !pick.play;
+    ['party-hat-choice', 'bowtie-choice'].forEach(function (id) {
+      document.getElementById(id).closest('.srow').hidden = !petOn || !questOn || !pick.play || pick.playLook !== 'birthday';
+    });
     document.getElementById('decoration-choice').closest('.srow').hidden = !petOn || !questOn;
     // The text companion's colour, kept per animal like its coat; "text" is the
     // page's own ink.
@@ -1243,6 +1259,12 @@ document.addEventListener('DOMContentLoaded', function () {
   });
   document.querySelectorAll('#paint-choice button').forEach(function (b) {
     b.addEventListener('click', function () { store.set('worklog.pet.facePaint', this.dataset.paint); paintBuilder(); });
+  });
+  [['#play-look-choice', 'worklog.pet.playLook', 'playLook'], ['#party-hat-choice', 'worklog.pet.playHat', 'hat'],
+    ['#bowtie-choice', 'worklog.pet.playBowtie', 'bowtie']].forEach(function (c) {
+    document.querySelectorAll(c[0] + ' button').forEach(function (b) {
+      b.addEventListener('click', function () { store.set(c[1], this.dataset[c[2]]); paintBuilder(); });
+    });
   });
   /* Decorations: this theme's, then the streak specials on a row of their own as
      they're not the theme's; the locked ones saying what they take, and a line

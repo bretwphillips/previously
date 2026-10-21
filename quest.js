@@ -283,8 +283,8 @@ function monsterOn(host, weight) {
   var tabs = host.parentNode ? [].indexOf.call(host.parentNode.children, host) : 0;
   host.style.zIndex = String(1000 - tabs);
   var tier = tierFor(weight), spooky = document.body.classList.contains('halloween');
-  var muertos = document.body.classList.contains('muertos');
-  var m = (muertos && ALEBRIJES[tier]) || (spooky && HALLOWEEN_MONSTERS[tier]) || MONSTERS[tier], rows = m.rows, w = rows[0].length, h = rows.length;
+  var muertos = document.body.classList.contains('muertos'), play = document.body.classList.contains('play');
+  var m = (muertos && ALEBRIJES[tier]) || (play && PLAY_FOOD[tier]) || (spooky && HALLOWEEN_MONSTERS[tier]) || MONSTERS[tier], rows = m.rows, w = rows[0].length, h = rows.length;
   var wrap = document.createElement('span'); wrap.className = 'monster'; wrap.dataset.kind = m.kind || '';
   var svg = el('svg', { width: (w * m.px).toFixed(1), height: (h * m.px).toFixed(1), viewBox: '0 0 ' + w + ' ' + h });
   var g = el('g', { class: 'body' });
@@ -511,6 +511,134 @@ var ALEBRIJES = {
     '..otdddtoootdddtdddhho..',
     '...ooooo...oooooooooo...' ] }
 };
+/* ---- the play place ----------------------------------------------------------
+   Food for the tiers, a few nuggets up to the challenge burger. Beaten, it's
+   eaten: it bursts into crumbs of its own colour. */
+var PLAY_FOOD = {
+  slime: { kind: 'nuggets', px: 1.5, pal: {"o":"#3a2418","N":"#e8a85a","h":"#ffd08a","n":"#c47c30","d":"#b06a28","#":"#e8a85a"}, rows: [
+    '......oooo...',
+    '.....oNhhNo..',
+    '....oNhNNNo..',
+    '....oNNnNdo..',
+    '.ooo.odoooo..',
+    'oNhNooohhNNo.',
+    'ohNNNNoNNnNNo',
+    'oNNnNdoNnNNdo',
+    'oNnNNdodNNddo',
+    '.ooooo.ooooo.' ] },
+  ghost: { kind: 'fries', px: 1.5, pal: {"o":"#3a2418","F":"#ffd84a","f":"#d99000","h":"#fff2a8","R":"#e53935","r":"#ff7a6e","d":"#b8271f","Y":"#ffc928","#":"#ffd84a"}, rows: [
+    '...o...o..o....',
+    '..of.o.fo.f.o..',
+    '..hfoh.fhofoh..',
+    '.ohfFhofhFfFho.',
+    '.FhfFhFfhFfFhF.',
+    '.FhfFhFfhFfFhF.',
+    'ooooooooooooooo',
+    'oRrRRRRRRRRRRdo',
+    'oRrRRYRRRYRRRdo',
+    '.oRRRYRRRYRRdo.',
+    '.oRRRYYYYYRRdo.',
+    '.oRRRYRRRYRRdo.',
+    '..oRRYRRRYRdo..',
+    '..oRRRRRRRRdo..',
+    '...ooooooooo...' ] },
+  goblin: { kind: 'drink', px: 1.5, pal: {"o":"#3a2418","R":"#e53935","r":"#ff7a6e","d":"#b8271f","W":"#ffffff","p":"#ffb3b3","s":"#eef1f4","Y":"#ffc928","#":"#e53935"}, rows: [
+    '........R....',
+    '........p....',
+    '........R....',
+    '..oooooopoo..',
+    'oWsssssssssso',
+    'ooooooooooooo',
+    '.orRRRRRRRdo.',
+    '.orRRRRRRRdo.',
+    '.orRYRRRYRdo.',
+    '.orRYRRRYRdo.',
+    '..orYYYYYdo..',
+    '..orYRRRYdo..',
+    '..orYRRRYdo..',
+    '..orRRRRRdo..',
+    '...orRRRdo...',
+    '...orRRRdo...',
+    '...orRRRdo...',
+    '...orRRRdo...',
+    '...ooooooo...' ] },
+  demon: { kind: 'cone', px: 1.5, pal: {"o":"#3a2418","C":"#5a2e14","c":"#7a4424","h":"#a8683a","I":"#fff8ec","i":"#e6d8c2","H":"#f0c080","K":"#e0a050","k":"#b0702a","#":"#5a2e14"}, rows: [
+    '.......oo...',
+    '......oCo...',
+    '.....ohCo...',
+    '....ohCCCo..',
+    '....occcco..',
+    '...ohhCCCCo.',
+    '..ohCCCCCCo.',
+    '..occcccccco',
+    '.oIICIIICIIo',
+    '.oiiiiiiiiio',
+    '.oHHHHHHHHHo',
+    '.okkkkkkkkko',
+    '..oKKKKKKKo.',
+    '...oKKKKKo..',
+    '....oKKKko..',
+    '....oHKKko..',
+    '....oHKKko..',
+    '....oKKKko..',
+    '.....oooo...' ] },
+  dragon: { kind: 'burger', px: 1.5, pal: {"o":"#3a2418","B":"#e0a050","h":"#f4c27a","b":"#c47c30","s":"#fff6dc","L":"#5cc04a","l":"#9be07a","T":"#e53935","Q":"#ffcc33","P":"#6b3a1e","p":"#8a4e2a","#":"#e0a050"}, rows: [
+    '....ooooooo....',
+    '..ooBhhsBBBoo..',
+    '.oBhhBBBBsBBBo.',
+    '.oBsBBBsBBBBbo.',
+    'oBBBBBBBBBBBBbo',
+    'LlLLlLLLlLLlLLL',
+    'oTTTTTTTTTTTTTo',
+    'oQQQQQQQQQQQQQo',
+    'oPpPPQPpPPPpPPo',
+    'oPPpPPPPpPPPpPo',
+    'obbbbbbbbbbbbbo',
+    '.ooooooooooooo.' ] },
+  demonKing: { kind: 'kidsmeal', px: 1.5, pal: {"o":"#3a2418","R":"#e53935","r":"#ff7a6e","S":"#b8271f","Y":"#ffc928","y":"#ffe58a","T":"#d99a00","D":"#ffe14a","d":"#e8b400","A":"#ff8a1e","e":"#1d1b22","#":"#ffc928"}, rows: [
+    '......ooooooo...',
+    '.....oYYYYYYYo..',
+    '.....oYo...oYo..',
+    '.....ooooooooo..',
+    '....oyyyyyyyyyo.',
+    '...oYYYYYYYYYYYo',
+    '...oTTTTTTTTTTTo',
+    '...ooooooooooooo',
+    '...oRrRRRRRRRRSo',
+    '..oooRRYRRRYRRSo',
+    '.oDDDoRYRRRYRRSo',
+    'AoeDDoRYYYYYRRSo',
+    '.oDDDooYRRRYRRSo',
+    'oDDDDDoYRRRYRRSo',
+    'odDDDdoSSSSSSSSo',
+    '.ooooooooooooooo' ] },
+  lich: { kind: 'giant', px: 1.5, pal: {"o":"#3a2418","B":"#e0a050","h":"#f4c27a","b":"#c47c30","s":"#fff6dc","L":"#5cc04a","l":"#9be07a","T":"#e53935","t":"#ff7a6e","Q":"#ffcc33","P":"#6b3a1e","p":"#8a4e2a","X":"#c0563a","x":"#f0b090","k":"#e8dcc0","R":"#e53935","W":"#ffffff","#":"#e0a050"}, rows: [
+    '..........oo........',
+    '.........oRRRo......',
+    '.........oRWRRo.....',
+    '.........okooo......',
+    '.......ooookoooo....',
+    '.....ooBhhBBBsBoo...',
+    '....oBhhsBBBBBBsBo..',
+    '...oBsBBBBBBsBBBBbo.',
+    '...oBBBBBBBBBBBBBbo.',
+    '.LLlLLlLLLlLLlLLlLLl',
+    '.LoTtTTTtTTTtTTTtTTo',
+    'oQoQQQQQQQQQQQQQQQo.',
+    '.QoPpPPQPpPPPpQPPPPo',
+    '.ooPPpPPPPpPPPpPPPpo',
+    'oXoXxXXxXXXxXXxXXXo.',
+    '..oQQQQQQQQQQQQQQQo.',
+    '.oPPpPPPpPPQPpPPPPo.',
+    '.oPPPpPPPPpPPPpPPPo.',
+    '.lLlLLlLLLlLLlLLlLLL',
+    '..oQQQQQQQQQQQQQQQQL',
+    '..oPpPPPpPPPPpPPQPQ.',
+    '..oPPpPPPPpPPPpPPPo.',
+    '..obbbbbbbbbbbbbbbo.',
+    '...ooooooooooooooo..' ] },
+};
+
 var CONFETTI = [
   { rows: ['MN', 'NM'], pal: { M: '#f08a1c', N: '#ffc23a' } }, { rows: ['XXX', 'X.X', 'XX.'], pal: { X: '#e8508a' } },
   { rows: ['NM', 'MN'], pal: { M: '#f08a1c', N: '#ffc23a' } }, { rows: ['XXX', 'X.X', 'XX.'], pal: { X: '#2fb3c4' } },
@@ -806,6 +934,11 @@ function drawRoad() {
   svg.innerHTML = '<path d="' + d + '" fill="none" stroke="#f3e6c8" stroke-width="5" stroke-linecap="round"/>' +
     '<path d="' + d + '" fill="none" stroke="#8a5a2b" stroke-width="2" stroke-dasharray="4 4"/>';
   scroll.insertBefore(svg, scroll.firstChild);
+  // The play place's is a road: asphalt, a dashed yellow line down the middle.
+  if (document.body.classList.contains('play')) {
+    svg.innerHTML = '<path d="' + d + '" fill="none" stroke="#5a5a62" stroke-width="6" stroke-linecap="round"/>' +
+      '<path d="' + d + '" fill="none" stroke="#ffd84a" stroke-width="1.2" stroke-dasharray="3 3"/>';
+  }
   // Día de los Muertos' road is marigold petals, scattered along the same curve.
   if (document.body.classList.contains('muertos')) {
     var path = svg.firstChild, len = path.getTotalLength(), seed = 3, cols = ['#f08a1c', '#ffc23a', '#e8742a'];
