@@ -1081,8 +1081,8 @@ document.addEventListener('DOMContentLoaded', function () {
     document.dispatchEvent(new Event('companionchange'));
   }
   /* Not sure which animal? Four questions, each answer leaning toward a few of
-     them, and a fifth for a colour: the animal with the most points, in its
-     nearest coat, is shown as a preview, to switch to or not. */
+     them, and a fifth that quietly picks a colour: the animal with the most
+     points, in its nearest coat, is shown as a preview, to switch to or not. */
   var PICK_QUIZ = [
     ['Your ideal Saturday?', [
       ['Curled up with a good book', { cat: 2, bear: 1, hamster: 1 }],
@@ -1104,8 +1104,10 @@ document.addEventListener('DOMContentLoaded', function () {
       ['Quick', { bunny: 2, fox: 1 }],
       ['Steady', { pug: 2, bear: 1 }],
       ['Inventive', { raccoon: 2, pig: 1, frog: 1 }]]],
-    // the last picks a coat, not an animal: the suggested animal's nearest to it
-    ['Pick a colour you like', [['Warm', { coat: 'warm' }], ['Cool', { coat: 'cool' }], ['Light', { coat: 'light' }], ['Dark', { coat: 'dark' }]]],
+    // the last picks a coat, not an animal, without saying so: the time of day you
+    // like best leans warm, cool, light or dark, and the animal wears its nearest coat
+    ['Your favourite time of day?', [['Golden hour', { coat: 'warm' }], ['A rainy afternoon', { coat: 'cool' }],
+      ['A bright, early morning', { coat: 'light' }], ['Late at night', { coat: 'dark' }]]],
   ];
   // How near a coat's main colour is to a kind of colour: warm and cool by hue, light and dark by lightness.
   function coatFits(hex, kind) {
