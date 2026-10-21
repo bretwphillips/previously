@@ -95,27 +95,29 @@ const tray = (n) => ["o".repeat(n), "o" + "T".repeat(n - 2) + "o", "o" + "t".rep
 for (const n of [27, 31]) SPRITES[`tray${n}`] = tray(n);
 // Each step laid out by hand so it always looks like more food than the one
 // before: [food, x, the row under it, cup]. Food on a tray stands on its rim
-// (one row into it); the back row stands four rows higher, peeking over.
+// (one row into it); burgers and big drinks stand four rows further back,
+// peeking over the shorter food in front.
 const LAYOUT = [
   [0, "a burger", 9, 8, [["burger", 0, 8]]],
   [25, "two burgers", 14, 10, [["burger", 0, 8], ["burger", 5, 10]]],
-  [50, "a meal", 20, 11, [["soda", 0, 9], ["fries", 15, 9], ["burger", 3, 11], ["burger", 10, 11]]],
-  [75, "a meal for two", 26, 12, [["soda", 0, 9], ["bigfries", 14, 9], ["soda", 21, 9], ["burger", 3, 12], ["burger", 10, 12], ["nuggets", 19, 12]]],
-  [100, "a tray of food", 27, 16, [["tray27", 0, 16], ["bigsoda", 1, 9], ["bigfries", 9, 9], ["soda", 20, 9], ["burger", 2, 13], ["nuggetbox", 10, 13], ["burger", 18, 13]]],
-  [150, "a tray filling up", 31, 16, [["tray27", 0, 16], ["bigsoda", 1, 9], ["kidsbox", 9, 9], ["soda", 21, 9], ["burger", 2, 13], ["nuggetbox", 10, 13], ["burger", 18, 13], ["fries", 26, 16]]],
-  [200, "a full tray", 31, 21, [["tray27", 0, 21], ["bigsoda", 1, 14], ["kidsbox", 9, 14], ["bigfries", 19, 14], ["burger", 2, 18], ["burger", 3, 11],
-    ["nuggetbox", 10, 18], ["burger", 18, 18], ["fries", 26, 21], ["nuggets", 26, 15]]],
-  [300, "a tray piled high", 35, 22, [["tray31", 2, 22], ["bigsoda", 3, 15], ["kidsbox", 11, 15], ["bigfries", 22, 15], ["burger", 4, 19], ["burger", 5, 12],
-    ["nuggetbox", 13, 19], ["burger", 22, 19], ["burger", 21, 12], ["fries", 0, 22], ["soda", 30, 22], ["nuggets", 30, 15]]],
-  [500, "an overflowing tray", 39, 24, [["tray31", 4, 24], ["bigsoda", 5, 17], ["kidsbox", 13, 17], ["bigfries", 24, 17], ["cone", 18, 10], ["burger", 6, 21], ["burger", 7, 14],
-    ["nuggetbox", 15, 21], ["bigfries", 14, 14], ["burger", 24, 21], ["burger", 23, 14], ["fries", 0, 24], ["soda", 34, 24], ["nuggets", 34, 17], ["nuggets", 0, 18], ["cone", 30, 24]]],
-  [700, "a stuffed takeout bag", 39, 24, [["tray27", 12, 22], ["bigsoda", 26, 15], ["burger", 28, 19], ["bigfries", 18, 15],
+  [50, "a meal", 20, 11, [["burger", 2, 8], ["burger", 10, 8], ["fries", 0, 11], ["nuggets", 8, 11], ["soda", 15, 11]]],
+  [75, "a meal for two", 26, 12, [["soda", 0, 8], ["burger", 4, 8], ["burger", 12, 8], ["soda", 21, 8], ["fries", 2, 12], ["nuggets", 9, 12], ["bigfries", 15, 12]]],
+  [100, "a tray of food", 27, 16, [["tray27", 0, 16], ["bigsoda", 1, 9], ["burger", 9, 9], ["burger", 18, 9], ["fries", 2, 13], ["nuggetbox", 8, 13], ["bigfries", 17, 13]]],
+  [150, "a tray filling up", 31, 16, [["tray27", 0, 16], ["bigsoda", 1, 9], ["burger", 9, 9], ["burger", 18, 9], ["kidsbox", 1, 13], ["nuggetbox", 12, 13],
+    ["bigfries", 19, 13], ["fries", 26, 16]]],
+  [200, "a full tray", 31, 22, [["tray27", 0, 22], ["bigsoda", 1, 15], ["burger", 9, 15], ["burger", 18, 15], ["burger", 13, 9], ["kidsbox", 1, 19],
+    ["nuggetbox", 12, 19], ["bigfries", 19, 19], ["soda", 26, 22]]],
+  [300, "a tray piled high", 35, 22, [["tray31", 2, 22], ["bigsoda", 3, 15], ["burger", 11, 15], ["burger", 21, 15], ["burger", 16, 9], ["kidsbox", 3, 19],
+    ["nuggetbox", 14, 19], ["bigfries", 23, 19], ["fries", 0, 22], ["soda", 30, 22], ["nuggets", 13, 22]]],
+  [500, "an overflowing tray", 39, 24, [["tray31", 4, 24], ["bigsoda", 5, 17], ["burger", 13, 17], ["burger", 23, 17], ["burger", 18, 11], ["soda", 30, 17],
+    ["kidsbox", 5, 21], ["nuggetbox", 16, 21], ["bigfries", 25, 21], ["fries", 0, 24], ["nuggets", 12, 24], ["cone", 22, 24], ["soda", 34, 24]]],
+  [700, "a stuffed takeout bag", 39, 24, [["tray27", 12, 22], ["burger", 19, 15], ["bigsoda", 28, 15], ["bigfries", 18, 19], ["nuggetbox", 27, 19],
     ["bagBack", 0, 10], ["bigfries", 2, 13], ["burger", 6, 11], ["bigsoda", 9, 13], ["bagFront", 0, 20],
-    ["kidsbox", 1, 24], ["nuggetbox", 12, 24], ["burger", 21, 24], ["soda", 30, 24], ["fries", 34, 24], ["nuggets", 34, 17]]],
-  [1000, "takeout bags overflowing", 43, 26, [["tray27", 16, 24], ["bigsoda", 30, 17], ["burger", 32, 21], ["bigfries", 22, 17], ["cone", 38, 15],
+    ["kidsbox", 1, 24], ["nuggets", 13, 24], ["cone", 19, 24], ["fries", 25, 24], ["soda", 34, 24]]],
+  [1000, "takeout bags overflowing", 43, 26, [["tray27", 16, 24], ["burger", 31, 17], ["cone", 38, 17], ["bigfries", 30, 21], ["soda", 38, 21],
     ["bagBack", 0, 12], ["bigfries", 2, 15], ["burger", 6, 13], ["bigsoda", 9, 15], ["bagFront", 0, 22],
     ["bagBack", 13, 13], ["bigsoda", 15, 16], ["nuggetbox", 19, 15], ["fries", 25, 16], ["bagFront", 13, 23],
-    ["kidsbox", 0, 26], ["burger", 10, 26], ["nuggetbox", 18, 26], ["burger", 26, 26], ["soda", 34, 26], ["fries", 38, 26], ["nuggets", 38, 20]]],
+    ["kidsbox", 0, 26], ["nuggets", 11, 26], ["nuggetbox", 16, 26], ["burger", 24, 26], ["fries", 33, 26], ["nuggets", 38, 26]]],
 ];
 const CUPS = ["red", "blue", "green", "orange", "purple"];
 export const PLAY = LAYOUT.map(([from, name, w, h, items], i) =>
