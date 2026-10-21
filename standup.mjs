@@ -227,6 +227,25 @@ export function standup(repos, tasks, activity, now = new Date(), { weightLimit 
     plan.push({ text: brief(issue.title), ref: repo.web ? urlFor(repo.web, issue.ticket) : issue.ticket, epic: issue.epic ?? null });
     load += weight;
   }
+  // Still room: the next tickets nobody has taken, in the epics you're working
+  // in, from the repo you've been busiest in first, each epic in its own order.
+  const workingRefs = new Set(plan.map((e) => e.epic?.ref).filter(Boolean));
+  const inWork = (epic) => Boolean(epic) && (working.has(epic.url) || workingRefs.has(epic.ref));
+  const busiest = (name) => repos.find((r) => r.name === name)?.committedAt ?? 0;
+  const blocked = (i) => ((activity.issues ?? []).find((x) => x.repo === i.repo && x.ticket === i.ticket)?.blockedBy ?? [])
+    .some((b) => b.source !== "description" || openTicket.has(b.ref.startsWith("#") ? `${i.repo}${b.ref}` : b.ref));
+  const planned = new Set(unstarted.map(({ issue }) => `${issue.repo}${issue.ticket}`));
+  const upNext = (activity.epicIssues ?? [])
+    .filter((i) => !i.assigned && inWork(i.epic) && !planned.has(`${i.repo}${i.ticket}`) && !blocked(i))
+    .map((i) => ({ issue: i, repo: repos.find((r) => r.name === i.repo) }))
+    .filter(({ issue, repo }) => repo?.inStandup && repo.onWorkHost && !repo.threads.some((t) => t.ticket === issue.ticket))
+    .sort((a, b) => busiest(b.issue.repo) - busiest(a.issue.repo) || a.issue.order - b.issue.order);
+  for (const { issue, repo } of upNext) {
+    const weight = issue.weight ?? UNWEIGHED;
+    if (load + weight > limit) continue;
+    plan.push({ text: brief(issue.title), ref: repo.web ? urlFor(repo.web, issue.ticket) : issue.ticket, epic: issue.epic ?? null });
+    load += weight;
+  }
   // Merge requests waiting on your review are on today's plan whatever the
   // weight limit -- someone is waiting -- unless a review thread covers them.
   for (const review of activity.reviews ?? []) {

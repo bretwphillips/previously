@@ -122,6 +122,13 @@ const issues = parse(process.env.ISSUES)
     };
   });
 
+// The open tickets in the epics your tickets belong to, each epic in its own
+// order: the standup's next work when your own leaves room.
+const epicIssues = parse(process.env.EPIC_ISSUES).map((i) => ({
+  repo: folderOf(i.path), ticket: `#${i.iid}`, title: i.title ?? "", weight: i.weight ?? null,
+  assigned: Boolean(i.assigned), order: i.order ?? 0, epic: epicOf(i.epic),
+}));
+
 // Comments from other people on your tickets and merge requests, counted by
 // gitlab-sync.mjs as they arrive.
 const messages = parse(process.env.MESSAGES).map(({ kind, path, ref, title, count, who, at }) => ({
@@ -155,7 +162,7 @@ const problems = parse(process.env.PROBLEMS).map(({ path, iid, title, url, kind 
 
 process.stdout.write(
   JSON.stringify(
-    { fetchedAt: Math.floor(Date.now() / 1000), mrsFetchedAt: Math.floor(Date.now() / 1000), comments, approvals, mrs, issues, messages, reviews, problems },
+    { fetchedAt: Math.floor(Date.now() / 1000), mrsFetchedAt: Math.floor(Date.now() / 1000), comments, approvals, mrs, issues, epicIssues, messages, reviews, problems },
     null,
     2,
   ),

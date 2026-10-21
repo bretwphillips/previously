@@ -365,7 +365,10 @@ to change something.
   first always goes in. Then, while there's room under the limit, your open tickets
   you haven't started -- assigned to you, with no thread yet -- those in an epic
   you're working in first, then the oldest; one blocked by a ticket still open
-  waits. Merge requests waiting on your review are added after, whatever the limit.
+  waits. Still room, and it takes the next tickets nobody is assigned to in the
+  epics your work belongs to (on GitHub, a parent issue's sub-issues), from the repo
+  you've committed to most recently first, each epic in its own order. Merge
+  requests waiting on your review are added after, whatever the limit.
 - **Blockers** — `blocked` entries from the narrative.
 - **Needs review** — merge requests recorded as `rfr`, and only those.
 

@@ -353,6 +353,19 @@ if (!quick) await Promise.all(
   }),
 );
 if (!quick) for (const key of Object.keys(cache.epics)) if (!epicKeys.has(key)) delete cache.epics[key];
+// The open tickets in each open epic, in the epic's own order, so the standup can
+// pick up the next one nobody has started when your own work leaves room.
+if (!quick) await Promise.all(
+  Object.values(cache.epics).map(async (c) => {
+    if (c.epic.state === "closed") { c.issues = []; return; }
+    const list = await pages(`groups/${c.epic.group_id}/epics/${c.epic.iid}/issues?state=opened`);
+    if (Array.isArray(list)) {
+      c.issues = list.filter((i) => i.state === "opened").map((i, order) => ({
+        project_id: i.project_id, iid: i.iid, title: i.title, weight: i.weight ?? null, assigned: (i.assignees ?? []).length > 0, order,
+      }));
+    }
+  }),
+);
 
 // A review request is news once, when it first appears; the list itself is
 // whatever is still open and waiting on you.
@@ -425,6 +438,9 @@ const env = {
       assigned: assignedKeys.has(key) })),
   ),
   EPICS: JSON.stringify(Object.values(cache.epics).map((e) => e.epic)),
+  EPIC_ISSUES: JSON.stringify(Object.values(cache.epics).flatMap((c) => (c.issues ?? [])
+    .map((i) => ({ ...i, path: pathOf.get(i.project_id), epic: { iid: c.epic.iid, group_id: c.epic.group_id, title: c.epic.title } }))
+    .filter((i) => i.path))),
   MESSAGES: JSON.stringify(Object.values(cache.messages)),
   REVIEWS: JSON.stringify(cache.reviews ?? []),
   PROBLEMS: JSON.stringify(cache.problems ?? []),
