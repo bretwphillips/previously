@@ -334,9 +334,9 @@ git state -- a commit, checkout, stash, fetch or staging -- the page rebuilds.
   them, never the drawer. A path a program broke across lines itself can't be
   followed; one the terminal wrapped can.
 
-Settings and Standup work around the drawer: Settings is a pane, padded like the
-rest, and while Standup is open the app dims the drawer to match its backdrop;
-clicking the dimmed drawer closes it.
+Settings and the popups work around the drawer: Settings is a pane, padded like
+the rest, and Standup, the quiz and the rest open above the page and stop short of
+the drawer, which stays usable while they're up.
 
 **A terminal app** -- Terminal, iTerm, Ghostty, Warp, kitty, WezTerm or
 Alacritty, whichever are installed -- opens a new window there instead, in

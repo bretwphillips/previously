@@ -327,23 +327,6 @@ final class RootView: NSView {
     }
 }
 
-/// The dashboard's sheet backdrop, continued over the drawer: the page cannot
-/// draw above it. A click here is a click on the backdrop.
-final class Shade: NSView {
-    var onClick: (() -> Void)?
-
-    override init(frame: NSRect) {
-        super.init(frame: frame)
-        wantsLayer = true
-        layer?.backgroundColor = NSColor(white: 0, alpha: 0.28).cgColor
-    }
-
-    required init?(coder: NSCoder) { fatalError() }
-
-    override func mouseDown(with event: NSEvent) { onClick?() }
-    override func resetCursorRects() { addCursorRect(bounds, cursor: .arrow) }
-}
-
 /// The dashboard's web view. The drawer sits above it, but a covered view still
 /// hears the mouse move -- AppKit sends tracking-area events whatever is on top
 /// -- so the dashboard set the cursor for its own page under the pointer and
@@ -540,7 +523,6 @@ final class DropWebView: WKWebView {
 /// in a folder, show it, or end it.
 final class TerminalDrawer: NSObject, WKScriptMessageHandler, WKNavigationDelegate {
     let view = NSView()
-    let shade = Shade()
     private let handle = ResizeHandle()
     private var web: WKWebView!
     private let pageDir = codeDir.appendingPathComponent("terminal")
@@ -578,15 +560,11 @@ final class TerminalDrawer: NSObject, WKScriptMessageHandler, WKNavigationDelega
         handle.onDrag = { [weak self] y in self?.onDrag?(y) }
         view.addSubview(handle)
         view.addSubview(web)
-        view.addSubview(shade)
-        shade.autoresizingMask = [.width, .height]
-        shade.isHidden = true
         handle.autoresizingMask = [.width, .minYMargin]
         web.autoresizingMask = [.width, .height]
         view.frame = NSRect(x: 0, y: 0, width: 600, height: 260)
         handle.frame = NSRect(x: 0, y: 254, width: 600, height: 6)
         web.frame = NSRect(x: 0, y: 0, width: 600, height: 254)
-        shade.frame = view.bounds
 
         web.loadFileURL(
             pageDir.appendingPathComponent("terminal.html"), allowingReadAccessTo: pageDir)
@@ -1193,11 +1171,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, WKN
     }
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-        // A fresh page can come back with a sheet open (the quiz, reopened once it's
-        // made) and only reports changes after that, so ask it.
-        webView.evaluateJavaScript("Array.prototype.some.call(document.querySelectorAll('.scrim'), function (s) { return !s.hidden; })") { [weak self] open, _ in
-            self?.drawer.shade.isHidden = (open as? Bool) != true
-        }
         tellPageDrawerHeight()
         matchTheme()
         // Give the page a beat to restore its pane and scroll before showing it.
@@ -1488,15 +1461,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, WKN
         // Shows or hides the drawer, nothing more: the body is ignored.
         if message.name == "toggleTerminal" {
             toggleTerminal()
-            return
-        }
-        // A settings or standup sheet opened or closed: shade the drawer to
-        // match, and keep typing out of the shell while it is up.
-        if message.name == "sheetOpen" {
-            let open = message.body as? Bool ?? false
-            drawer.shade.isHidden = !open
-            if open { window.makeFirstResponder(webView) }
-            else if drawerShown { drawer.focus() }
             return
         }
 
@@ -1803,7 +1767,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, WKN
         config.userContentController.add(self, name: "reviewRemove")
         config.userContentController.add(self, name: "themeChanged")
         config.userContentController.add(self, name: "markerStyle")
-        config.userContentController.add(self, name: "sheetOpen")
         webView = DashboardWebView(frame: .zero, configuration: config)
         webView.navigationDelegate = self
         root = RootView(dashboard: webView, drawer: drawer.view)
@@ -1817,9 +1780,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, WKN
             self.root.drawerHeight = self.root.clamp(y)
             UserDefaults.standard.set(Double(self.root.drawerHeight), forKey: "TerminalHeight")
             self.tellPageDrawerHeight()
-        }
-        drawer.shade.onClick = { [weak self] in
-            self?.webView.evaluateJavaScript("window.closeSheets && window.closeSheets()")
         }
         drawer.onEmpty = { [weak self] in self?.hideTerminal() }
         drawer.onRepoChanged = { [weak self] _ in self?.refresh() }

@@ -2427,32 +2427,6 @@ document.addEventListener('DOMContentLoaded', function () {
   if (terminalOpen && handlers && handlers.toggleTerminal) {
     terminalOpen.addEventListener('click', function () { handlers.toggleTerminal.postMessage(''); });
   }
-  /* The drawer sits above the page, so the app shades it itself while a
-     sheet is open; all it hears is whether one is. Clicking that shade is
-     clicking the backdrop. */
-  var scrims = document.querySelectorAll('.scrim');
-  // Unknown until the first report: a reload can come back with a sheet already
-  // reopened, or with the app still shading for one that's gone.
-  var sheetWasOpen = null;
-  function reportSheet() {
-    var open = false;
-    for (var i = 0; i < scrims.length; i++) if (!scrims[i].hidden) open = true;
-    if (open === sheetWasOpen || !(handlers && handlers.sheetOpen)) return;
-    sheetWasOpen = open;
-    handlers.sheetOpen.postMessage(open);
-  }
-  var sheetWatch = new MutationObserver(reportSheet);
-  for (var si = 0; si < scrims.length; si++) {
-    sheetWatch.observe(scrims[si], { attributes: true, attributeFilter: ['hidden'] });
-  }
-  reportSheet();
-  window.closeSheets = function () {
-    for (var i = 0; i < scrims.length; i++) {
-      var close = scrims[i].querySelector('.close');
-      if (!scrims[i].hidden && close) close.click();
-    }
-  };
-
   /* Editor links go through the app: WebKit can drop a click on a scheme it can't load. */
   document.addEventListener('click', function (e) {
     var link = e.target.closest ? e.target.closest('a[href^="vscode:"], a[href^="cursor:"], a[href^="windsurf:"], a[href^="zed:"]') : null;
