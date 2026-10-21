@@ -3,7 +3,8 @@
 *Previously, on your work…*
 
 It answers one question — **where do I pick up?** — across every repo you
-work in, offline, at no cost to look at.
+work in. It reads your local git, so it works offline, and opening it never
+spends AI tokens.
 
 ![The Overview: repos grouped by activity in the sidebar, and what needs you across all of them](docs/images/overview.png)
 
