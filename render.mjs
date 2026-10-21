@@ -1163,7 +1163,7 @@ function settingsPane(userName, weightLimit = 5, terminals = [], update = null, 
               `<div class="themes" id="race-choice">${["cat", "pug", "frog", "bunny", "pig", "fox", "bear", "mouse", "hamster", "raccoon", "penguin"]
                 .map((r) => `<button data-race="${r}">${r[0].toUpperCase() + r.slice(1)}</button>`)
                 .join("")}</div>
-              <button type="button" class="pick-quiz-open" id="pick-quiz-open">Not sure? Take the quiz</button>
+              <button type="button" class="pick-quiz-open" id="pick-quiz-open">Take the animal quiz</button>
               <div class="pick-quiz" id="pick-quiz" hidden></div>`,
             )}
             ${row("Coat", `<div class="swatches" id="coat-choice"></div>`)}
