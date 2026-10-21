@@ -99,6 +99,12 @@ body.halloween.quest .pet.pixel .deco-n { color: #c4641a; }
 .monster.defeated .body { animation: hit .4s steps(2) 3, poof .01s .7s forwards; }
 @keyframes hit { 0% { filter: brightness(3) } 50% { filter: none; transform: translateX(1px) } 100% { transform: translateX(-1px) } }
 @keyframes poof { to { opacity: 0 } }
+/* The play place's food is eaten: a quick hit, then two bites in turn, then the balls. */
+.monster .bite { opacity: 0; }
+.monster.defeated.eats .body { animation: hit .2s steps(2) 1, poof .01s .25s forwards; }
+.monster.defeated.eats .bite1 { animation: bite .3s steps(1, end) .25s; }
+.monster.defeated.eats .bite2 { animation: bite .3s steps(1, end) .55s; }
+@keyframes bite { 0%, 100% { opacity: 1 } }
 .bit { position: absolute; width: 3px; height: 3px; opacity: 0; }
 .monster.defeated .bit { animation: bits .6s cubic-bezier(.2,.7,.4,1) .7s forwards; }
 @keyframes bits { 0% { opacity: 1; transform: translate(0,0) } 100% { opacity: 0; transform: translate(var(--dx), var(--dy)) } }
