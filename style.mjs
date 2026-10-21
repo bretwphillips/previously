@@ -906,11 +906,11 @@ nav .space-switch select { width: 100%; font: inherit; font-size: 12.5px; font-w
 .themes button[aria-pressed="true"] { background: var(--sel); border-color: var(--muted); font-weight: 600; }
 .themes.deco-specials { margin-top: 10px; align-items: center; }
 /* The companion quiz, under the races. */
-.pick-quiz-open { font: inherit; font-size: 12px; margin-top: 8px; padding: 5px 11px; cursor: pointer; color: var(--ink);
+.pick-quiz-open { font: inherit; font-size: 12px; margin: 0 0 10px; padding: 5px 11px; cursor: pointer; color: var(--ink);
   border: 1px solid var(--line); border-radius: 6px; background: var(--bg); }
 .pick-quiz-open:hover { border-color: var(--muted); }
 .pick-quiz-open[hidden], .pick-quiz[hidden] { display: none; }
-.pick-quiz { margin-top: 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); }
+.pick-quiz { margin: 0 0 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); }
 .pick-quiz .pick-q { margin: 0 0 8px; font-size: 13px; }
 .deco-specials-label { font-size: 11px; color: #b8860b; width: 100%; font-weight: 600; letter-spacing: .02em; }
 /* The streak specials are a reward of their own: gold, starred. */
