@@ -133,7 +133,7 @@ const ANIMALS = {
     },
   },
   pig: {
-    headTop: 2, eyes: 6, neck: 12, hatDrop: 1,
+    headTop: 2, eyes: 6, neck: 12, hatDrop: 1, snout: true,
     rows: [
       ".................",
       ".................",
@@ -482,6 +482,9 @@ function calavera(grid, a, ox, oy, calm) {
     if ((c === "e" || c === "w") && y <= oy + a.eyes + 1) eyes.push([x, y]);
     if (LOOK_FUR[c]) grid[y][x] = "Q"; else if (LOOK_FEATURES[c]) grid[y][x] = "K";
   }
+  // a snout drawn with its own outline (the pig's) is painted over like the rest of
+  // the face, so the grin sits on bone as on the pug's muzzle
+  for (let y = oy + a.eyes + 2; y < oy + a.neck; y++) for (let x = ox + 4; x <= ox + 12; x++) if (grid[y][x] === "o") grid[y][x] = "Q";
   const bone = (x, y) => y >= oy && y < oy + a.neck && grid[y][x] === "Q";
   // the eyes as the mood draws them, squint and all, painted dark and widened outward
   const widen = (list) => list.flatMap(([ex, ey]) => [[ex, ey, ex < mid], [ex + (ex < mid ? -1 : 1), ey, ex < mid]]);
@@ -535,7 +538,9 @@ function dressUp(grid, animal, mood, costume, facePaint = true) {
   if (costume === "skeleton") {
     for (let y = oy; y < oy + a.neck; y++) for (let x = 0; x < W; x++) {
       const c = grid[y][x];
-      if (PAINT[c]) grid[y][x] = PAINT[c];
+      // the pig's snout is bone, its nostrils black; the pug's muzzle is a dark mask
+      const paint = a.snout && c === "k" ? "b" : PAINT[c];
+      if (paint) grid[y][x] = paint;
     }
   }
   for (const part of COSTUMES[costume](mood)) {
