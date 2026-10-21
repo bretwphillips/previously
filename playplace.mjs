@@ -124,7 +124,8 @@ export function playArt(count) {
   return `<svg class="hoard play" viewBox="0 0 ${w} ${h}" width="${w * scale}" height="${h * scale}" shape-rendering="crispEdges">${rows.join("")}</svg>`;
 }
 
-// ---------- the trail: the restaurant, a house, a car, newest first, a road between them (quest.js).
+// ---------- the trail: home, the car, the restaurant -- newest first, so the restaurant, the car,
+// then home -- a road between them (quest.js).
 const STOP_PAL = { o: "var(--play-o, #3a2418)", R: "#e53935", r: "#ff8a80", S: "#b8271f", Y: "#ffc928", y: "#ffe58a", C: "#2f7fe0", c: "#7fb6ff", G: "#2eae5a",
   W: "#f7f2e8", w: "#bfe3ff", s: "#ffffff", D: "#7a4a2a", d: "#ffc928", N: "#3d7be0", K: "#9a5a3a", k: "#9aa0a8", T: "#3a3a40" };
 const STOPS = [
@@ -132,12 +133,12 @@ const STOPS = [
   [[".......ooooooo.........", ".......oYRRRYo.........", ".......oYYYYYo.........", ".......oYRRRYo......ooo", "..ooooooooooooooo..oCCo",
     ".oRRRRRRRRRRRRRRRo.oCcCo", "oRRRRRRRRRRRRRRRRRooCCo.", "oYRYRYRYRYRYRYRYRYoYYo.", ".oYoYoYoYoYoYoYoYooYyYo.", ".oWWWWWWWWWWWWWWWoGGGGo.",
     ".oWwwwWwwwWWDDWoWoGGGo..", ".oWwswWwswWWDDWwWo.oRRo.", ".oWwwwWwwwWWDDWoWo..oRo.", ".oWWWWWWWWWWDDWWWo...oo.", "ooooooooooooooooooooooo."], 1.1],
-  // a house: a peaked roof and a chimney, curtained windows, the front door
-  [["..........oo...", "....ooo...oKo..", "...oNNNo..oKo..", "..oNNNNNooKo...", ".oNNNNNNNNNo...", "oNNNNNNNNNNNo..",
-    "ooooooooooooo..", ".oWWWWWWWWWo...", ".owwoWWWoDDo...", ".owwoWWWoDdo...", ".oWWWWWWoDDo...", "ooooooooooooo.."], 1.2],
   // a little red car
   [[".....ooooo.......", "....oCcoCCo......", "...oCcCoCCCo.....", ".oooooooooooooo..", "oRrRRRRRRRRRRRYo.", "oRRRRRRRRRRRRRRo.",
     "oSSooSSSSSSooSSo.", ".ooTToooooooTToo.", "..oTko.....oTko..", "...oo.......oo..."], 1.2],
+  // a house: a peaked roof and a chimney, curtained windows, the front door
+  [["..........oo...", "....ooo...oKo..", "...oNNNo..oKo..", "..oNNNNNooKo...", ".oNNNNNNNNNo...", "oNNNNNNNNNNNo..",
+    "ooooooooooooo..", ".oWWWWWWWWWo...", ".owwoWWWoDDo...", ".owwoWWWoDdo...", ".oWWWWWWoDDo...", "ooooooooooooo.."], 1.2],
 ];
 export const PLAY_STOPS = STOPS.map(([rows, scale]) => svg(rows, STOP_PAL, scale, "play-stop"));
 
@@ -175,7 +176,7 @@ body.quest.play main { padding-top: 42px; }
 nav .trail .play-stop { display: none; }
 body.quest.play nav .trail .camp, body.quest.play nav .trail .haunt { display: none; }
 body.quest.play nav .trail .play-stop { display: inline; }
-body.quest.play nav .road { opacity: 1; }
+body.quest.play nav .road { opacity: 0.5; }
 
 /* the hoard */
 body:not(.play) .hoard.play, body.play .hoard:not(.play) { display: none; }
