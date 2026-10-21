@@ -89,7 +89,7 @@ body.halloween.quest .pet.pixel .deco-n { color: #c4641a; }
 @keyframes glint { 0% { opacity: 0; transform: scale(.3) } 40% { opacity: 1; transform: scale(1.2) } 100% { opacity: 0; transform: scale(.6) } }
 
 .monster { position: absolute; top: 0; right: 0; pointer-events: none; transform: translate(42%, -55%); }
-.monster svg { display: block; shape-rendering: crispEdges; filter: drop-shadow(0 1px 0 rgba(0,0,0,.25)); }
+.monster svg { display: block; overflow: visible; shape-rendering: crispEdges; filter: drop-shadow(0 1px 0 rgba(0,0,0,.25)); }
 .monster[data-kind="ghost"] svg { filter: drop-shadow(0 0 2px rgba(196,179,238,.9)); }
 .monster[data-kind="ghost"] .body { animation: float 2.6s ease-in-out infinite, flicker 3.7s ease-in-out infinite; }
 @keyframes float { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-1.5px) } }
