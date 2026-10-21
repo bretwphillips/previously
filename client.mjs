@@ -1053,6 +1053,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // wears only in fantasy mode, the one place it wears anything.
     var petOn = store.get('worklog.pet', 'off') === 'on', questOn = store.get('worklog.quest', 'off') === 'on';
     document.getElementById('race-choice').closest('.srow').hidden = !petOn;
+    document.getElementById('pick-quiz-open').closest('.srow').hidden = !petOn;
     // Coat only shows in the pixel companion; as text it's just the animal.
     document.getElementById('coat-choice').closest('.srow').hidden = !petOn || !questOn;
     document.getElementById('text-colour-choice').closest('.srow').hidden = !petOn || questOn;
@@ -1085,38 +1086,46 @@ document.addEventListener('DOMContentLoaded', function () {
      points, in its nearest coat, is shown as a preview, to switch to or not. */
   var PICK_QUIZ = [
     ['Your ideal Saturday?', [
-      ['Curled up with a good book', { cat: 2, bear: 1, hamster: 1 }],
-      ['Out on a long walk', { pug: 2, fox: 1, penguin: 1 }],
+      ['Curled up with a good book', { cat: 2, hamster: 1 }],
+      ['Out on a long walk', { fox: 2, pug: 1, penguin: 1 }],
       ['Tinkering on a side project', { raccoon: 2, mouse: 1, fox: 1 }],
-      ['Snacks and a nap', { pig: 2, hamster: 1, bear: 1 }]]],
+      ['Snacks and a nap', { pig: 2, hamster: 1, bear: 1 }],
+      ['Hosting friends for dinner', { bunny: 2, pug: 1, pig: 1 }],
+      ['A swim somewhere cold', { penguin: 2, frog: 1 }]]],
     ['A build breaks. You\u2026', [
-      ['Calmly read the logs', { penguin: 2, cat: 1, frog: 1 }],
+      ['Calmly read the logs', { penguin: 2, frog: 1 }],
       ['Try something clever', { fox: 2, raccoon: 1 }],
       ['Ask for a second pair of eyes', { bunny: 2, pug: 1 }],
-      ['Get a snack first', { bear: 2, pig: 1, hamster: 1 }]]],
+      ['Get a snack first', { bear: 2, pig: 1, hamster: 1 }],
+      ['Write a test that catches it', { mouse: 2, hamster: 1 }],
+      ['Take a walk and come back to it', { pug: 2, frog: 1 }]]],
     ['On your desk?', [
-      ['A plant', { frog: 2, bunny: 1 }],
-      ['A big mug of coffee', { bear: 1, raccoon: 1, cat: 1 }],
-      ['A pile of stickers', { mouse: 2, hamster: 1 }],
-      ['Noise-cancelling headphones', { penguin: 1, fox: 1, cat: 1 }]]],
+      ['A plant', { frog: 2, mouse: 1 }],
+      ['A big mug of coffee', { bear: 2, raccoon: 1 }],
+      ['A pile of stickers', { hamster: 2, mouse: 1 }],
+      ['Noise-cancelling headphones', { cat: 2, penguin: 1 }],
+      ['A rubber duck', { penguin: 1, pug: 1, pig: 1 }],
+      ['Snacks in a drawer', { raccoon: 2, pig: 1 }]]],
     ['Your code, in a word?', [
       ['Tidy', { hamster: 2, mouse: 1 }],
-      ['Quick', { bunny: 2, fox: 1 }],
-      ['Steady', { pug: 2, bear: 1 }],
-      ['Inventive', { raccoon: 2, pig: 1, frog: 1 }]]],
-    // the last picks a coat, not an animal, without saying so: the time of day you
-    // like best leans warm, cool, light or dark, and the animal wears its nearest coat
-    ['Your favourite time of day?', [['Golden hour', { coat: 'warm' }], ['A rainy afternoon', { coat: 'cool' }],
-      ['A bright, early morning', { coat: 'light' }], ['Late at night', { coat: 'dark' }]]],
+      ['Quick', { fox: 2, bunny: 1 }],
+      ['Steady', { bear: 2, pug: 1 }],
+      ['Inventive', { raccoon: 2, pig: 1, frog: 1 }],
+      ['Playful', { bunny: 1, pig: 1, frog: 1 }],
+      ['Thorough', { mouse: 2, cat: 1 }]]],
+    // the last picks a coat, not an animal, without saying so
+    ['Your favourite time of day?', [['Golden hour', { coat: 0 }], ['A rainy afternoon', { coat: 1 }], ['A bright, early morning', { coat: 2 }],
+      ['Late at night', { coat: 3 }], ['A misty dawn', { coat: 4 }], ['Any time at all', { coat: 'any' }]]],
   ];
-  // How near a coat's main colour is to a kind of colour: warm and cool by hue, light and dark by lightness.
-  function coatFits(hex, kind) {
-    var n = parseInt(hex.slice(1), 16), r = (n >> 16) / 255, g = (n >> 8 & 255) / 255, b = (n & 255) / 255;
-    var max = Math.max(r, g, b), min = Math.min(r, g, b), l = (max + min) / 2, d = max - min, h = 0;
-    if (d) h = max === r ? ((g - b) / d + 6) % 6 : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
-    var sat = d ? d / (1 - Math.abs(2 * l - 1)) : 0, warm = h < 1.2 || h > 5.4, cool = h >= 2.4 && h <= 5.2;
-    return kind === 'light' ? l : kind === 'dark' ? 1 - l : kind === 'warm' ? (warm ? sat : 0) + l * 0.1 : (cool ? sat : 0) + l * 0.1;
-  }
+  // each animal's coat for each time of day, chosen by hand; any time at all is any coat
+  var PICK_COATS = {
+    cat: ['tabby', 'brown', 'cream', 'black', 'grey'], pug: ['apricot', 'blue', 'fawn', 'black', 'silver'],
+    frog: ['yellow', 'blue', 'green', 'purple', 'red'], bunny: ['brown', 'grey', 'white', 'black', 'lavender'],
+    pig: ['ginger', 'mint', 'pink', 'black', 'grey'], fox: ['red', 'silver', 'fennec', 'violet', 'arctic'],
+    bear: ['brown', 'panda', 'pink', 'black', 'polar'], mouse: ['brown', 'grey', 'white', 'black', 'lilac'],
+    hamster: ['golden', 'mint', 'white', 'black', 'grey'], raccoon: ['rusty', 'blue', 'brown', 'plum', 'grey'],
+    penguin: ['pink', 'teal', 'chick', 'classic', 'blue']
+  };
   var PICK_SAYS = {
     cat: 'Independent, curious, and happiest somewhere comfortable.', pug: 'Loyal and steady \u2014 always up for the walk.',
     frog: 'Calm, patient, and at home anywhere.', bunny: 'Quick on your feet and quicker to ask for help.',
@@ -1137,13 +1146,13 @@ document.addEventListener('DOMContentLoaded', function () {
         q.textContent = (step + 1) + ' of ' + PICK_QUIZ.length + ' \u00b7 ' + PICK_QUIZ[step][0];
         pickQuiz.appendChild(q);
         var answers = document.createElement('div');
-        answers.className = 'themes';
+        answers.className = 'themes pick-answers';
         PICK_QUIZ[step][1].forEach(function (a) {
           var b = document.createElement('button');
           b.type = 'button';
           b.textContent = a[0];
           b.addEventListener('click', function () {
-            if (a[1].coat) scores.coat = a[1].coat;
+            if ('coat' in a[1]) scores.coat = a[1].coat;
             else for (var k in a[1]) scores[k] = (scores[k] || 0) + a[1][k];
             step++;
             ask();
@@ -1156,9 +1165,9 @@ document.addEventListener('DOMContentLoaded', function () {
       // the most points wins; a tie goes to the one listed first
       var best = window.COMPANION.RACES.reduce(function (top, r) { return (scores[r] || 0) > (scores[top] || 0) ? r : top; }, window.COMPANION.RACES[0]);
       var name = best[0].toUpperCase() + best.slice(1);
-      var coats = window.COMPANION.COATS[best], coat = Object.keys(coats).reduce(function (top, c) {
-        return coatFits(coats[c].C, scores.coat || 'warm') > coatFits(coats[top].C, scores.coat || 'warm') ? c : top;
-      }, Object.keys(coats)[0]);
+      var coats = window.COMPANION.COATS[best], names = Object.keys(coats);
+      var coat = scores.coat === 'any' ? names[Math.floor(Math.random() * names.length)] : (PICK_COATS[best] || [])[scores.coat || 0];
+      if (!coats[coat]) coat = Object.keys(coats)[0];
       // a little preview of it, in your outfit, before anything changes
       var look = document.createElement('div');
       look.className = 'pick-result';

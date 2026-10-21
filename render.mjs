@@ -1158,11 +1158,11 @@ function settingsPane(userName, weightLimit = 5, terminals = [], update = null, 
               toggle("pet-toggle", "pet"),
               "A small animal in the sidebar, fed by your commits and the scope lines you check off. Purely decorative.",
             )}
+            ${row("", `<button type="button" class="pick-quiz-open" id="pick-quiz-open">Which animal are you?</button>
+              <div class="pick-quiz" id="pick-quiz" hidden></div>`)}
             ${row(
               "Race",
-              `<button type="button" class="pick-quiz-open" id="pick-quiz-open">Which animal are you?</button>
-              <div class="pick-quiz" id="pick-quiz" hidden></div>
-              <div class="themes" id="race-choice">${["cat", "pug", "frog", "bunny", "pig", "fox", "bear", "mouse", "hamster", "raccoon", "penguin"]
+              `<div class="themes" id="race-choice">${["cat", "pug", "frog", "bunny", "pig", "fox", "bear", "mouse", "hamster", "raccoon", "penguin"]
                 .map((r) => `<button data-race="${r}">${r[0].toUpperCase() + r.slice(1)}</button>`)
                 .join("")}</div>`,
             )}

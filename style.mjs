@@ -912,6 +912,9 @@ nav .space-switch select { width: 100%; font: inherit; font-size: 12.5px; font-w
 .pick-quiz-open[hidden], .pick-quiz[hidden] { display: none; }
 .pick-quiz { margin: 0 0 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); }
 .pick-quiz .pick-q { margin: 0 0 8px; font-size: 13px; }
+/* six answers, as an even three by two */
+.pick-quiz .pick-answers { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.pick-quiz .pick-answers button { text-align: left; }
 .pick-result { display: flex; gap: 14px; align-items: center; margin-bottom: 8px; }
 .pick-result svg { flex: none; }
 .pick-result .pick-q { margin: 0; }
