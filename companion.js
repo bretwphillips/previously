@@ -97,6 +97,69 @@ const ANIMALS = {
       sad:     { at: 4, rows: ["..oCCweCoCweCCo..", ".oCCCeeCCCeeCCCo.", ".oChCtCCCCCCCCCo.", ".oCCCtCCCCCCCCCo.", ".oCCCCmmmmmCCCCo.", "..oCCmCCCCCmCCo.."] },
     },
   },
+  // long ears above a cat-sized head: two rows taller, so every anchor is two lower
+  bunny: {
+    headTop: 5, eyes: 8, neck: 13,
+    rows: [
+      "....ooo...ooo....",
+      "...oCCCo.oCCCo...",
+      "...oCiCo.oCiCo...",
+      "...oCiCo.oCiCo...",
+      "...oCiCo.oCiCo...",
+      "..ooCiCoooCiCoo..",
+      ".oCCCCCCCCCCCCCo.",
+      ".oChCCCCCCCCCCCo.",
+      ".oCCweCCCCCweCCo.",
+      ".oCCeeCCCCCeeCCo.",
+      ".oCCCCCCpCCCCCCo.",
+      ".oCCCCCmCmCCCCCo.",
+      "..oCCCCCwCCCCCo..",
+      "...oCCCcccCCCo...",
+      "...oCCCcccCCCooo.",
+      "...oCCCCCCCCCocco",
+      "...oCCCCCCCCCooo.",
+      "...oCCo...oCCo...",
+      "...oooo...oooo...",
+    ],
+    moods: {
+      dancing: { at: 8, rows: [".oCCCeCCCCCeCCCo.", ".oCCeCeCCCeCeCCo."] },
+      peckish: { at: 8, rows: [".oCCCCCCCCCCCCCo.", ".oCCeeCCCCCeeCCo.", null, ".oCCCCCmmmCCCCCo."] },
+      // the ears bend over
+      hungry:  { at: 0, rows: [".................", "..ooo.......ooo..", ".oCCCo.....oCCCo.", "..oiCCo...oCCio..", "...oiCo...oCio...", "..ooCiCoooCiCoo..", null, null,
+        ".oCCCCCCCCCCCCCo.", ".oCCeeCCCCCeeCCo.", ".oCCCCCCpCCZZZCo.", ".oCCCCCmmmCCCCCo.", "..oCCCmCCCmCCCo.."] },
+      // and flop down
+      sad:     { at: 0, rows: [".................", ".................", ".................", "ooo...........ooo", "oCCoo.......ooCCo", "oiiCCoooooooCCiio", null, null,
+        ".oCCweCCCCCCCCCo.", ".oCCeeCCCCCeeCCo.", ".oCCCCCCpCCCtCCo.", ".oCCCCCmmmCCtCCo.", "..oCCCmCCCmCCCo.."] },
+    },
+  },
+  pig: {
+    headTop: 2, eyes: 6, neck: 12, hatDrop: 1,
+    rows: [
+      ".................",
+      ".................",
+      "..ooo.......ooo..",
+      ".oiiCoooooooCiio.",
+      ".oCiCCCCCCCCCiCo.",
+      ".oChCCCCCCCCCCCo.",
+      ".oCCweCCCCCweCCo.",
+      ".oCCeeCCCCCeeCCo.",
+      ".oCCCCoooooCCCCo.",
+      ".oCCCokkkkkoCCCo.",
+      ".oCCCokmkmkoCCCo.",
+      "..oCCCoooooCCCo..",
+      "...oCCCmmmCCCo...",
+      "...oCCCcccCCCo.o.",
+      "...oCCCCCCCCCooCo",
+      "...oCCo...oCCo.o.",
+      "...oooo...oooo...",
+    ],
+    moods: {
+      dancing: { at: 6, rows: [".oCCeeCCCCCeeCCo.", ".oCeCCeCCCeCCeCo."] },
+      peckish: { at: 6, rows: [".oCCCCCCCCCCCCCo.", ".oCCeeCCCCCeeCCo.", null, null, null, null, "...oCCCCmCCCCo..."] },
+      hungry:  { at: 6, rows: [".oCCCCCCCCCCCCCo.", ".oCCeeCCCCCeeCCo.", null, null, null, null, "...oCCmCZCmCCo...", "...oCCCcccCCCo...", "...oCCCCCCCCCoooo", "...oCCo...oCCo..."] },
+      sad:     { at: 6, rows: [".oCCweCCCCCCCCCo.", ".oCCeeCCCCCeeCCo.", ".oCCCCoooooCCtCo.", ".oCCCokkkkkoCtCo.", null, null, "...oCCmCCCmCCo...", "...oCCCcccCCCo...", "...oCCCCCCCCCo...", "...oCCo...oCCoooo"] },
+    },
+  },
 };
 
 // ---------- hats: bottom row lands on headTop (or, with onEyes, eyeRow on the eyes).
@@ -219,6 +282,18 @@ const COATS = {
     apricot: { C: "#e8a865", h: "#f4c58f", c: "#f8dfc0", k: "#3a2a22", D: "#c4823f", m: "#f2a0a8", o: "#5a3a20" },
     silver:  { C: "#c9c6c0", h: "#e3e1dc", c: "#efede9", k: "#2f2f33", D: "#a6a29a", m: "#f2a0a8", o: "#4a4a4e" },
     black:   { C: "#3a3c42", h: "#55585f", c: "#62656c", k: "#18191c", D: "#2c2e33", m: "#d98a96", o: "#141518" },
+  },
+  bunny: {
+    white: { C: "#f4f1ec", h: "#ffffff", c: "#fffdf8", i: "#f2b8c2", p: "#e88a9a", m: "#6b5e58", o: "#6b5e58" },
+    brown: { C: "#b98a62", h: "#d4ab85", c: "#f0dcc4", i: "#f2b8c2", p: "#d9808f", m: "#4a3220", o: "#4a3220" },
+    grey:  { C: "#a3a6ad", h: "#c8cbd1", c: "#e9ebee", i: "#f0b8c0", p: "#d98a96", m: "#3d4047", o: "#3d4047" },
+    black: { C: "#3d4047", h: "#5e626b", c: "#8a8e96", i: "#c98a95", p: "#c98a95", m: "#16181c", o: "#16181c" },
+  },
+  pig: {
+    pink:   { C: "#f4aebd", h: "#fbd0d9", c: "#fde3e8", i: "#e8899c", k: "#ee95a8", m: "#9c4a5c", o: "#8a4252" },
+    ginger: { C: "#e8a073", h: "#f4c09c", c: "#fbdcc6", i: "#cc7a52", k: "#e08f63", m: "#7a3e20", o: "#6e3a1e" },
+    black:  { C: "#3d3a40", h: "#5c5860", c: "#6e6a72", i: "#2c2a2e", k: "#c99aa6", m: "#16151a", o: "#16151a" },
+    grey:   { C: "#b4aeb0", h: "#d4cfd1", c: "#e8e4e5", i: "#9a9093", k: "#e0a5b2", m: "#4a4245", o: "#4a4245" },
   },
   frog: {
     green:  { C: "#5fb84a", h: "#8fd67a", c: "#e6f2b8", m: "#24502a", o: "#24502a" },
@@ -2518,7 +2593,7 @@ function decorationsFor(theme, right, days, commits, commitDays = 0) {
   return ladder.concat(streaks).filter((d) => DECORATIONS[d.name] && !DECORATIONS_ON_HOLD.includes(d.name));
 }
 const api = { MOODS, ANIMALS, HATS, COATS, HAT_COLOURS, W, H, compose, companion, dressUp, DECORATIONS,
-  RACES: ["cat", "pug", "frog"], CLASSES: ["none", "wizard", "ranger", "knight"],
+  RACES: ["cat", "pug", "frog", "bunny", "pig"], CLASSES: ["none", "wizard", "ranger", "knight"],
   COSTUMES: ["none", ...Object.keys(COSTUMES)], LOOKS: Object.keys(LOOKS), LOOKS_PAINTED,
   DECORATION_NAMES: ["none", ...Object.keys(DECORATIONS)], DECORATION_LADDERS, DECORATION_STREAKS, decorationsFor,
   DECORATION_PX, decorationPx };

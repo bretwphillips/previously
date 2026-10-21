@@ -115,6 +115,8 @@ export function textArts(mood) {
     pug: [`${pad} /"""\\`, middle(`${eyes[0]}w${eyes[1]}`), `${pad} (_${tongue}_)`].join("\n"),
     // a brow between the eyes joins them and makes the row as wide as the body
     frog: [`${pad}(${eyes[0]})_(${eyes[1]})`, middle(frogMouth), `${pad} ^^ ^^`].join("\n"),
+    bunny: [`${pad} (\\_/)`, middle(face), `${pad} (")(")`].join("\n"),
+    pig: [`${pad} ^___^`, middle(face), `${pad}  (oo)`].join("\n"),
   };
 }
 
