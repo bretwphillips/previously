@@ -101,12 +101,12 @@ const ANIMALS = {
   bunny: {
     headTop: 5, eyes: 8, neck: 13,
     rows: [
-      "....ooo...ooo....",
-      "...oCCCo.oCCCo...",
-      "...oCiCo.oCiCo...",
-      "...oCiCo.oCiCo...",
-      "...oCiCo.oCiCo...",
-      "..ooCiCoooCiCoo..",
+      "..ooo.......ooo..",
+      ".oCCCo.....oCCCo.",
+      ".oCiCo.....oCiCo.",
+      ".oCiCo.....oCiCo.",
+      ".oCiCo.....oCiCo.",
+      ".oCiCoooooooCiCo.",
       ".oCCCCCCCCCCCCCo.",
       ".oChCCCCCCCCCCCo.",
       ".oCCweCCCCCweCCo.",
@@ -125,7 +125,7 @@ const ANIMALS = {
       dancing: { at: 8, rows: [".oCCCeCCCCCeCCCo.", ".oCCeCeCCCeCeCCo."] },
       peckish: { at: 8, rows: [".oCCCCCCCCCCCCCo.", ".oCCeeCCCCCeeCCo.", null, ".oCCCCCmmmCCCCCo."] },
       // the ears bend over
-      hungry:  { at: 0, rows: [".................", "..ooo.......ooo..", ".oCCCo.....oCCCo.", "..oiCCo...oCCio..", "...oiCo...oCio...", "..ooCiCoooCiCoo..", null, null,
+      hungry:  { at: 0, rows: [".................", "oo.............oo", "oCo...........oCo", ".oCo.........oCo.", ".oiCo.......oCio.", ".oCiCoooooooCiCo.", null, null,
         ".oCCCCCCCCCCCCCo.", ".oCCeeCCCCCeeCCo.", ".oCCCCCCpCCZZZCo.", ".oCCCCCmmmCCCCCo.", "..oCCCmCCCmCCCo.."] },
       // and flop down
       sad:     { at: 0, rows: [".................", ".................", ".................", "ooo...........ooo", "oCCoo.......ooCCo", "oiiCCoooooooCCiio", null, null,
