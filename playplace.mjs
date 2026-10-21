@@ -22,9 +22,10 @@ const BANNER_PAL = {
   1: "#ff3b7a", 2: "#2f7fe0", 3: "#2eae5a", 4: "#ffc928", 5: "#8e44ad",
   a: "#ffb0cc", b: "#9fc8ff", c: "#98e8b0", d: "#fff0a0", e: "#d4a8f0",
 };
-const BALLOON = ["...oooo...", ".ooCCCCoo.", ".oCHCCCCo.", "oCHHCCCCCo", "oCHCCCCCCo", "oCCCCCCCCo", "oCCCCCCCCo", ".oCCCCCCo.", ".ooCCCCoo.", "...oCCo...", "....oo....", ".....l....", "....l.....", ".....l...."];
+let BULBS = [];
 function awning(w) {
-  const h = 40, g = grid(w, h), SW = 12, DEPTH = 9;
+  const h = 24, g = grid(w, h), SW = 12, DEPTH = 9;
+  const bulbs = [];
   const put = (x, y, c) => { if (x >= 0 && x < w && y >= 0 && y < h) g[y][x] = c; };
   // the rod it hangs from
   for (let x = 0; x < w; x++) { put(x, 0, "o"); put(x, 1, "K"); put(x, 2, "o"); }
@@ -40,18 +41,26 @@ function awning(w) {
     put(x, bottom, "o");
     if (at === 0) for (let y = 3; y < bottom; y++) put(x, y, "o");
   }
-  // balloons tied under the awning, every few stripes, in turn of colour
-  for (let n = 0, x = 30; x < w - 10; x += 118 + (n * 41) % 60, n++) {
-    const C = "12345"[n % 5], H = "abcde"[n % 5], y0 = 15 + (n % 3) * 2;
-    BALLOON.forEach((row, dy) => [...row].forEach((c, dx) => {
-      if (c === ".") return;
-      put(x + dx, y0 + dy, c === "C" ? C : c === "H" ? "w" : c);
-    }));
-    for (let y = 3 + DEPTH + 6; y < y0; y++) put(x + 5, y, "l");
+  // a marquee bulb at each scallop's tip, lit in two alternating sets
+  for (let k = 0; k * SW < w; k++) {
+    const cx = k * SW + SW / 2 - 1, cy = 3 + DEPTH + 1;
+    bulbs.push([cx, cy, k % 2]);
   }
+  BULBS = bulbs;
   return g.map((r) => r.join(""));
 }
-export const PLAY_BANNER = `<div class="awning" aria-hidden="true">${svg(awning(1800), BANNER_PAL)}</div>`;
+const awningRows = awning(1800);
+// the bulbs drawn over the awning, each set its own group so the two can twinkle in turn
+const sockets = BULBS.map(([x, y]) =>
+  `<rect x="${x - 1}" y="${y - 1}" width="4" height="4" fill="#3a2a30"/><rect x="${x}" y="${y}" width="2" height="2" fill="#8a6a3a"/>`).join("");
+const bulbSet = (set) => `<g class="bulbs b${set}">${BULBS.filter((b) => b[2] === set).map(([x, y]) =>
+  `<rect x="${x}" y="${y}" width="2" height="2" fill="#fff3a8"/><rect x="${x}" y="${y}" width="1" height="1" fill="#ffffff"/>`).join("")}</g>`;
+export const PLAY_BANNER = `<div class="awning" aria-hidden="true">${svg(awningRows, BANNER_PAL).replace("</svg>", sockets + bulbSet(0) + bulbSet(1) + "</svg>")}</div>`;
+export const PLAY_CSS = `
+.awning .bulbs { animation: bulb 1.2s steps(1, end) infinite; }
+.awning .bulbs.b1 { animation-delay: -.6s; }
+@keyframes bulb { 0% { opacity: 1; } 50% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .awning .bulbs { animation: none; } }`;
 
 // ---------- the hoard: food only -- burgers, fries, sodas, nuggets and soft-serve in
 // Halloween's candy places, a tray of it from 100, a takeout bag from 700.
@@ -69,6 +78,10 @@ const SPRITES = {
   nuggets: [".ooo.", "oNNno", "oNnNo", ".ooo."],
   soda: ["...W.", "..W..", "ooooo", "oWWWo", "oCCCo", "oCcCo", "oCCCo", ".ooo."],
   cone: [".ooo.", "oIIIo", "oIiIo", ".oKo.", "..o.."],
+  // wide ones, taking turns with the burger
+  nuggetbox: [".oNo.oNo.", "oNnNoNnNo", "oRWRWRWRo", "oRWRWRWRo", "oRWRWRWRo", ".ooooooo."],
+  bigfries: ["F.F.F.F.F", "FfFFfFFfF", ".oRRRRRo.", ".oRRWRRo.", ".oRRRRRo.", "..ooooo.."],
+  bigsoda: ["......W..", ".....W...", ".ooooooo.", ".oWWWWWo.", ".oCCCCCo.", ".oCCcCCo.", ".oCCCCCo.", "..ooooo.."],
   // a red serving tray under the food
   handle: [],
   tray: ["ooooooooooooooo", "oTTTTTTTTTTTTTo", "otttttttttttttto".slice(0, 14) + "o", ".ooooooooooooo."],
@@ -82,7 +95,7 @@ const SPRITES = {
 const SLOT = { wrapped: 5, corn: 6, drop: 5, pop: 8, pail: 6 }; // the tray sits right under the food
 const RISE = 3; // room added above, for what grows up
 // each candy place takes a food of its size, in turn, so a pile is a mix
-const AS = { wrapped: ["burger"], corn: ["fries", "cone"], drop: ["nuggets"], pop: ["soda"], handle: ["handle"], pail: ["tray"], sackBack: ["bagBack"], sackFront: ["bagFront"] };
+const AS = { wrapped: ["burger", "nuggetbox", "bigfries", "bigsoda"], corn: ["fries", "cone"], drop: ["nuggets"], pop: ["soda"], handle: ["handle"], pail: ["tray"], sackBack: ["bagBack"], sackFront: ["bagFront"] };
 const NAMES = ["a burger", "burgers to share", "a meal", "a small spread", "a tray of food", "a tray filling up", "a full tray",
   "a tray piled high", "an overflowing tray", "a takeout bag", "a takeout bag overflowing"];
 const CUPS = ["red", "blue", "green", "orange", "purple"];
