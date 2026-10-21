@@ -1135,7 +1135,7 @@ function settingsPane(userName, weightLimit = 5, terminals = [], update = null, 
               `<div class="themes" id="overlay-choice">
                 <button data-overlay="none">None</button>
                 <button data-overlay="quest">Fantasy</button>
-                <button data-overlay="play">Play place</button>
+                <button data-overlay="play">Happiest place of all the places</button>
                 <button data-overlay="halloween">Halloween</button>
                 <button data-overlay="muertos">Día de los Muertos</button>
               </div>
@@ -1203,7 +1203,7 @@ function settingsPane(userName, weightLimit = 5, terminals = [], update = null, 
               ]
                 .map(([c, label]) => `<button data-play-look="${c}">${label}</button>`)
                 .join("")}</div>`,
-              "What it wears in fantasy mode at the play place.",
+              "What it wears in fantasy mode at the happiest place of all the places.",
             )}
             ${row(
               "Party hat",

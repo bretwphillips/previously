@@ -1,4 +1,4 @@
-// The Happiest Play Place on Earth: a fast-food play place in quest mode. A striped
+// The happiest place of all the places: a fast-food play place in quest mode. A striped
 // awning for the banner, a hoard of food from one burger to takeout bags, soda cups for
 // the markers, the restaurant, its sign and a slide on the trail. The food on the tabs
 // and its eating are in quest.js; the outfits and decorations in companion.js. Nothing
