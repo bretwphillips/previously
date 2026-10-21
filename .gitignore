@@ -37,5 +37,12 @@ update.json
 # Which Claude session runs in each terminal-drawer tab, for auto-resume.
 terminal-sessions/
 
-# Local copies of merge requests checked out for review (review.sh).
+# Local copies of merge requests checked out for review (review.mjs).
 reviews/
+
+# Where the terminal drawer's tabs were, and which ran Claude, for the next launch.
+terminal-layout.json
+
+# The Electron shell's own packages (npm install in electron/).
+electron/node_modules/
+electron/Previously.ico

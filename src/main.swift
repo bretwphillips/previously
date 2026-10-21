@@ -16,23 +16,6 @@ struct Alert: Codable, Identifiable {
     var id: String { (space ?? "") + repo + text }
 }
 
-struct ActiveRepo: Codable, Identifiable {
-    let repo: String
-    let ticket: String
-    let now: String
-    let branch: String
-    var id: String { repo }
-}
-
-struct Summary: Codable {
-    var pending: Int = 0
-    var needs: [Alert] = []
-    var news: [Alert]?
-    var active: [ActiveRepo] = []
-    /// Where each repo lives: a space's repos can be in any of its folders.
-    var paths: [String: String]?
-}
-
 // The app's folder is wherever make.sh last built from, kept in this user's
 // preferences; failing that, beside the app (where older installs put it) or
 // ~/Projects/previously. An older install named it .previously; that still works.
@@ -52,104 +35,129 @@ let codeDir: URL = {
     return parent.appendingPathComponent("previously")
 }()
 
-// MARK: - Spaces
+// MARK: - The core
 //
-// Groups of project folders -- work, personal, a side job -- listed in
-// spaces.json beside the code (written by spaces.mjs and the Settings page).
-// Each keeps its own data in spaces/<id>/: narrative, tasks, notes, settings
-// for when it syncs, and its own page.
+// What the app decides lives in core.mjs, shared with any other shell; this app
+// is the Mac's window, menu bar, terminal and clipboard around it. The core runs
+// as a child process (core-server.mjs), talking JSON lines: the page's messages
+// go to it, and it says what to show and do.
 
-struct SpaceInfo: Codable {
-    let id: String
-    let name: String
-    var word: String?
-    var folders: [String]?
+/// What the core says about the current space: its page, and what the menu bar lists.
+struct CoreState: Codable {
+    var current = "work"
+    var page: String?
+    var notes: String?
+    var projects: String?
+    var pending = 0
+    var needs: [Alert] = []
+    var paths: [String: String] = [:]
+    /// Settings -> Terminal: "off", "app" for the drawer, or a terminal app's id.
+    var terminal = "off"
 }
 
-struct SpacesConfig: Codable {
-    var current: String
-    var companion: String?
-    var menubar: String?
-    var spaces: [SpaceInfo]
-}
+/// The last state the core sent.
+var coreState = CoreState()
 
-func spacesConfig() -> SpacesConfig? {
-    guard let data = try? Data(contentsOf: codeDir.appendingPathComponent("spaces.json")) else { return nil }
-    return try? JSONDecoder().decode(SpacesConfig.self, from: data)
-}
-
-func currentSpace() -> String { spacesConfig()?.current ?? "work" }
-
-func spaceDir(_ id: String? = nil) -> URL {
-    codeDir.appendingPathComponent("spaces").appendingPathComponent(id ?? currentSpace())
-}
+func currentSpace() -> String { coreState.current }
 
 /// Where the current space's repos are, from its last build.
-func repoPaths() -> [String: String] {
-    guard let data = try? Data(contentsOf: spaceDir().appendingPathComponent("summary.json")),
-          let summary = try? JSONDecoder().decode(Summary.self, from: data)
-    else { return [:] }
-    return summary.paths ?? [:]
-}
+func repoPaths() -> [String: String] { coreState.paths }
 
 /// A new terminal's folder: the current space's first, else ~/Projects.
 func projectsFolder() -> URL {
-    if let first = spacesConfig()?.spaces.first(where: { $0.id == currentSpace() })?.folders?.first {
-        return URL(fileURLWithPath: first)
-    }
-    return FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Projects")
+    coreState.projects.map { URL(fileURLWithPath: $0) }
+        ?? FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Projects")
 }
 
-/// One of the scripts beside the code, run for a space.
-func script(_ name: String, space: String? = nil, args: [String] = [], env extra: [String: String] = [:]) -> Process {
-    let task = Process()
-    task.executableURL = URL(fileURLWithPath: "/bin/sh")
-    task.arguments = [codeDir.appendingPathComponent(name).path] + args
-    var env = ProcessInfo.processInfo.environment
-    env["PREVIOUSLY_SPACE"] = space ?? currentSpace()
-    for (k, v) in extra { env[k] = v }
-    task.environment = env
-    return task
+final class Core {
+    private var process: Process?
+    private var input: FileHandle?
+    private var buffer = Data()
+    private var quitting = false
+    /// One of the core's instructions: an op and its arguments, with an id when it wants an answer.
+    var onOp: ((String, Any?, Int?) -> Void)?
+    private var asked = 0
+    private var answers: [Int: (Any?) -> Void] = [:]
+
+    func start() {
+        let task = Process()
+        task.executableURL = URL(fileURLWithPath: "/bin/sh")
+        // env.sh puts back the PATH a Dock launch doesn't have, and finds node.
+        task.arguments = ["-c", ". \"$0/env.sh\"; exec \"$NODE\" \"$0/core-server.mjs\"", codeDir.path]
+        task.currentDirectoryURL = codeDir
+        let inPipe = Pipe(), outPipe = Pipe()
+        task.standardInput = inPipe
+        task.standardOutput = outPipe
+        outPipe.fileHandleForReading.readabilityHandler = { [weak self] handle in
+            let data = handle.availableData
+            // Empty is the end: it has gone, and the handler would only spin.
+            guard !data.isEmpty else { handle.readabilityHandler = nil; return }
+            DispatchQueue.main.async { self?.received(data) }
+        }
+        // Gone unexpectedly: started again, after a moment so a broken one can't spin.
+        task.terminationHandler = { [weak self] _ in
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                guard let self, !self.quitting else { return }
+                self.start()
+            }
+        }
+        buffer = Data()
+        do { try task.run() } catch { return }
+        process = task
+        input = inPipe.fileHandleForWriting
+    }
+
+    func stop() {
+        quitting = true
+        try? input?.close()
+    }
+
+    private func received(_ data: Data) {
+        buffer.append(data)
+        while let newline = buffer.firstIndex(of: 0x0a) {
+            let line = buffer[buffer.startIndex..<newline]
+            buffer.removeSubrange(buffer.startIndex...newline)
+            guard let json = try? JSONSerialization.jsonObject(with: line) as? [String: Any],
+                  let op = json["op"] as? String
+            else { continue }
+            if op == "answer", let id = json["id"] as? Int {
+                answers.removeValue(forKey: id)?(json["args"] is NSNull ? nil : json["args"])
+                continue
+            }
+            onOp?(op, json["args"], json["id"] as? Int)
+        }
+    }
+
+    private func write(_ object: [String: Any]) {
+        guard let input, let data = try? JSONSerialization.data(withJSONObject: object) else { return }
+        // Throwing, not the older write(_:), which takes the app down if the core has gone.
+        try? input.write(contentsOf: data + Data([0x0a]))
+    }
+
+    /// A page message (its body as the page sent it) or one of the app's own.
+    func send(_ name: String, _ body: Any? = nil) {
+        var line: [String: Any] = ["message": name]
+        if let body, JSONSerialization.isValidJSONObject([body]) { line["body"] = body }
+        write(line)
+    }
+
+    func reply(_ id: Int, _ value: Bool) { write(["reply": id, "value": value]) }
+
+    /// A question for the core; its answer comes back on the main queue.
+    func ask(_ name: String, _ body: Any? = nil, answer: @escaping (Any?) -> Void) {
+        asked += 1
+        answers[asked] = answer
+        var line: [String: Any] = ["message": name, "id": asked]
+        if let body, JSONSerialization.isValidJSONObject([body]) { line["body"] = body }
+        write(line)
+    }
 }
 
 final class Model: ObservableObject {
-    @Published var summary = Summary()
+    @Published var summary = CoreState()
     /// The page's marker pictures (fantasy mode's orbs, Halloween's potions); empty for plain dots.
     @Published var markers: [String: NSImage] = [:]
     @Published var markerStyle = "dots"
-    private var lastSeen: Date?
-
-    /// The spaces the menu bar lists: every one, or only the current one, as Settings says.
-    private func listed() -> [SpaceInfo] {
-        guard let config = spacesConfig() else { return [] }
-        return config.menubar == "current" ? config.spaces.filter { $0.id == config.current } : config.spaces
-    }
-
-    func reload() {
-        let current = currentSpace()
-        var merged = Summary()
-        for space in listed() {
-            guard let data = try? Data(contentsOf: spaceDir(space.id).appendingPathComponent("summary.json")),
-                  let one = try? JSONDecoder().decode(Summary.self, from: data)
-            else { continue }
-            merged.needs += one.needs.map { var a = $0; a.space = space.id; a.spaceName = space.name; return a }
-            if space.id == current { merged.active = one.active; merged.paths = one.paths }
-        }
-        merged.pending = merged.needs.count
-        summary = merged
-    }
-
-    /// Cheap enough to call on a timer: it only stats a few files.
-    func reloadIfChanged() {
-        let files = [codeDir.appendingPathComponent("spaces.json")]
-            + listed().map { spaceDir($0.id).appendingPathComponent("summary.json") }
-        let stamp = files.compactMap {
-            (try? FileManager.default.attributesOfItem(atPath: $0.path)[.modificationDate]) as? Date
-        }.max()
-        guard stamp != lastSeen else { return }
-        lastSeen = stamp
-        reload()
-    }
 }
 
 // MARK: - Quick view
@@ -542,6 +550,9 @@ final class TerminalDrawer: NSObject, WKScriptMessageHandler, WKNavigationDelega
     var onEmpty: (() -> Void)?
     var onHide: (() -> Void)?
     var onDrag: ((CGFloat) -> Void)?
+    /// The core keeps the tabs' layout and their Claude sessions.
+    var tell: ((String, Any) -> Void)?
+    var ask: ((String, @escaping (Any?) -> Void) -> Void)?
 
     var isEmpty: Bool { shells.isEmpty }
 
@@ -673,10 +684,8 @@ final class TerminalDrawer: NSObject, WKScriptMessageHandler, WKNavigationDelega
 
     // MARK: Layout across launches
 
-    /// Kept as folders and widths: the shells themselves end with the app, so
-    /// the next launch starts fresh ones where these were.
-    private static let layoutKey = "TerminalLayout"
-
+    /// Kept by the core as folders and widths: the shells themselves end with the
+    /// app, so the next launch starts fresh ones where these were.
     private func saveLayout(_ body: [String: Any]) {
         guard let tabs = body["tabs"] as? [[String: Any]] else { return }
         var saved: [[String: Any]] = []
@@ -692,55 +701,44 @@ final class TerminalDrawer: NSObject, WKScriptMessageHandler, WKNavigationDelega
             let focused = (tab["focused"] as? Int).flatMap { ids.firstIndex(of: $0) } ?? 0
             saved.append(["panes": panes, "focused": focused])
         }
-        UserDefaults.standard.set(
-            ["tabs": saved, "current": body["current"] as? Int ?? 0], forKey: Self.layoutKey)
+        tell?("termLayout", ["tabs": saved, "current": body["current"] as? Int ?? 0])
     }
 
-    /// Rebuilds the last layout with new shells. A folder that has gone since
-    /// falls back to the projects folder. False when there was nothing to rebuild.
-    func restore() -> Bool {
-        guard let saved = UserDefaults.standard.dictionary(forKey: Self.layoutKey),
-              let tabs = saved["tabs"] as? [[String: Any]], !tabs.isEmpty
-        else { return false }
-        // Tabs Claude was running in when the app last stopped, quit or crashed.
-        let running = Set(UserDefaults.standard.stringArray(forKey: Self.claudeKey) ?? [])
-        let resuming = autoResume()
-        var focusedIds: [Int] = []
-        for tab in tabs {
-            var previous: Int?
-            var ids: [Int] = []
-            for pane in tab["panes"] as? [[String: Any]] ?? [] {
-                var dir = projectsDir
-                var isDir: ObjCBool = false
-                if let path = pane["dir"] as? String,
-                   FileManager.default.fileExists(atPath: path, isDirectory: &isDir), isDir.boolValue
-                {
-                    dir = URL(fileURLWithPath: path)
+    /// Rebuilds the last layout with new shells, as the core plans it: where each
+    /// tab was, and the Claude session to resume in it. False when there was
+    /// nothing to rebuild.
+    func restore(done: @escaping (Bool) -> Void) {
+        guard let ask else { done(false); return }
+        ask("termRestore") { [weak self] answer in
+            guard let self, self.shells.isEmpty,
+                  let plan = answer as? [String: Any], let tabs = plan["tabs"] as? [[String: Any]]
+            else { done(false); return }
+            var focusedIds: [Int] = []
+            for tab in tabs {
+                var previous: Int?
+                var ids: [Int] = []
+                for pane in tab["panes"] as? [[String: Any]] ?? [] {
+                    guard let path = pane["dir"] as? String else { continue }
+                    let dir = URL(fileURLWithPath: path)
+                    guard let id = self.open(in: dir, repo: self.repoName(for: dir), beside: previous,
+                                             key: pane["key"] as? String, resume: pane["resume"] as? String)
+                    else { continue }
+                    if pane["stale"] as? Bool == true {
+                        self.note("Claude was running here, but its session couldn't be found to resume.", in: id)
+                    }
+                    if let grow = pane["grow"] as? Double, grow > 0 {
+                        self.call("window.termGrow(\(id), \(grow))")
+                    }
+                    ids.append(id)
+                    previous = id
                 }
-                let key = pane["key"] as? String
-                var resume: String?
-                var stale = false
-                if resuming, let key, running.contains(key) {
-                    resume = sessionId(for: key, in: dir)
-                    stale = resume == nil
-                }
-                guard let id = open(in: dir, repo: repoName(for: dir), beside: previous, key: key, resume: resume)
-                else { continue }
-                if stale {
-                    note("Claude was running here, but its session couldn't be found to resume.", in: id)
-                }
-                if let grow = pane["grow"] as? Double, grow > 0 {
-                    call("window.termGrow(\(id), \(grow))")
-                }
-                ids.append(id)
-                previous = id
+                if !ids.isEmpty { focusedIds.append(ids[min(tab["focused"] as? Int ?? 0, ids.count - 1)]) }
             }
-            if !ids.isEmpty { focusedIds.append(ids[min(tab["focused"] as? Int ?? 0, ids.count - 1)]) }
+            guard !focusedIds.isEmpty else { done(false); return }
+            let current = min(max(plan["current"] as? Int ?? 0, 0), focusedIds.count - 1)
+            self.call("window.termActivate(\(focusedIds[current]))")
+            done(true)
         }
-        guard !focusedIds.isEmpty else { return false }
-        let current = min(max(saved["current"] as? Int ?? 0, 0), focusedIds.count - 1)
-        call("window.termActivate(\(focusedIds[current]))")
-        return true
     }
 
     /// When the app is quitting, the tabs Claude was running in are kept for
@@ -787,48 +785,16 @@ final class TerminalDrawer: NSObject, WKScriptMessageHandler, WKNavigationDelega
         }
     }
 
-    /// The keys of tabs Claude Code is running in, kept as it changes, so a
-    /// crash leaves the last word.
-    private static let claudeKey = "TerminalClaude"
     private var quitting = false
 
-    private func autoResume() -> Bool {
-        let file = codeDir.appendingPathComponent("settings.json")
-        let settings = (try? JSONSerialization.jsonObject(with: Data(contentsOf: file))) as? [String: Any]
-        return settings?["autoResume"] as? String == "on"
-    }
-
+    /// The keys of tabs Claude Code is running in, as it changes -- but not as
+    /// they end with the app quitting, which keeps them for next time.
     private func saveClaudeTabs() {
         guard !quitting else { return }
-        UserDefaults.standard.set(shells.values.filter(\.claude).map(\.key), forKey: Self.claudeKey)
+        tell?("termClaude", shells.values.filter(\.claude).map(\.key))
     }
 
-    private func forgetSession(_ key: String) {
-        try? FileManager.default.removeItem(at: codeDir.appendingPathComponent("terminal-sessions/\(key)"))
-    }
-
-    /// The session a tab was running: what the hook filed under its key, else
-    /// the newest in that folder. Only one Claude Code still has on disk.
-    private func sessionId(for key: String, in dir: URL) -> String? {
-        let folder = FileManager.default.homeDirectoryForCurrentUser
-            .appendingPathComponent(".claude/projects")
-            .appendingPathComponent(String(dir.standardizedFileURL.path.map { $0.isLetter || $0.isNumber ? $0 : "-" }))
-        let exists = { (id: String) in
-            FileManager.default.fileExists(atPath: folder.appendingPathComponent("\(id).jsonl").path)
-        }
-        let filed = (try? String(contentsOf: codeDir.appendingPathComponent("terminal-sessions/\(key)"), encoding: .utf8))?
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-        if let filed, !filed.isEmpty { return exists(filed) ? filed : nil }
-        let newest = (try? FileManager.default.contentsOfDirectory(
-            at: folder, includingPropertiesForKeys: [.contentModificationDateKey]))?
-            .filter { $0.pathExtension == "jsonl" }
-            .max { a, b in
-                let da = (try? a.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate ?? .distantPast
-                let db = (try? b.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate ?? .distantPast
-                return da < db
-            }
-        return newest.map { $0.deletingPathExtension().lastPathComponent }
-    }
+    private func forgetSession(_ key: String) { tell?("termForget", key) }
 
     /// A folder opens in Finder, and a plain document -- image, PDF, text, audio,
     /// video -- in its own app. Anything else is only shown in Finder: a list of
@@ -1112,11 +1078,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, WKN
     WKScriptMessageHandler
 {
     private let model = Model()
+    private let core = Core()
     private var statusItem: NSStatusItem!
     private var popover: NSPopover!
     private var window: NSWindow!
     private var webView: DashboardWebView!
-    private var timer: Timer?
     private var pendingPane: String?
     private var cardPending = true
     private var rebuilds = 0
@@ -1131,23 +1097,77 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, WKN
         buildStatusItem()
 
         watchPresence()
-        refresh()
-        // Open again if it was open when the app last quit, as it was laid out.
-        if UserDefaults.standard.bool(forKey: "TerminalOpen") && terminalChoice() == "app" {
-            showTerminal()
+        core.onOp = { [weak self] op, args, id in self?.perform(op, args, id) }
+        core.start()
+        drawer.tell = { [weak self] name, body in self?.core.send(name, body) }
+        drawer.ask = { [weak self] name, answer in self?.core.ask(name, answer: answer) }
+        // The layout used to be kept in this app's preferences: handed to the core once.
+        let defaults = UserDefaults.standard
+        if let layout = defaults.dictionary(forKey: "TerminalLayout") {
+            core.send("termImport", ["layout": layout, "claude": defaults.stringArray(forKey: "TerminalClaude") ?? []])
+            defaults.removeObject(forKey: "TerminalLayout")
+            defaults.removeObject(forKey: "TerminalClaude")
         }
-        timer = Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { [weak self] _ in
-            self?.model.reloadIfChanged()
-            self?.followPage()
-        }
-        checkForUpdate()
-        // Auto-resume needs Claude Code's session hook: added or taken out to match
-        // the setting, in case it was switched while the app couldn't do it.
-        let resume = ((try? JSONSerialization.jsonObject(with: Data(contentsOf: codeDir.appendingPathComponent("settings.json")))) as? [String: Any])?["autoResume"] as? String
-        try? script("session-hook.sh", args: [resume == "on" ? "install" : "remove"]).run()
     }
 
-    func applicationWillTerminate(_ notification: Notification) { drawer.terminateAll(quitting: true) }
+    /// Whether the first state has come: the terminal reopens once it says how.
+    private var started = false
+
+    func applicationWillTerminate(_ notification: Notification) {
+        drawer.terminateAll(quitting: true)
+        core.stop()
+    }
+
+    /// What the core asks of the app.
+    private func perform(_ op: String, _ args: Any?, _ id: Int?) {
+        let body = args as? [String: Any] ?? [:]
+        switch op {
+        case "state":
+            guard let args, let data = try? JSONSerialization.data(withJSONObject: args),
+                  let state = try? JSONDecoder().decode(CoreState.self, from: data)
+            else { return }
+            coreState = state
+            model.summary = state
+            if !started {
+                started = true
+                // Open again if it was open when the app last quit, as it was laid out.
+                if UserDefaults.standard.bool(forKey: "TerminalOpen") && terminalChoice() == "app" { showTerminal() }
+            }
+        case "show":
+            guard let page = body["page"] as? String else { return }
+            show(page: URL(fileURLWithPath: page), standup: body["standup"] as? String, rebuilt: body["rebuilt"] as? Bool == true)
+        case "present":
+            if let id { core.reply(id, present()) }
+        case "canFollow":
+            guard let id else { return }
+            guard window.isVisible, !window.isMiniaturized else { core.reply(id, false); return }
+            webView.evaluateJavaScript("window.pageBusy ? window.pageBusy() : false") { [weak self] busy, _ in
+                self?.core.reply(id, (busy as? Bool) != true)
+            }
+        case "alert":
+            let alert = NSAlert()
+            alert.messageText = body["title"] as? String ?? ""
+            alert.informativeText = body["text"] as? String ?? ""
+            alert.runModal()
+        case "openTerminal":
+            guard let dir = body["dir"] as? String, let label = body["label"] as? String else { return }
+            openTerminal(at: URL(fileURLWithPath: dir), label: label)
+        case "settingsSaved":
+            if body["terminal"] as? String != "app" {
+                if drawerShown { hideTerminal() }
+                drawer.terminateAll()
+            }
+        case "relaunch":
+            // The new app opens once this one has gone.
+            let relaunch = Process()
+            relaunch.executableURL = URL(fileURLWithPath: "/bin/sh")
+            relaunch.arguments = ["-c", "sleep 1; /usr/bin/open \"$0\"", Bundle.main.bundlePath]
+            try? relaunch.run()
+            NSApp.terminate(nil)
+        default:
+            break
+        }
+    }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { false }
 
@@ -1282,14 +1302,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, WKN
         NSApp.windowsMenu = windowMenu
     }
 
-    @objc private func refreshCommand() { refresh() }
+    @objc private func refreshCommand() { core.send("refresh") }
 
     /// Settings → Terminal: "off", "app" for the drawer, or a terminal app's id.
-    private func terminalChoice() -> String {
-        let file = codeDir.appendingPathComponent("settings.json")
-        let settings = (try? JSONSerialization.jsonObject(with: Data(contentsOf: file))) as? [String: Any]
-        return settings?["terminal"] as? String ?? "off"
-    }
+    private func terminalChoice() -> String { coreState.terminal }
 
     @objc private func toggleTerminal() {
         switch terminalChoice() {
@@ -1314,9 +1330,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, WKN
         switch terminalChoice() {
         case "off": return
         case "app":
-            showTerminal(startPlain: false)
-            drawer.open(repo: repo)
-            drawer.focus()
+            showTerminal(startPlain: false) { [weak self] in
+                self?.drawer.open(repo: repo)
+                self?.drawer.focus()
+            }
         case let other:
             guard let path = repoPaths()[repo] else { return }
             let dir = URL(fileURLWithPath: path)
@@ -1330,9 +1347,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, WKN
         switch terminalChoice() {
         case "off": return
         case "app":
-            showTerminal(startPlain: false)
-            drawer.open(dir: dir, label: label)
-            drawer.focus()
+            showTerminal(startPlain: false) { [weak self] in
+                self?.drawer.open(dir: dir, label: label)
+                self?.drawer.focus()
+            }
         case let other:
             openExternal(other, in: dir)
         }
@@ -1364,7 +1382,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, WKN
         }
     }
 
-    private func showTerminal(startPlain: Bool = true) {
+    /// `then` runs once the last layout is back, so a tab asked for joins it rather than racing it.
+    private func showTerminal(startPlain: Bool = true, then: (() -> Void)? = nil) {
         showWindow(pane: nil)
         drawerShown = true
         drawer.view.isHidden = false
@@ -1374,8 +1393,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, WKN
         tellPageDrawerHeight()
         matchTheme()
         UserDefaults.standard.set(true, forKey: "TerminalOpen")
-        if drawer.isEmpty && !drawer.restore() && startPlain { drawer.openPlain() }
-        drawer.focus()
+        guard drawer.isEmpty else {
+            drawer.focus()
+            then?()
+            return
+        }
+        drawer.restore { [weak self] restored in
+            guard let self else { return }
+            if !restored && startPlain && self.drawer.isEmpty { self.drawer.openPlain() }
+            self.drawer.focus()
+            then?()
+        }
     }
 
     /// A tracking area on a hidden view never fires, so the drawer's is made
@@ -1451,7 +1479,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, WKN
     }
 
     @objc private func openNotesFile() {
-        NSWorkspace.shared.open(spaceDir().appendingPathComponent("notes.md"))
+        guard let notes = coreState.notes else { return }
+        NSWorkspace.shared.open(URL(fileURLWithPath: notes))
     }
 
     @objc private func settingsCommand() {
@@ -1459,7 +1488,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, WKN
         webView.evaluateJavaScript("window.openSettings && window.openSettings()")
     }
 
-    /// The page asking to save one of the two files it owns. Nothing else is writable.
+    /// The page's messages. The few that are the Mac's own -- the terminal, the
+    /// clipboard, the folder picker, an editor link, the theme -- are handled here;
+    /// everything else is the core's.
     func userContentController(
         _ controller: WKUserContentController, didReceive message: WKScriptMessage
     ) {
@@ -1500,29 +1531,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, WKN
             return
         }
 
-        // The daily quiz: made on request (one Claude Code call), then the page is
-        // rebuilt to show it; an answer is only recorded -- the page has shown it.
-        if message.name == "makeQuiz" {
-            guard !quizRunning else { return }
-            quizRunning = true
-            let task = script("quiz.sh", args: ["make"])
-            task.terminationHandler = { [weak self] _ in
-                DispatchQueue.main.async {
-                    self?.quizRunning = false
-                    self?.refresh()
-                }
-            }
-            if (try? task.run()) == nil { quizRunning = false }
-            return
-        }
-        if message.name == "quizAnswer" {
-            guard let raw = message.body as? String,
-                  let body = try? JSONSerialization.jsonObject(with: Data(raw.utf8)) as? [String: Any],
-                  let id = body["id"] as? String, let choice = body["choice"] as? Int
-            else { return }
-            try? script("quiz.sh", args: ["answer", id, String(choice)]).run()
-            return
-        }
         // An editor link (a quiz answer's file and line): WebKit doesn't always
         // navigate to a scheme it can't load, so the page hands it over.
         if message.name == "openLink" {
@@ -1532,47 +1540,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, WKN
             NSWorkspace.shared.open(url)
             return
         }
-        if message.name == "quizFlag" {
-            guard let id = message.body as? String else { return }
-            try? script("quiz.sh", args: ["flag", id]).run()
-            return
-        }
-
-        // A merge request checked out beside your work to review, and taken away again.
-        if message.name == "reviewLocally" || message.name == "reviewRemove" {
-            guard let body = message.body as? [String: Any],
-                  let repo = body["repo"] as? String, let path = repoPaths()[repo],
-                  let number = body["number"] as? Int
-            else { return }
-            let adding = message.name == "reviewLocally"
-            var args = adding ? ["add", path, String(number)] : ["remove", path]
-            if adding, body["host"] as? String == "github" { args.append("github") }
-            let task = script("review.sh", args: args)
-            let out = Pipe(), err = Pipe()
-            task.standardOutput = out
-            task.standardError = err
-            task.terminationHandler = { [weak self] done in
-                let dir = String(decoding: out.fileHandleForReading.readDataToEndOfFile(), as: UTF8.self)
-                    .trimmingCharacters(in: .whitespacesAndNewlines)
-                let why = String(decoding: err.fileHandleForReading.readDataToEndOfFile(), as: UTF8.self)
-                    .trimmingCharacters(in: .whitespacesAndNewlines)
-                DispatchQueue.main.async {
-                    guard let self else { return }
-                    if done.terminationStatus != 0 {
-                        let alert = NSAlert()
-                        alert.messageText = adding ? "Couldn't check out !\(number)" : "Kept the review tree"
-                        alert.informativeText = why
-                        alert.runModal()
-                    } else if adding, !dir.isEmpty {
-                        self.openTerminal(at: URL(fileURLWithPath: dir), label: "\(repo) !\(number)")
-                    }
-                    self.refresh()
-                }
-            }
-            try? task.run()
-            return
-        }
-
         // Both flavours, so Slack takes the HTML and anything else gets the text.
         if message.name == "copyText" {
             guard let payload = message.body as? [String: Any],
@@ -1588,51 +1555,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, WKN
             return
         }
 
-        guard let text = message.body as? String else { return }
-
-        // The switcher above Overview.
-        if message.name == "switchSpace" {
-            switchSpace(text)
-            return
-        }
-
-        // Settings -> Spaces: the spaces, their folders and when each syncs.
-        // A space's sync goes to its own settings; the rest to spaces.json.
-        if message.name == "saveSpaces" {
-            guard var config = try? JSONSerialization.jsonObject(with: Data(text.utf8)) as? [String: Any],
-                  var spaces = config["spaces"] as? [[String: Any]]
-            else { return }
-            for i in spaces.indices {
-                guard let id = spaces[i]["id"] as? String, !id.isEmpty, !id.contains("/"), !id.hasPrefix(".")
-                else { return }
-                if let sync = spaces[i].removeValue(forKey: "sync") as? String {
-                    let dir = spaceDir(id)
-                    try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-                    let file = dir.appendingPathComponent("settings.json")
-                    var settings =
-                        (try? JSONSerialization.jsonObject(with: Data(contentsOf: file)) as? [String: Any])
-                        .flatMap { $0 } ?? [:]
-                    settings["sync"] = sync
-                    if let out = try? JSONSerialization.data(withJSONObject: settings, options: [.prettyPrinted, .sortedKeys]) {
-                        try? out.write(to: file, options: .atomic)
-                    }
-                }
-            }
-            config["spaces"] = spaces
-            if let out = try? JSONSerialization.data(withJSONObject: config, options: [.prettyPrinted, .sortedKeys]) {
-                try? out.write(to: codeDir.appendingPathComponent("spaces.json"))
-            }
-            // Folders moved between spaces change every space's page.
-            let all = script("refresh.sh", args: ["--all", "--cached"])
-            all.terminationHandler = { [weak self] _ in
-                DispatchQueue.main.async { self?.refresh() }
-            }
-            try? all.run()
-            return
-        }
-
         // "+ Add folder": the Mac's own folder picker; the page is handed the paths.
         if message.name == "pickFolder" {
+            let text = message.body as? String ?? ""
             let panel = NSOpenPanel()
             panel.canChooseDirectories = true
             panel.canChooseFiles = false
@@ -1650,100 +1575,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, WKN
             return
         }
 
-        // An edit to the narrative made in the page: applied to worklog.json by
-        // edit.mjs (one field of one thread, not the whole file), then rebuilt.
-        if message.name == "saveNarrative" {
-            let task = script("edit.sh", env: ["EDIT_PATCH": text])
-            task.terminationHandler = { [weak self] _ in
-                DispatchQueue.main.async { self?.refresh(cached: true) }
-            }
-            try? task.run()
-            return
-        }
-
-        // Sync now, from Settings or the standup window. Registered from the
-        // start but never handled, so the button did nothing.
-        // "full" asks GitLab for everything again rather than what changed.
-        // "all" from Settings -> Spaces: every space, one after another;
-        // {"space", "full"} from a space's own column.
-        if message.name == "syncNow" {
-            let body = message.body as? String ?? ""
-            if body == "all" {
-                for id in spacesConfig()?.spaces.map(\.id) ?? [currentSpace()] { queueSync(space: id) }
-            } else if body.hasPrefix("{"),
-                      let ask = try? JSONSerialization.jsonObject(with: Data(body.utf8)) as? [String: Any],
-                      let space = ask["space"] as? String {
-                queueSync(full: ask["full"] as? Bool == true, space: space)
-            } else {
-                queueSync(full: body == "full", space: currentSpace())
-            }
-            return
-        }
-
-        // Settings -> A.I.: {"scope": "all" | "space", "text"} -- the notes for
-        // every space beside the code, a space's own in its folder.
-        if message.name == "saveAiNotes" {
-            guard let note = try? JSONSerialization.jsonObject(with: Data(text.utf8)) as? [String: Any],
-                  let body = note["text"] as? String
-            else { return }
-            let dir = note["scope"] as? String == "all" ? codeDir : spaceDir()
-            try? body.write(to: dir.appendingPathComponent("ai-notes.md"), atomically: true, encoding: .utf8)
-            refresh(cached: true)
-            return
-        }
-
-        // Settings -> General -> Updates.
-        if message.name == "checkUpdate" {
-            checkForUpdate(force: true)
-            return
-        }
-        if message.name == "updateNow" {
-            installUpdate()
-            return
-        }
-
-        // Settings are merged, not replaced: the page's copy of lastSyncAt can
-        // be older than the one a sync just stamped.
-        // When a space syncs is that space's; everything else is the app's.
-        if message.name == "saveSettings" {
-            guard let incoming = try? JSONSerialization.jsonObject(with: Data(text.utf8)) as? [String: Any]
-            else { return }
-            let own = spaceDir().appendingPathComponent("settings.json")
-            let app = codeDir.appendingPathComponent("settings.json")
-            let resumeWas = ((try? JSONSerialization.jsonObject(with: Data(contentsOf: app))) as? [String: Any])?["autoResume"] as? String ?? "off"
-            for file in [own, app] {
-                var settings =
-                    (try? JSONSerialization.jsonObject(with: Data(contentsOf: file)) as? [String: Any])
-                    .flatMap { $0 } ?? [:]
-                for (key, value) in incoming where key != "lastSyncAt" && (key == "sync") == (file == own) {
-                    settings[key] = value
-                }
-                if let out = try? JSONSerialization.data(
-                    withJSONObject: settings, options: [.prettyPrinted, .sortedKeys])
-                {
-                    try? out.write(to: file, options: .atomic)
-                }
-            }
-            if terminalChoice() != "app" {
-                if drawerShown { hideTerminal() }
-                drawer.terminateAll()
-            }
-            // Auto-resume needs Claude Code's session hook, and only while it's on.
-            if let resume = incoming["autoResume"] as? String, resume != resumeWas {
-                try? script("session-hook.sh", args: [resume == "on" ? "install" : "remove"]).run()
-            }
-            refresh(cached: true)
-            return
-        }
-
-        let files = [
-            "saveTasks": "tasks.json", "saveNotes": "notes.md", "saveLinks": "links.json",
-            "saveChecks": "checks.json",
-        ]
-        guard let file = files[message.name] else { return }
-        try? text.write(
-            to: spaceDir().appendingPathComponent(file), atomically: true, encoding: .utf8)
-        refresh(cached: true)
+        core.send(message.name, message.body)
     }
 
     private func buildWindow() {
@@ -1788,7 +1620,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, WKN
         }
         drawer.onEmpty = { [weak self] in self?.hideTerminal() }
         drawer.onHide = { [weak self] in self?.hideTerminal() }
-        drawer.onRepoChanged = { [weak self] _ in self?.refresh() }
+        drawer.onRepoChanged = { [weak self] _ in self?.core.send("repoChanged") }
         window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 1080, height: 740),
             styleMask: [.titled, .closable, .miniaturizable, .resizable],
@@ -1800,7 +1632,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, WKN
         window.center()
         window.setFrameAutosaveName("WorklogWindow")
         window.isReleasedWhenClosed = false
-        loadPage()
         window.makeKeyAndOrderFront(nil)
     }
 
@@ -1832,7 +1663,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, WKN
         if popover.isShown {
             popover.performClose(nil)
         } else {
-            refresh()
+            core.send("popoverShown")
             // A transient popover only closes on an outside click while the app
             // is active, so make it active -- and close on clicks elsewhere too.
             NSApp.activate(ignoringOtherApps: true)
@@ -1854,21 +1685,32 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, WKN
         if let pane, let slash = pane.firstIndex(of: "/") {
             let space = String(pane[..<slash])
             pendingPane = String(pane[pane.index(after: slash)...])
-            if space != currentSpace() { switchSpace(space) }
+            if space != currentSpace() { core.send("switchSpace", space) }
         } else if let pane { pendingPane = pane }
         NSApp.activate(ignoringOtherApps: true)
         if window.isMiniaturized { window.deminiaturize(nil) }
         window.makeKeyAndOrderFront(nil)
-        refresh()
-        checkForUpdate()
+        core.send("windowShown")
     }
 
-    private func loadPage() {
-        let page = spaceDir().appendingPathComponent("worklog.html")
-        loadedAt = pageModified()
-        // A reload blanks the view while the new page renders. When the window
-        // is showing an earlier page, a still of it covers the swap and lifts
-        // once the new one has drawn, so a rebuild doesn't flash.
+    /// The page the core says to show. A reload blanks the view while the new page
+    /// renders, so when the window is showing an earlier page a still of it covers
+    /// the swap and lifts once the new one has drawn. An open standup keeps the
+    /// page: it's handed the fresh draft instead, and reloads itself once it closes.
+    private func show(page: URL, standup: String?, rebuilt: Bool) {
+        if rebuilt { rebuilds += 1 }
+        guard let standup else { loadPage(page); return }
+        webView.evaluateJavaScript("window.standupIsOpen ? window.standupIsOpen() : false") { [weak self] open, _ in
+            guard let self else { return }
+            if (open as? Bool) == true {
+                self.webView.evaluateJavaScript("window.standupFresh(\(standup))")
+            } else {
+                self.loadPage(page)
+            }
+        }
+    }
+
+    private func loadPage(_ page: URL) {
         guard window.isVisible, webView.url != nil, reloadCover == nil else {
             webView.loadFileURL(page, allowingReadAccessTo: codeDir)
             return
@@ -1889,23 +1731,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, WKN
         }
     }
 
-    /// Shows another space: remembered as the current one, rebuilt, and loaded.
-    private func switchSpace(_ id: String) {
-        let file = codeDir.appendingPathComponent("spaces.json")
-        guard var config = (try? JSONSerialization.jsonObject(with: Data(contentsOf: file))) as? [String: Any],
-              let spaces = config["spaces"] as? [[String: Any]],
-              spaces.contains(where: { $0["id"] as? String == id })
-        else { return }
-        config["current"] = id
-        if let out = try? JSONSerialization.data(withJSONObject: config, options: [.prettyPrinted, .sortedKeys]) {
-            try? out.write(to: file, options: .atomic)
-        }
-        model.reload()
-        // Its last page at once, then a fresh one when the build finishes.
-        if FileManager.default.fileExists(atPath: spaceDir().appendingPathComponent("worklog.html").path) { loadPage() }
-        refresh()
-    }
-
     private var reloadCover: NSImageView?
     private func liftCover() {
         guard let cover = reloadCover else { return }
@@ -1916,89 +1741,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, WKN
         }, completionHandler: { cover.removeFromSuperview() })
     }
 
-    /// When the page was last rebuilt on disk, and when the window last loaded it.
-    private var loadedAt: Date?
-    private func pageModified() -> Date? {
-        let page = spaceDir().appendingPathComponent("worklog.html")
-        return (try? FileManager.default.attributesOfItem(atPath: page.path))?[.modificationDate] as? Date
-    }
-
-    /// A rebuild from elsewhere -- a session updating the narrative, a script --
-    /// reaches an open window by itself. A hidden window is left alone: it
-    /// rebuilds when it is next opened. An open standup is handed its draft; a
-    /// page where you are typing is asked again on the next tick.
-    private func followPage() {
-        guard window.isVisible, !window.isMiniaturized,
-              let changed = pageModified(), changed != loadedAt
-        else { return }
-        webView.evaluateJavaScript(
-            "window.pageBusy ? window.pageBusy() : false"
-        ) { [weak self] busy, _ in
-            guard let self, (busy as? Bool) != true else { return }
-            self.deliverOrReload()
-        }
-    }
-
-
-    /// A full sync of one space (the current one unless named): git fetch and
-    /// GitLab. That space is then rebuilt, so the menu bar has its news.
-    /// Syncs asked for while another runs, waiting their turn: one at a time, never two at once.
-    private var syncQueue: [(space: String, full: Bool)] = []
-
-    private func queueSync(full: Bool = false, space: String) {
-        if let i = syncQueue.firstIndex(where: { $0.space == space }) {
-            if full { syncQueue[i].full = true }
-        } else {
-            syncQueue.append((space, full))
-        }
-        if !hourlyRunning { nextSync() }
-    }
-
-    private func nextSync() {
-        guard !hourlyRunning, !syncQueue.isEmpty else { return }
-        let next = syncQueue.removeFirst()
-        runSync(full: next.full, space: next.space)
-    }
-
-    private func runSync(full: Bool = false, space: String? = nil) {
-        hourlyRunning = true
-        let id = space ?? currentSpace()
-        let task = script("sync.sh", space: id, env: full ? ["FULL": "1"] : [:])
-        task.terminationHandler = { [weak self] _ in
-            DispatchQueue.main.async {
-                guard let self else { return }
-                self.hourlyRunning = false
-                self.stamp(["lastSyncAt"], space: id)
-                self.refresh(space: id)
-                // The page shows every space's last sync, so it redraws even for another's.
-                if id != currentSpace() { self.refresh(cached: true) }
-                self.nextSync()
-            }
-        }
-        try? task.run()
-    }
-
-    // MARK: - Syncing on a schedule, only while someone is there to see it.
+    // MARK: - Whether someone is there
     //
-    // Daily (and hourly, which includes it) does the full sync -- git fetch and
-    // GitLab -- the first time you're at the Mac each day, so the standup is
-    // current when you get in; weekly, the first time after seven days. Hourly
-    // also asks GitLab, not git, once an hour. Whatever is due waits for you:
-    // the screen unlocked and awake, the keyboard or mouse used in the last 15
-    // minutes, and the window visible. Then a random 0-5 minutes more, so people
-    // arriving together don't all sync together. A GitLab sync that fails
-    // pushes the next back, doubling up to four hours.
+    // The core syncs on a schedule only while someone is there to see it: the
+    // screen unlocked and awake, the keyboard or mouse used in the last 15
+    // minutes, and the window visible. This is how the Mac knows.
     private var screenLocked = false
     private var screenAsleep = false
-    private var hourlyPending: DispatchWorkItem?
-    private var hourlyBackoff: Double = 1
-    private var hourlyRunning = false
-    private var quizRunning = false
 
     private func watchPresence() {
         let dnc = DistributedNotificationCenter.default()
         dnc.addObserver(forName: .init("com.apple.screenIsLocked"), object: nil, queue: .main) { [weak self] _ in
-            self?.screenLocked = true; self?.cancelHourly()
+            self?.screenLocked = true; self?.core.send("away")
         }
         dnc.addObserver(forName: .init("com.apple.screenIsUnlocked"), object: nil, queue: .main) { [weak self] _ in
             self?.screenLocked = false
@@ -2006,15 +1760,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, WKN
         let ws = NSWorkspace.shared.notificationCenter
         for name in [NSWorkspace.screensDidSleepNotification, NSWorkspace.willSleepNotification] {
             ws.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
-                self?.screenAsleep = true; self?.cancelHourly()
+                self?.screenAsleep = true; self?.core.send("away")
             }
         }
         for name in [NSWorkspace.screensDidWakeNotification, NSWorkspace.didWakeNotification] {
             ws.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in self?.screenAsleep = false }
         }
-        // Checked each minute; costs nothing until a sync is due and you're there.
-        Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in self?.hourlyTick() }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 5) { [weak self] in self?.hourlyTick() }
     }
 
     private func present() -> Bool {
@@ -2023,189 +1774,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, WKN
             && window.isVisible && !window.isMiniaturized && window.occlusionState.contains(.visible)
     }
 
-    private func cancelHourly() {
-        hourlyPending?.cancel()
-        hourlyPending = nil
-    }
-
-    /// Each space syncs on its own schedule, from its own settings; one at a
-    /// time, the current space first.
-    private func hourlyTick() {
-        let ids = spacesConfig().map { config in
-            [config.current] + config.spaces.map(\.id).filter { $0 != config.current }
-        } ?? [currentSpace()]
-        let now = Date().timeIntervalSince1970
-        for id in ids {
-            guard let data = try? Data(contentsOf: spaceDir(id).appendingPathComponent("settings.json")),
-                  let settings = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-                  let mode = settings["sync"] as? String, mode != "manual"
-            else { continue }
-            let lastFull = settings["lastSyncAt"] as? Double ?? 0
-            let fullDue = mode == "weekly"
-                ? now - lastFull >= 7 * 86400
-                : lastFull < Calendar.current.startOfDay(for: Date()).timeIntervalSince1970
-            // Frequent: the urgent GitLab check (your events, review requests) every
-            // 15 minutes, the rest of GitLab hourly, git daily.
-            let lastApi = max(settings["lastApiSyncAt"] as? Double ?? 0, lastFull)
-            let lastQuick = max(settings["lastQuickSyncAt"] as? Double ?? 0, lastApi)
-            // Hourly: GitLab hourly. Every 15 min: that, plus the urgent check between.
-            let apiDue = (mode == "hourly" || mode == "frequent") && now - lastApi >= 3600 * hourlyBackoff
-            let quickDue = mode == "frequent" && now - lastQuick >= 900 * hourlyBackoff
-            guard fullDue || apiDue || quickDue else { continue }
-            guard !hourlyRunning else { return }
-            guard present() else { cancelHourly(); return }
-            guard hourlyPending == nil else { return }
-            let work = DispatchWorkItem { [weak self] in
-                guard let self else { return }
-                self.hourlyPending = nil
-                guard self.present() else { return }
-                if fullDue { self.runSync(space: id) } else { self.runApiSync(quick: !apiDue, space: id) }
-            }
-            hourlyPending = work
-            // Spread: up to five minutes for the bigger syncs, one for the quick check.
-            DispatchQueue.main.asyncAfter(deadline: .now() + Double.random(in: 0...(fullDue || apiDue ? 300 : 60)), execute: work)
-            return
-        }
-        cancelHourly()
-    }
-
-    private func runApiSync(quick: Bool = false, space id: String) {
-        hourlyRunning = true
-        let task = script("hosts.sh", space: id, env: quick ? ["QUICK": "1"] : [:])
-        task.terminationHandler = { [weak self] done in
-            DispatchQueue.main.async {
-                guard let self else { return }
-                self.hourlyRunning = false
-                self.hourlyBackoff = done.terminationStatus == 0 ? 1 : min(self.hourlyBackoff * 2, 4)
-                self.stamp([quick ? "lastQuickSyncAt" : "lastApiSyncAt"], space: id)
-                self.refresh(space: id)
-                self.nextSync()
-            }
-        }
-        try? task.run()
-    }
-
-    /// Records when a space last synced, in its own settings.
-    private func stamp(_ keys: [String], space id: String) {
-        let file = spaceDir(id).appendingPathComponent("settings.json")
-        var settings =
-            (try? JSONSerialization.jsonObject(with: Data(contentsOf: file)) as? [String: Any])
-            .flatMap { $0 } ?? ["sync": "manual"]
-        for key in keys { settings[key] = Date().timeIntervalSince1970 }
-        if let out = try? JSONSerialization.data(withJSONObject: settings, options: [.prettyPrinted, .sortedKeys]) {
-            try? out.write(to: file, options: .atomic)
-        }
-    }
-
-    /// Runs the local git walk for a space (the current one unless named).
-    /// `cached` reuses the last one, for saves that change nothing git knows
-    /// about. Only the current space's page is shown, so only it reloads.
-    // MARK: - Updates
-    //
-    // Once a day, the first time the window opens, update.sh asks GitHub for
-    // the latest release; the page shows it from update.json. Installing runs
-    // update.sh too, which rebuilds the app; this copy then opens the new one
-    // and quits.
-    private var updateRunning = false
-
-    private func checkForUpdate(force: Bool = false) {
-        guard !updateRunning else { return }
-        if !force {
-            let settings = (try? JSONSerialization.jsonObject(
-                with: Data(contentsOf: codeDir.appendingPathComponent("settings.json")))) as? [String: Any]
-            guard settings?["updates"] as? String != "off" else { return }
-            let state = (try? JSONSerialization.jsonObject(
-                with: Data(contentsOf: codeDir.appendingPathComponent("update.json")))) as? [String: Any]
-            let checked = state?["checkedAt"] as? Double ?? 0
-            guard Date().timeIntervalSince1970 - checked > 20 * 3600 else { return }
-        }
-        updateRunning = true
-        let task = script("update.sh", args: ["check"])
-        task.terminationHandler = { [weak self] _ in
-            DispatchQueue.main.async {
-                self?.updateRunning = false
-                self?.refresh(cached: true)
-            }
-        }
-        if (try? task.run()) == nil { updateRunning = false }
-    }
-
-    private func installUpdate() {
-        guard !updateRunning else { return }
-        updateRunning = true
-        let started = Date().timeIntervalSince1970
-        let task = script("update.sh", args: ["install"])
-        task.terminationHandler = { [weak self] done in
-            DispatchQueue.main.async {
-                guard let self else { return }
-                self.updateRunning = false
-                // 3: nothing newer after all. Anything else but 0 stopped it,
-                // and update.mjs has said why in update.json -- unless it never
-                // got that far, which is said here instead.
-                guard done.terminationStatus == 0 else {
-                    if done.terminationStatus != 3 { self.noteUpdateProblem(since: started, status: done.terminationStatus) }
-                    self.refresh(cached: true)
-                    return
-                }
-                // The new app opens once this one has gone.
-                let relaunch = Process()
-                relaunch.executableURL = URL(fileURLWithPath: "/bin/sh")
-                relaunch.arguments = ["-c", "sleep 1; /usr/bin/open \"$0\"", Bundle.main.bundlePath]
-                try? relaunch.run()
-                NSApp.terminate(nil)
-            }
-        }
-        if (try? task.run()) == nil {
-            updateRunning = false
-            noteUpdateProblem(since: started, status: -1)
-            refresh(cached: true)
-        }
-    }
-
-    /// An update that stopped without leaving its reason gets a plain one.
-    private func noteUpdateProblem(since started: Double, status: Int32) {
-        let file = codeDir.appendingPathComponent("update.json")
-        var state = ((try? JSONSerialization.jsonObject(with: Data(contentsOf: file))) as? [String: Any]) ?? [:]
-        let at = (state["problem"] as? [String: Any])?["at"] as? Double ?? 0
-        guard at < started - 1 else { return }
-        state["problem"] = [
-            "text": "The update stopped before it could say why (exit \(status)). Run sh update.sh install in the previously folder to see the error.",
-            "at": Date().timeIntervalSince1970,
-        ]
-        if let out = try? JSONSerialization.data(withJSONObject: state, options: [.prettyPrinted, .sortedKeys]) {
-            try? out.write(to: file, options: .atomic)
-        }
-    }
-
-    private func refresh(cached: Bool = false, space: String? = nil) {
-        let id = space ?? currentSpace()
-        let task = script("refresh.sh", space: id, args: cached ? ["--cached"] : [])
-        task.terminationHandler = { [weak self] _ in
-            DispatchQueue.main.async {
-                guard let self else { return }
-                self.model.reload()
-                guard id == currentSpace() else { return }
-                self.rebuilds += 1
-                self.deliverOrReload()
-            }
-        }
-        try? task.run()
-    }
-
-    /// An open standup window keeps the page: it is handed the fresh draft
-    /// instead, and reloads itself once it closes. Anything else reloads.
-    private func deliverOrReload() {
-        webView.evaluateJavaScript("window.standupIsOpen ? window.standupIsOpen() : false") {
-            [weak self] result, _ in
-            guard let self else { return }
-            guard (result as? Bool) == true,
-                  let data = try? Data(contentsOf: spaceDir().appendingPathComponent("standup.json")),
-                  let json = String(data: data, encoding: .utf8)
-            else { self.loadPage(); return }
-            self.loadedAt = self.pageModified()
-            self.webView.evaluateJavaScript("window.standupFresh(\(json))")
-        }
-    }
 }
 
 
@@ -2251,6 +1819,8 @@ extension AppDelegate: NSMenuItemValidation {
     }
 }
 
+// A write to the core after it has gone fails as an error, rather than ending the app.
+signal(SIGPIPE, SIG_IGN)
 let app = NSApplication.shared
 let delegate = AppDelegate()
 app.delegate = delegate

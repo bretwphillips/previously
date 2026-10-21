@@ -62,7 +62,9 @@ Optional, for Sync: `glab` (`glab auth login`) for repos on GitLab, `gh`
 asked through its host, worked out from its remote; nothing is configured. A
 space talks to one GitLab -- the one most of its clones use -- and to github.com;
 repos on any other host still get `git fetch`, just not comments, reviews or
-merge-request state.
+merge-request state. On Windows the installer offers to install `gh` and log it
+in. If a sync finds repos on a host whose tool isn't installed, the Overview says
+which, and how to get it, until a sync finds it.
 
 Branches named `<ticket>-<title>` (GitLab's default) are what tie a branch to a
 ticket. Each space keeps its `worklog.json`, `tasks.json` and `notes.md` in
@@ -127,7 +129,8 @@ standup and sync schedule. Settings → Spaces shows them as columns: add the
 folders a space tracks (a folder of projects or a single project, anywhere on
 the Mac), drag a folder from one to another, set how often each syncs, and add
 more spaces. Once more than one space has folders, a select at the top of the
-sidebar switches between them. Two
+sidebar switches between them; until then the app opens on whichever space has
+folders, so moving everything out of Work leaves you looking at Personal. Two
 choices sit under the columns: whether the companion and its hoard are shared or
 one per space, and whether the menu bar lists what needs you in every space or
 only the one you're viewing. Each space keeps its data in `spaces/<id>/`; your
@@ -300,7 +303,7 @@ git state -- a commit, checkout, stash, fetch or staging -- the page rebuilds.
   hide the drawer, ask for a terminal in a repo by name (checked against the
   current space's repos), say that its theme changed, say whether a sheet is
   open, and ask for a review tree (see *Review threads*: a known repo and an MR
-  number, which `review.sh` fetches into `reviews/`, then a shell opened there).
+  number, which `review.mjs` fetches into `reviews/`, then a shell opened there).
   None of those carries input.
 - The app starts shells, ends them and reads which folder each is in from macOS.
   It never writes to one, and nothing a shell prints reaches the page.
@@ -771,7 +774,7 @@ starts `claude --resume <id>` and is an ordinary shell once you leave Claude.
 Several sessions, even in one repo, each come back to their own tab.
 
 It knows which session is which because turning it on adds a small hook to
-`~/.claude/settings.json` (`session-hook.sh`): each session started in a drawer
+`~/.claude/settings.json` (`claude-hook.mjs`): each session started in a drawer
 tab tells Previously its ID. Turning it off takes the hook out again and leaves
 the rest of that file alone. Only IDs are kept (`terminal-sessions/`), never the
 conversation. A tab with no ID on file -- a session already running when you

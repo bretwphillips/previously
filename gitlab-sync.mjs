@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // What a sync asks GitLab, and what it keeps between syncs so it can ask less.
-// gitlab.sh finds the host and a clone to run glab from; this makes the calls,
+// sync.mjs finds the host and a clone to run glab from; this makes the calls,
 // remembers them in sync-cache.json, and hands activity.mjs the same inputs it
 // always had.
 //
@@ -11,6 +11,7 @@
 // catches what an incremental sync can't see, a deleted comment or a link
 // removed without touching its ticket, none of which matters day to day.
 import { execFile, execFileSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
 import { readFileSync, writeFileSync, renameSync } from "node:fs";
 import { join } from "node:path";
 import { since as standupSince } from "./standup.mjs";
@@ -446,7 +447,7 @@ const env = {
   REVIEWS: JSON.stringify(cache.reviews ?? []),
   PROBLEMS: JSON.stringify(cache.problems ?? []),
 };
-const activity = execFileSync(process.execPath, [new URL("activity.mjs", import.meta.url).pathname], { env, encoding: "utf8", maxBuffer: 64 << 20 });
+const activity = execFileSync(process.execPath, [fileURLToPath(new URL("activity.mjs", import.meta.url))], { env, encoding: "utf8", maxBuffer: 64 << 20 });
 writeAtomic(join(DATA, "activity.json"), activity);
 
 cache.eventsAt = now;

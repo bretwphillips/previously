@@ -32,9 +32,10 @@ nothing runs when you are not working.
 
 **You need:**
 
-- a Mac on macOS 13 or later
-- `git`, `node`, and Xcode's command-line tools (`xcode-select --install`) — the
-  installer checks for each and says how to get any that are missing
+- a Mac on macOS 13 or later, or Windows 10 or 11
+- `git` and `node` (20 or later), and on a Mac, Xcode's command-line tools
+  (`xcode-select --install`) — the installer checks for each and says how to get
+  any that are missing
 - your repos cloned in a folder, `~/Projects` say
 
 **Optional:** `glab` (`glab auth login`) and/or `gh` (`gh auth login`), so Sync can
@@ -53,6 +54,16 @@ Rather download it? Get the zip from the latest release on the
 [Releases page](https://github.com/bretwphillips/previously/releases/latest) — not
 the green **Code** button, which gives the newest unreleased work — unzip it, and
 run `sh previously/install.sh` the same way.
+
+**On Windows**, the same in PowerShell:
+
+```powershell
+git clone https://github.com/bretwphillips/previously.git
+powershell -ExecutionPolicy Bypass -File previously\install.ps1
+```
+
+It installs Previously's window into the Start menu; closing the window leaves
+it in the tray, where the Mac app has its menu-bar item.
 
 It asks which folder holds your repos (`~/Projects` by default), moves itself in
 beside them, builds `Previously.app` into `~/Applications` on your own Mac — which

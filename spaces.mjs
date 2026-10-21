@@ -7,7 +7,7 @@
 //   node spaces.mjs which <repo>     "space<TAB>data<TAB>path" for a repo, by name or path
 //   node spaces.mjs ids              every space's id
 import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
-import { basename, dirname, join, resolve } from "node:path";
+import { basename, dirname, join, resolve, sep } from "node:path";
 import { homedir } from "node:os";
 import { fileURLToPath } from "node:url";
 
@@ -21,7 +21,7 @@ const SPACE_FILES = ["worklog.json", "tasks.json", "notes.md", "links.json", "ch
   "resolved.json", "worklog.html", "build.log", ".journal"];
 
 const slug = (name) => name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "space";
-const expand = (p) => resolve(p.replace(/^~(?=$|\/)/, homedir()));
+const expand = (p) => resolve(p.replace(/^~(?=$|[\\/])/, homedir()));
 
 function defaults() {
   return {
@@ -77,8 +77,18 @@ export function readSpaces() {
   }
   config.companion = config.companion === "each" ? "each" : "shared";
   config.menubar = config.menubar === "current" ? "current" : "all";
-  if (!config.spaces.some((s) => s.id === config.current)) config.current = config.spaces[0].id;
+  config.current = shownSpace(config);
   return config;
+}
+
+// The space the app opens on: the current one, unless it is gone or has no
+// folders while another has some -- an empty Work with everything in Personal
+// opens Personal, since with one space in use there is no select to switch.
+export function shownSpace(config) {
+  const spaces = config?.spaces ?? [];
+  const current = spaces.find((s) => s.id === config.current);
+  if (current?.folders?.length) return current.id;
+  return (spaces.find((s) => s.folders?.length) ?? current ?? spaces[0])?.id ?? "work";
 }
 
 export function writeSpaces(config) {
@@ -105,7 +115,7 @@ export function reposOf(space, config = readSpaces()) {
   const nearest = (path) => {
     let best = null;
     for (const s of config.spaces) for (const f of s.folders) {
-      if ((path === f || path.startsWith(f + "/")) && (!best || f.length > best.length)) best = { id: s.id, length: f.length };
+      if ((path === f || path.startsWith(f + sep)) && (!best || f.length > best.length)) best = { id: s.id, length: f.length };
     }
     return best?.id;
   };
@@ -167,18 +177,26 @@ export function adopt(space, names, config = readSpaces()) {
   }
 }
 
+// A repo by name (in whichever space has it) or by path: {space, data, path}.
+export function findRepo(arg) {
+  if (!arg) return null;
+  const want = arg.includes("/") || arg.includes("\\") ? resolve(arg) : arg;
+  for (const s of readSpaces().spaces) {
+    const hit = reposOf(s).find((r) => r.name === want || r.path === want || basename(r.path) === want);
+    if (hit) return { space: s.id, data: s.data, path: hit.path };
+  }
+  return null;
+}
+
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const [cmd, arg] = process.argv.slice(2);
   if (cmd === "data") console.log(spaceFor(arg).data);
   else if (cmd === "repos") for (const r of reposOf(spaceFor(arg))) console.log(`${r.name}\t${r.path}`);
   else if (cmd === "ids") for (const s of readSpaces().spaces) console.log(s.id);
   else if (cmd === "which") {
-    const want = arg?.includes("/") ? resolve(arg) : arg;
-    for (const s of readSpaces().spaces) {
-      const hit = reposOf(s).find((r) => r.name === want || r.path === want || basename(r.path) === want);
-      if (hit) { console.log(`${s.id}\t${s.data}\t${hit.path}`); process.exit(0); }
-    }
-    process.exit(1);
+    const hit = findRepo(arg);
+    if (!hit) process.exit(1);
+    console.log(`${hit.space}\t${hit.data}\t${hit.path}`);
   } else {
     console.error("usage: node spaces.mjs data|repos|which|ids [arg]");
     process.exit(2);
