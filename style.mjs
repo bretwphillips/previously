@@ -722,7 +722,7 @@ body.quest:not(.quest-none) .thread-tabs .mark { display: none; }
 .thread-mrs .done { opacity: 0.6; }
 
 /* Settings */
-.scrim { position: fixed; inset: 0; background: rgba(0,0,0,0.28); z-index: 20;
+.scrim { position: fixed; inset: 0; background: transparent; z-index: 20;
          display: flex; align-items: flex-start; justify-content: center; padding-top: 72px; }
 /* A class with display beats the UA rule for [hidden], so say it explicitly. */
 .scrim[hidden] { display: none; }
