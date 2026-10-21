@@ -17,7 +17,7 @@ const svg = (rows, pal, s = 1.6, cls = "") => {
 const grid = (w, h) => Array.from({ length: h }, () => Array(w).fill("."));
 
 // ---------- the banner: a red-and-yellow striped awning along the top, its edge
-// scalloped.
+// scalloped, swaying a little in a breeze.
 const BANNER_PAL = {
   o: "var(--play-o, #3a2a30)", K: "#7a3a1e", R: "#e53935", r: "#ff7a6e", S: "#b8271f", Y: "#ffc928", y: "#ffe58a", T: "#d99a00",
 };
@@ -168,7 +168,10 @@ ${ballRules(DARK_ROOT, "#8a8496")}
 /* the banner: hung from the bottom edge of the bar, over the page as it scrolls */
 .top .awning { display: none; }
 body.quest.play .top .awning { display: block; position: absolute; top: 100%; left: 0; right: 0; height: 39px; overflow: hidden; pointer-events: none; }
-body.quest.play .awning svg { display: block; }
+body.quest.play .awning svg { display: block; transform-origin: 0 0; animation: breeze 5s ease-in-out infinite alternate; }
+/* a breeze: pinned at the rod, the scallops sway a few pixels and back */
+@keyframes breeze { 0% { transform: skewX(0deg); } 60% { transform: skewX(-4deg); } 100% { transform: skewX(-2deg); } }
+@media (prefers-reduced-motion: reduce) { body.quest.play .awning svg { animation: none; } }
 body.quest.play nav .nav-scroll { padding-top: 34px; }
 body.quest.play main { padding-top: 42px; }
 
