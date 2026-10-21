@@ -114,6 +114,8 @@ const issues = parse(process.env.ISSUES)
       weight: issue.weight ?? null,
       // assigned to you, open: what the standup's Today can plan beyond your threads
       assigned: Boolean(assigned),
+      // when it last changed: the standup puts long-quiet tickets after fresh ones
+      updatedAt: issue.updated_at ? Date.parse(issue.updated_at) / 1000 : null,
       // The epic the ticket belongs to, on tiers that have epics.
       epic: issue.epic?.iid ? epicOf(issue.epic) : null,
       blockedBy: [...blockedBy].map(([ref, source]) => ({ ref, source })),
@@ -126,7 +128,7 @@ const issues = parse(process.env.ISSUES)
 // order: the standup's next work when your own leaves room.
 const epicIssues = parse(process.env.EPIC_ISSUES).map((i) => ({
   repo: folderOf(i.path), ticket: `#${i.iid}`, title: i.title ?? "", weight: i.weight ?? null,
-  assigned: Boolean(i.assigned), order: i.order ?? 0, epic: epicOf(i.epic),
+  assigned: Boolean(i.assigned), order: i.order ?? 0, epic: epicOf(i.epic), updatedAt: i.updatedAt ?? null,
 }));
 
 // Comments from other people on your tickets and merge requests, counted by

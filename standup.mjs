@@ -14,6 +14,8 @@ const stamp = (now) =>
 const WEIGHT_LIMIT = 5;
 // A ticket with no recorded weight is counted as the smallest there is.
 const UNWEIGHED = 1;
+// Not touched in this long, a ticket waits behind ones that are moving.
+const STALE_DAYS = 30;
 
 // Monday looks back to Friday. Any other day looks back to yesterday.
 export function since(now = new Date()) {
@@ -209,40 +211,38 @@ export function standup(repos, tasks, activity, now = new Date(), { weightLimit 
     plan.push(entry);
     load += entry.weight;
   }
-  // Then your open tickets you haven't started -- assigned to you, no thread for
-  // them yet -- while they fit: those in an epic you're working in first, then
-  // the oldest. One blocked by a ticket still open waits.
-  const working = new Set(plan.map((e) => e.epic?.url ?? e.epic?.ref).filter(Boolean));
-  const openTicket = new Set((activity.issues ?? []).filter((i) => i.state === "opened").map((i) => `${i.repo}${i.ticket}`));
-  const unstarted = (activity.issues ?? [])
-    .filter((i) => i.assigned && i.state === "opened")
-    .map((i) => ({ issue: i, repo: repos.find((r) => r.name === i.repo) }))
-    .filter(({ issue, repo }) => repo?.inStandup && repo.onWorkHost && !repo.threads.some((t) => t.ticket === issue.ticket))
-    .filter(({ issue }) => !(issue.blockedBy ?? []).some((b) => b.source !== "description" || openTicket.has(b.ref.startsWith("#") ? `${issue.repo}${b.ref}` : b.ref)))
-    .sort((a, b) => Number(working.has(b.issue.epic?.url ?? b.issue.epic?.ref)) - Number(working.has(a.issue.epic?.url ?? a.issue.epic?.ref))
-      || Number(a.issue.ticket.slice(1)) - Number(b.issue.ticket.slice(1)));
-  for (const { issue, repo } of unstarted) {
-    const weight = issue.weight ?? UNWEIGHED;
-    if (load + weight > limit) continue;
-    plan.push({ text: brief(issue.title), ref: repo.web ? urlFor(repo.web, issue.ticket) : issue.ticket, epic: issue.epic ?? null });
-    load += weight;
-  }
-  // Still room: the next tickets nobody has taken, in the epics you're working
-  // in, from the repo you've been busiest in first, each epic in its own order.
-  const workingRefs = new Set(plan.map((e) => e.epic?.ref).filter(Boolean));
-  const inWork = (epic) => Boolean(epic) && (working.has(epic.url) || workingRefs.has(epic.ref));
+  // Then what you haven't started, while it fits. The epics your started work
+  // belongs to come first: your open tickets in them (assigned to you, no thread
+  // yet), then the next ones nobody has taken there, from the repo you've been
+  // busiest in, each epic in its own order. A ticket nobody has touched in a month
+  // waits behind those, and tickets assigned to you in other epics come last. One
+  // blocked by a ticket still open waits.
+  const working = new Set(plan.flatMap((e) => [e.epic?.url, e.epic?.ref]).filter(Boolean));
+  const inWork = (epic) => Boolean(epic) && (working.has(epic.url) || working.has(epic.ref));
   const busiest = (name) => repos.find((r) => r.name === name)?.committedAt ?? 0;
+  const openTicket = new Set((activity.issues ?? []).filter((i) => i.state === "opened").map((i) => `${i.repo}${i.ticket}`));
   const blocked = (i) => ((activity.issues ?? []).find((x) => x.repo === i.repo && x.ticket === i.ticket)?.blockedBy ?? [])
     .some((b) => b.source !== "description" || openTicket.has(b.ref.startsWith("#") ? `${i.repo}${b.ref}` : b.ref));
-  const planned = new Set(unstarted.map(({ issue }) => `${issue.repo}${issue.ticket}`));
-  const upNext = (activity.epicIssues ?? [])
-    .filter((i) => !i.assigned && inWork(i.epic) && !planned.has(`${i.repo}${i.ticket}`) && !blocked(i))
-    .map((i) => ({ issue: i, repo: repos.find((r) => r.name === i.repo) }))
-    .filter(({ issue, repo }) => repo?.inStandup && repo.onWorkHost && !repo.threads.some((t) => t.ticket === issue.ticket))
+  const fresh = (list) => list
+    .map((issue) => ({ issue, repo: repos.find((r) => r.name === issue.repo) }))
+    .filter(({ issue, repo }) => repo?.inStandup && repo.onWorkHost && !repo.threads.some((t) => t.ticket === issue.ticket) && !blocked(issue));
+  const number = (i) => Number(i.ticket.slice(1));
+  const stale = (i) => (i.updatedAt ?? nowSeconds) < nowSeconds - STALE_DAYS * DAY;
+  const mine = fresh((activity.issues ?? []).filter((i) => i.assigned && i.state === "opened"));
+  const free = fresh((activity.epicIssues ?? []).filter((i) => !i.assigned && inWork(i.epic)))
     .sort((a, b) => busiest(b.issue.repo) - busiest(a.issue.repo) || a.issue.order - b.issue.order);
-  for (const { issue, repo } of upNext) {
-    const weight = issue.weight ?? UNWEIGHED;
-    if (load + weight > limit) continue;
+  const ours = mine.filter(({ issue }) => inWork(issue.epic)).sort((a, b) => number(a.issue) - number(b.issue));
+  const moving = ({ issue }) => !stale(issue), quiet = ({ issue }) => stale(issue);
+  const queue = [
+    ...ours.filter(moving), ...free.filter(moving),
+    ...ours.filter(quiet), ...free.filter(quiet),
+    ...mine.filter(({ issue }) => !inWork(issue.epic)).sort((a, b) => busiest(b.issue.repo) - busiest(a.issue.repo) || number(a.issue) - number(b.issue)),
+  ];
+  const queued = new Set();
+  for (const { issue, repo } of queue) {
+    const key = `${issue.repo}${issue.ticket}`, weight = issue.weight ?? UNWEIGHED;
+    if (queued.has(key) || load + weight > limit) continue;
+    queued.add(key);
     plan.push({ text: brief(issue.title), ref: repo.web ? urlFor(repo.web, issue.ticket) : issue.ticket, epic: issue.epic ?? null });
     load += weight;
   }

@@ -362,6 +362,7 @@ if (!quick) await Promise.all(
     if (Array.isArray(list)) {
       c.issues = list.filter((i) => i.state === "opened").map((i, order) => ({
         project_id: i.project_id, iid: i.iid, title: i.title, weight: i.weight ?? null, assigned: (i.assignees ?? []).length > 0, order,
+        updatedAt: i.updated_at ? secondsOf(i.updated_at) : null,
       }));
     }
   }),
