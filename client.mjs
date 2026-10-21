@@ -1080,6 +1080,102 @@ document.addEventListener('DOMContentLoaded', function () {
     applyPet(store.get('worklog.pet', 'off'));
     document.dispatchEvent(new Event('companionchange'));
   }
+  /* Not sure which animal? Four questions, each answer leaning toward a few of
+     them; the one with the most points is suggested, to take or not. */
+  var PICK_QUIZ = [
+    ['Your ideal Saturday?', [
+      ['Curled up with a good book', { cat: 2, bear: 1, hamster: 1 }],
+      ['Out on a long walk', { pug: 2, fox: 1, penguin: 1 }],
+      ['Tinkering on a side project', { raccoon: 2, mouse: 1, fox: 1 }],
+      ['Snacks and a nap', { pig: 2, hamster: 1, bear: 1 }]]],
+    ['A build breaks. You\u2026', [
+      ['Calmly read the logs', { penguin: 2, cat: 1, frog: 1 }],
+      ['Try something clever', { fox: 2, raccoon: 1 }],
+      ['Ask for a second pair of eyes', { bunny: 2, pug: 1 }],
+      ['Get a snack first', { bear: 2, pig: 1, hamster: 1 }]]],
+    ['On your desk?', [
+      ['A plant', { frog: 2, bunny: 1 }],
+      ['A big mug of coffee', { bear: 1, raccoon: 1, cat: 1 }],
+      ['A pile of stickers', { mouse: 2, hamster: 1 }],
+      ['Noise-cancelling headphones', { penguin: 1, fox: 1, cat: 1 }]]],
+    ['Your code, in a word?', [
+      ['Tidy', { hamster: 2, mouse: 1 }],
+      ['Quick', { bunny: 2, fox: 1 }],
+      ['Steady', { pug: 2, bear: 1 }],
+      ['Inventive', { raccoon: 2, pig: 1, frog: 1 }]]],
+  ];
+  var PICK_SAYS = {
+    cat: 'Independent, curious, and happiest somewhere comfortable.', pug: 'Loyal and steady \u2014 always up for the walk.',
+    frog: 'Calm, patient, and at home anywhere green.', bunny: 'Quick on your feet and quicker to ask for help.',
+    pig: 'Clever and easy-going, with a snack never far away.', fox: 'Clever, quick, and fond of a smart shortcut.',
+    bear: 'Strong and steady, refuelled by snacks and coffee.', mouse: 'Small, tidy, and into every detail.',
+    hamster: 'Organised, busy, and cheek-full of ideas.', raccoon: 'Inventive and resourceful \u2014 whatever works.',
+    penguin: 'Cool under pressure, and fine in a crowd.'
+  };
+  var pickQuiz = document.getElementById('pick-quiz');
+  var pickOpen = document.getElementById('pick-quiz-open');
+  function runPickQuiz() {
+    var scores = {}, step = 0;
+    function ask() {
+      pickQuiz.textContent = '';
+      if (step < PICK_QUIZ.length) {
+        var q = document.createElement('p');
+        q.className = 'pick-q';
+        q.textContent = (step + 1) + ' of ' + PICK_QUIZ.length + ' \u00b7 ' + PICK_QUIZ[step][0];
+        pickQuiz.appendChild(q);
+        var answers = document.createElement('div');
+        answers.className = 'themes';
+        PICK_QUIZ[step][1].forEach(function (a) {
+          var b = document.createElement('button');
+          b.type = 'button';
+          b.textContent = a[0];
+          b.addEventListener('click', function () {
+            for (var k in a[1]) scores[k] = (scores[k] || 0) + a[1][k];
+            step++;
+            ask();
+          });
+          answers.appendChild(b);
+        });
+        pickQuiz.appendChild(answers);
+        return;
+      }
+      // the most points wins; a tie goes to the one listed first
+      var best = window.COMPANION.RACES.reduce(function (top, r) { return (scores[r] || 0) > (scores[top] || 0) ? r : top; }, window.COMPANION.RACES[0]);
+      var name = best[0].toUpperCase() + best.slice(1);
+      var result = document.createElement('p');
+      result.className = 'pick-q';
+      result.innerHTML = 'You\u2019re a <b></b> \u2014 ';
+      result.querySelector('b').textContent = name.toLowerCase();
+      result.appendChild(document.createTextNode(PICK_SAYS[best] || ''));
+      pickQuiz.appendChild(result);
+      var actions = document.createElement('div');
+      actions.className = 'themes';
+      var take = document.createElement('button');
+      take.type = 'button';
+      take.textContent = 'Be a ' + name.toLowerCase();
+      take.addEventListener('click', function () {
+        store.set('worklog.pet.race', best);
+        pickQuiz.hidden = true;
+        pickOpen.hidden = false;
+        paintBuilder();
+      });
+      var again = document.createElement('button');
+      again.type = 'button';
+      again.textContent = 'Try again';
+      again.addEventListener('click', runPickQuiz);
+      var keep = document.createElement('button');
+      keep.type = 'button';
+      keep.textContent = 'Keep mine';
+      keep.addEventListener('click', function () { pickQuiz.hidden = true; pickOpen.hidden = false; });
+      actions.appendChild(take); actions.appendChild(again); actions.appendChild(keep);
+      pickQuiz.appendChild(actions);
+    }
+    pickQuiz.hidden = false;
+    pickOpen.hidden = true;
+    ask();
+  }
+  if (pickOpen) pickOpen.addEventListener('click', runPickQuiz);
+
   var raceButtons = document.querySelectorAll('#race-choice button');
   for (var rb = 0; rb < raceButtons.length; rb++) raceButtons[rb].addEventListener('click', function () {
     store.set('worklog.pet.race', this.dataset.race);
