@@ -452,40 +452,44 @@ for (const repo of repos) {
   writeFileSync(file, JSON.stringify({ open, unblocked }));
 }
 
-// Goals: what you wrote, plus each epic your unfinished tickets belong to --
+// Goals: what you wrote, plus each epic your unfinished tickets belong to and
+// each one sync found with open tickets in these repos, started or not --
 // one line per epic, tagged as GitLab's, unless a written goal already names it.
 const writtenGoals = state.goals ?? [];
 const goalText = (g) => (typeof g === "string" ? g : g?.text ?? "");
+// Your threads first, so the epics of work you've started lead.
+const epicHolders = [
+  ...repos.flatMap((r) => r.threads.map((t) => [r, t])),
+  ...activity.epicIssues.flatMap((i) => repos.filter((r) => r.name === i.repo).map((r) => [r, i])),
+];
 // Epics are told apart by where they live: two groups can each have an &12,
 // two repos each a #1. A number two of them share is written with its repo.
 // One with no address yet (typed into the narrative) is taken to be the one that has it.
 const refsSeen = new Map(); // ref -> the addresses behind it
-for (const r of repos) for (const t of r.threads) {
+for (const [, t] of epicHolders) {
   if (t.epic?.ref) (refsSeen.get(t.epic.ref) ?? refsSeen.set(t.epic.ref, new Set()).get(t.epic.ref)).add(t.epic.url ?? null);
 }
 const labelOf = (r, t) =>
   [...refsSeen.get(t.epic.ref)].filter(Boolean).length > 1 ? `${r.name}${t.epic.ref}` : t.epic.ref;
 
 const epicGoals = [];
-for (const r of repos) {
-  for (const t of r.threads) {
-    if (!t.epic?.ref || t.quest?.merged || t.epic.open === false) continue;
-    const label = labelOf(r, t);
-    const named = [...writtenGoals.map(goalText), ...epicGoals.map(goalText)].some((g) =>
-      new RegExp(`(^|[^\\w-])${label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`).test(g),
-    );
-    if (!named) {
-      epicGoals.push({
-        text: `${t.epic.title || "Epic"} \u2014 ${t.epic.parent ? "parent issue" : "epic"} ${label}`,
-        src: t.epic.source ?? "GitLab",
-      });
-    }
+for (const [r, t] of epicHolders) {
+  if (!t.epic?.ref || t.quest?.merged || t.epic.open === false) continue;
+  const label = labelOf(r, t);
+  const named = [...writtenGoals.map(goalText), ...epicGoals.map(goalText)].some((g) =>
+    new RegExp(`(^|[^\\w-])${label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`).test(g),
+  );
+  if (!named) {
+    epicGoals.push({
+      text: `${t.epic.title || "Epic"} \u2014 ${t.epic.parent ? "parent issue" : "epic"} ${label}`,
+      src: t.epic.source ?? "GitLab",
+    });
   }
 }
 
 // Where each epic lives, for linking "&12" (or "repo#1") wherever it is written in Goals.
 const epicLinks = {};
-for (const r of repos) for (const t of r.threads) if (t.epic?.url) epicLinks[labelOf(r, t)] ??= t.epic.url;
+for (const [r, t] of epicHolders) if (t.epic?.url) epicLinks[labelOf(r, t)] ??= t.epic.url;
 
 const order = { active: 0, parked: 1, clean: 2 };
 repos.sort(
