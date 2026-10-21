@@ -428,6 +428,14 @@ section[hidden] { display: none; }
 .review-local:hover, .review-remove:hover { color: var(--ink); border-color: var(--muted); }
 .review-local[hidden], .review-remove[hidden] { display: none; }
 .quiz-list { margin: 8px 0 0; padding-left: 22px; }
+.quiz-list[hidden], .quiz-past[hidden] { display: none; }
+.quiz-past { max-height: 60vh; overflow-y: auto; font-size: 13px; }
+.quiz-past h3 { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 14px 0 6px; }
+.quiz-past ol { margin: 0; padding-left: 22px; }
+.quiz-past > ol > li { margin: 0 0 14px; }
+.quiz-past ul { list-style: none; margin: 4px 0; padding: 0; }
+.quiz-past .is-answer { font-weight: 600; }
+.quiz-past p { margin: 0 0 4px; }
 .quiz-q { margin: 0 0 18px; }
 .quiz-ask { margin: 0 0 8px; font-weight: 500; }
 .quiz-choices { display: grid; gap: 6px; }
@@ -686,7 +694,7 @@ ul.tasks { list-style: none; padding: 0; margin: 0; }
                   border-radius: 6px; padding: 6px 10px; }
 .task-add input:focus { outline: none; border-color: var(--waiting); }
 
-.thread-tabs { display: flex; flex-wrap: wrap; gap: 6px 4px; margin: 22px 0 0; }
+.thread-tabs { display: flex; flex-wrap: wrap; gap: 6px 4px; margin: 22px 0 0; isolation: isolate; }
 /* fantasy mode's monsters and locks sit on a tab's top edge, so wrapped rows leave them room */
 body.quest:not(.quest-none) .thread-tabs { row-gap: 24px; }
 .thread-tabs button { font: inherit; font-size: 11px; font-family: var(--mono); cursor: pointer;

@@ -53,6 +53,7 @@ function answer(id, choice) {
   const asked = history.asked.find((a) => a.key === (q.ref ?? q.id));
   if (asked) {
     asked.right = choice === q.answer;
+    asked.chosen = choice;
     asked.last = quiz.day;
   }
   finished(quiz, s);

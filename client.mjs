@@ -2362,6 +2362,16 @@ document.addEventListener('DOMContentLoaded', function () {
       tally(1, picked === answer ? 1 : 0);
       if (quizBridge.quizAnswer) quizBridge.quizAnswer.postMessage(JSON.stringify({ id: item.dataset.id, choice: picked }));
     });
+    // Previous questions: the plain list in place of today's, and back.
+    var pastToggle = document.getElementById('quiz-past-toggle');
+    if (pastToggle) pastToggle.addEventListener('click', function () {
+      var showing = pastToggle.getAttribute('aria-pressed') !== 'true';
+      pastToggle.setAttribute('aria-pressed', String(showing));
+      pastToggle.textContent = showing ? 'Today\u2019s quiz' : 'Previous questions';
+      document.getElementById('quiz-past').hidden = !showing;
+      var list = quiz.querySelector('.quiz-list');
+      if (list) list.hidden = showing;
+    });
     // The score under the quiz, kept up as you answer rather than at the next rebuild.
     function tally(answered, correct) {
       var line = document.getElementById('quiz-status');

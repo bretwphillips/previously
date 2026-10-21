@@ -488,6 +488,8 @@ recent. A new question is never one it has asked before.
   the commit on GitLab or GitHub -- code you reviewed may be newer than your clone.
 - **Bad question** on any question takes it out of your score and it's never asked
   again.
+- **Previous questions** shows the last 60 days' questions as a plain list to study
+  later: each with its answer marked, the one you picked, why, and the line it's on.
 - **Repeats:** after 30 questions, every other quiz is one fewer new question plus one
   asked before -- one you got wrong first, else the longest ago -- rechecked against
   the code: if its quote is no longer in the file it's never tried again.

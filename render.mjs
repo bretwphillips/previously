@@ -900,6 +900,28 @@ function updateRow(update, settings, row, about) {
 
 // The daily code quiz (quiz.mjs). Today's questions as made, answers revealed as
 // they're chosen; the page records each answer through the app.
+// Earlier questions, plain, to study: grouped by day, the answer marked and yours
+// beside it, why, and where in the code.
+function pastList(past) {
+  if (!past.length) return "";
+  const letter = (i) => String.fromCharCode(65 + i);
+  const days = new Map();
+  for (const q of past) {
+    const key = `${q.day}\u0000${q.repo ?? ""}`;
+    if (!days.has(key)) days.set(key, []);
+    days.get(key).push(q);
+  }
+  const when = (day) => new Date(`${day}T12:00:00`).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+  return `<div class="quiz-past" id="quiz-past" hidden>${[...days].map(([key, qs]) => {
+    const [day, repo] = key.split("\u0000");
+    return `<h3>${esc(when(day))}${repo ? ` \u00b7 ${esc(repo)}` : ""}</h3><ol>${qs.map((q) => `<li>
+      <p class="quiz-ask">${esc(q.question)}${q.right === true ? ' <span class="seen">right</span>' : q.right === false ? ' <span class="seen">missed</span>' : ""}</p>
+      <ul>${q.choices.map((c, i) => `<li${i === q.answer ? ' class="is-answer"' : ""}>${letter(i)}. ${esc(c)}${i === q.answer ? " \u2713" : ""}${i === q.chosen && i !== q.answer ? " \u2190 yours" : ""}</li>`).join("")}</ul>
+      <p>${esc(q.explanation ?? "")} ${q.href ? `<a class="quiz-code" href="${esc(q.href)}">${esc(q.file)}:${q.line}</a>` : q.file ? `<span class="quiz-code">${esc(q.file)}:${q.line}</span>` : ""}</p>
+    </li>`).join("")}</ol>`;
+  }).join("")}</div>`;
+}
+
 function quizSheet(quiz) {
   if (!quiz?.claude) return "";
   const t = quiz.today;
@@ -937,8 +959,10 @@ function quizSheet(quiz) {
     ${questions.length ? `<ol class="quiz-list">${questions.map(item).join("")}</ol>` : ""}
     ${current?.error ? `<p class="hint">${esc(current.error)}</p>` : ""}
     ${!questions.length && !current?.error ? `<p class="hint">${esc(String(quiz.count))} question${quiz.count === 1 ? "" : "s"} on code you\u2019ve been working in, each pointing at the line it comes from.</p>` : ""}
+    ${pastList(quiz.past ?? [])}
     <div class="notes-actions">
       ${questions.length ? "" : `<button class="mini primary" id="quiz-make"${current?.error ? "" : " data-auto"}>${current?.error ? "Try again" : "Make today\u2019s quiz"}</button>`}
+      ${(quiz.past ?? []).length ? `<button class="mini" id="quiz-past-toggle" aria-pressed="false">Previous questions</button>` : ""}
       <span class="hint" id="quiz-status" data-answered="${s.answered ?? 0}" data-correct="${s.correct ?? 0}" data-streak="${s.streak ?? 0}" data-best="${s.best ?? 0}">${done ? "Done for today. " : ""}${esc(record)}</span>
     </div>
   </div>
