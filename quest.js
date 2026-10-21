@@ -712,6 +712,14 @@ function fitDeco(svg) {
     svg.style.justifySelf = '';
     var room = pet.getBoundingClientRect().left + parseFloat(getComputedStyle(pet).paddingLeft);
     if (svg.getBoundingClientRect().left < room) svg.style.justifySelf = 'end';
+    // the count under it stays centred under it, wherever it ended up
+    var n = pet.querySelector('.deco-n');
+    if (n) {
+      n.style.transform = '';
+      var d = svg.getBoundingClientRect(), c = n.getBoundingClientRect();
+      var dx = Math.round((d.left + d.width / 2) - (c.left + c.width / 2));
+      if (dx) n.style.transform = 'translateX(' + dx + 'px)';
+    }
   });
 }
 
