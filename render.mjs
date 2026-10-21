@@ -335,7 +335,7 @@ function reviewLine(r, withRepo) {
     withRepo ? `<span class="who">${esc(r.repo)}</span>` : ""
   }<span class="what">${r.url && !withRepo ? link(r.url, esc(what)) : esc(what)}</span>${reviewButton(r)}</li>`;
 }
-// Checks the merge request out into the repo's review tree (review.sh) and opens a
+// Checks the merge request out into the repo's review tree (review.mjs) and opens a
 // terminal there. Shown only in the app with a terminal chosen, like the terminal icons.
 const REVIEW_TIP =
   "Checks this merge request out into the repo's review tree, a separate git worktree, and opens a terminal there. " +

@@ -2457,7 +2457,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var here = e.target.closest ? e.target.closest('[data-term-repo]') : null;
     if (here && handlers && handlers.openTerminal) handlers.openTerminal.postMessage(here.dataset.termRepo);
   });
-  /* Review copies: made, or taken away, by the app (review.sh). */
+  /* Review copies: made, or taken away, by the app (review.mjs). */
   document.addEventListener('click', function (e) {
     var button = e.target.closest ? e.target.closest('.review-local, .review-remove') : null;
     if (!button || !handlers) return;

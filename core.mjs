@@ -17,10 +17,10 @@
 //   await host.canFollow()   the window is showing and the page isn't mid-edit
 //
 // A shell's question gets its answer as message()'s result: termRestore, for one.
-import { spawn } from "node:child_process";
 import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { homedir } from "node:os";
+import { node } from "./proc.mjs";
 import { CODE } from "./spaces.mjs";
 
 const SPACES = join(CODE, "spaces.json");
@@ -58,21 +58,10 @@ const now = () => Date.now() / 1000;
 /** The space's own summary, as its last build left it. */
 const summaryOf = (id) => readJson(join(spaceDir(id), "summary.json"));
 
-/** One of the scripts beside the code, run for a space. Its output is kept, never passed on. */
-function script(name, { space, args = [], env = {} } = {}) {
-  return new Promise((done) => {
-    let out = "", err = "";
-    const child = spawn("/bin/sh", [join(CODE, name), ...args], {
-      cwd: CODE,
-      env: { ...process.env, PREVIOUSLY_SPACE: space ?? currentSpace(), ...env },
-      stdio: ["ignore", "pipe", "pipe"],
-    });
-    child.stdout.on("data", (d) => (out += d));
-    child.stderr.on("data", (d) => (err += d));
-    child.on("error", (e) => done({ code: -1, out, err: String(e.message ?? e) }));
-    child.on("close", (code) => done({ code: code ?? -1, out: out.trim(), err: err.trim() }));
-  });
-}
+/** One of the app's scripts, run for a space. Its output is kept, never passed on,
+    and it never throws: {code, out, err}. */
+const script = (name, { space, args = [], env = {} } = {}) =>
+  node(name, args, { env: { PREVIOUSLY_SPACE: space ?? currentSpace(), ...env } });
 
 export function createCore(host) {
   // ---------- what the shell shows
@@ -123,7 +112,7 @@ export function createCore(host) {
       handed the fresh draft rather than losing its place. */
   async function refresh({ cached = false, space } = {}) {
     const id = space ?? currentSpace();
-    await script("refresh.sh", { space: id, args: cached ? ["--cached"] : [] });
+    await script("refresh.mjs", { space: id, args: cached ? ["--cached"] : [] });
     publish();
     if (id === currentSpace()) show({ standup: true, rebuilt: true });
   }
@@ -159,7 +148,7 @@ export function createCore(host) {
     }
     writeJson(SPACES, config);
     // Folders moved between spaces change every space's page.
-    await script("refresh.sh", { args: ["--all", "--cached"] });
+    await script("refresh.mjs", { args: ["--all", "--cached"] });
     refresh();
   }
 
@@ -182,7 +171,7 @@ export function createCore(host) {
     host.settingsSaved({ terminal: readJson(APP_SETTINGS, {})?.terminal ?? "off" });
     // Auto-resume needs Claude Code's session hook, and only while it's on.
     if (typeof incoming.autoResume === "string" && incoming.autoResume !== resumeWas) {
-      script("session-hook.sh", { args: [incoming.autoResume === "on" ? "install" : "remove"] });
+      script("claude-hook.mjs", { args: [incoming.autoResume === "on" ? "install" : "remove"] });
     }
     refresh({ cached: true });
   }
@@ -229,7 +218,7 @@ export function createCore(host) {
   async function runSync({ full = false, space }) {
     running = true;
     const id = space ?? currentSpace();
-    await script("sync.sh", { space: id, env: full ? { FULL: "1" } : {} });
+    await script("sync.mjs", { space: id, env: full ? { FULL: "1" } : {} });
     running = false;
     stamp(["lastSyncAt"], id);
     refresh({ space: id });
@@ -256,7 +245,7 @@ export function createCore(host) {
 
   async function runApiSync({ quick = false, space: id }) {
     running = true;
-    const done = await script("hosts.sh", { space: id, env: quick ? { QUICK: "1" } : {} });
+    const done = await script("sync.mjs", { space: id, args: ["hosts"], env: quick ? { QUICK: "1" } : {} });
     running = false;
     backoff = done.code === 0 ? 1 : Math.min(backoff * 2, 4);
     stamp([quick ? "lastQuickSyncAt" : "lastApiSyncAt"], id);
@@ -301,9 +290,9 @@ export function createCore(host) {
 
   // ---------- updates
   //
-  // Once a day, the first time the window opens, update.sh asks GitHub for the
-  // latest release; the page shows it from update.json. Installing runs update.sh
-  // too, which rebuilds the app; the shell then opens the new one and quits.
+  // Once a day, the first time the window opens, update.mjs asks GitHub for the
+  // latest release; the page shows it from update.json. Installing runs it too,
+  // which rebuilds the app; the shell then opens the new one and quits.
   let updating = false;
 
   async function checkForUpdate(force = false) {
@@ -313,7 +302,7 @@ export function createCore(host) {
       if (now() - (readJson(UPDATE, {})?.checkedAt ?? 0) <= 20 * 3600) return;
     }
     updating = true;
-    await script("update.sh", { args: ["check"] });
+    await script("update.mjs", { args: ["check"] });
     updating = false;
     refresh({ cached: true });
   }
@@ -333,7 +322,7 @@ export function createCore(host) {
     if (updating) return;
     updating = true;
     const started = now();
-    const done = await script("update.sh", { args: ["install"] });
+    const done = await script("update.mjs", { args: ["install"] });
     updating = false;
     // 3: nothing newer after all. Anything else but 0 stopped it, and update.mjs
     // has said why in update.json -- unless it never got that far.
@@ -352,7 +341,7 @@ export function createCore(host) {
   async function makeQuiz() {
     if (quizzing) return;
     quizzing = true;
-    await script("quiz.sh", { args: ["make"] });
+    await script("quiz.mjs", { args: ["make"] });
     quizzing = false;
     refresh();
   }
@@ -365,7 +354,7 @@ export function createCore(host) {
     if (typeof repo !== "string" || !path || !Number.isInteger(number)) return;
     const args = adding ? ["add", path, String(number)] : ["remove", path];
     if (adding && body.host === "github") args.push("github");
-    const done = await script("review.sh", { args });
+    const done = await script("review.mjs", { args });
     if (done.code !== 0) {
       host.alert({ title: adding ? `Couldn't check out !${number}` : "Kept the review tree", text: done.err });
     } else if (adding && done.out) {
@@ -454,7 +443,7 @@ export function createCore(host) {
       // An edit to the narrative: applied to worklog.json by edit.mjs (one field
       // of one thread, not the whole file), then rebuilt.
       case "saveNarrative":
-        await script("edit.sh", { env: { EDIT_PATCH: text } });
+        await script("edit.mjs", { env: { EDIT_PATCH: text } });
         return refresh({ cached: true });
       case "saveSettings": return saveSettings(body);
       case "saveSpaces": return saveSpaces(body);
@@ -480,11 +469,11 @@ export function createCore(host) {
       case "makeQuiz": return makeQuiz();
       case "quizAnswer": {
         const a = parse(body);
-        if (typeof a?.id === "string" && Number.isInteger(a.choice)) script("quiz.sh", { args: ["answer", a.id, String(a.choice)] });
+        if (typeof a?.id === "string" && Number.isInteger(a.choice)) script("quiz.mjs", { args: ["answer", a.id, String(a.choice)] });
         return;
       }
       case "quizFlag":
-        if (text) script("quiz.sh", { args: ["flag", text] });
+        if (text) script("quiz.mjs", { args: ["flag", text] });
         return;
 
       case "reviewLocally": return review(true, parse(body));
@@ -534,7 +523,7 @@ export function createCore(host) {
     // Auto-resume needs Claude Code's session hook: added or taken out to match
     // the setting, in case it was switched while the app couldn't do it.
     const resume = readJson(APP_SETTINGS, {})?.autoResume;
-    script("session-hook.sh", { args: [resume === "on" ? "install" : "remove"] });
+    script("claude-hook.mjs", { args: [resume === "on" ? "install" : "remove"] });
 
     // Cheap enough every few seconds: it only stats a few files.
     let seen = null;

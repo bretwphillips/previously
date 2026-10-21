@@ -15,7 +15,7 @@ the rest sit beside the code. None of them are tracked by git.
 | `update.json` | The last update check: the latest release and its notes, and why the last update stopped, if it did. |
 | `ledger.json` | Every commit counted toward the hoard, by hash. One beside the code when the companion is shared, else one per space. |
 | `terminal-sessions/` | Auto-resume: which Claude Code session runs in which drawer tab. |
-| `reviews/` | Review trees: a worktree per repo for checking out a merge request you review (`review.sh`). |
+| `reviews/` | Review trees: a worktree per repo for checking out a merge request you review (`review.mjs`). |
 
 **Edit these.**
 
@@ -58,10 +58,10 @@ the rest sit beside the code. None of them are tracked by git.
 | `ledger.mjs` | Counts your commits since you started using the app into `ledger.json`, by hash, so the count never drops. |
 | `hoard.mjs` | Fantasy mode's commit hoard: the pixel art for each stage and where it begins. |
 | `quest.js`, `quest.css`, `quest-defs.svg` | Fantasy mode: locks, keys, monsters, the companion in costume, the road to the tent. Plain files inlined at build time. |
-| `github-sync.mjs` | The GitHub half of a sync, in the same shape as GitLab's; keeps `sync-cache-github.json`, writes `activity-github.json`. `github.sh` runs it. |
+| `github-sync.mjs` | The GitHub half of a sync, in the same shape as GitLab's; keeps `sync-cache-github.json`, writes `activity-github.json`. `sync.mjs` runs it. |
 | `hosts.mjs` | Where a ticket, merge or pull request, or branch lives on its repo's host. |
 | `blockers.mjs` | "Blocked by #12" and its kin, read from a ticket's description on either host. |
-| `gitlab-sync.mjs` | A sync's GitLab calls, asking only for what changed since the last one; keeps the rest in `sync-cache.json`. `gitlab.sh` finds the host and runs it. |
+| `gitlab-sync.mjs` | A sync's GitLab calls, asking only for what changed since the last one; keeps the rest in `sync-cache.json`. `sync.mjs` finds the host and runs it. |
 | `halloween.mjs` | Halloween's candy hoard and haunted houses, drawn at build time; the monsters and their candy are in `quest.js`. |
 | `toys.mjs` | The None theme's hoard of pet toys, laid out at the gold's steps. |
 | `ivy.mjs`, `cobweb.mjs` | The banners along the top: Fantasy's ivy, Halloween's cobwebs. |
@@ -86,28 +86,24 @@ the rest sit beside the code. None of them are tracked by git.
 
 | | |
 |---|---|
-| `refresh.sh` | Rebuild the current space's page (`PREVIOUSLY_SPACE` names another, `--all` does every space). Silent on success. Run by the app on every open. |
-| `journal.sh` | Snapshots your narrative, tasks, notes, links and commit ledger into the space's private `.journal/` history when they change. |
-| `edit.mjs`, `edit.sh` | Apply one edit made in the app to `worklog.json`. |
-| `env.sh` | Puts back the PATH the app lacks (Homebrew, nvm, fnm, Volta, asdf). Sourced by the others. |
-| `show.sh` | The terminal view. |
-| `done.sh` | Record that HEAD finished one or more scope lines. |
-| `quiz.sh` | The app's way into `quiz.mjs`, with the PATH `env.sh` puts back. |
-| `review.sh` | Fetches a merge request into its review tree, or removes the tree. |
+| `refresh.mjs`, `refresh.sh` | Rebuild the current space's page (`PREVIOUSLY_SPACE` names another, `--all` does every space). Silent on success. Run by the app on every open. |
+| `journal.mjs` | Snapshots your narrative, tasks, notes, links and commit ledger into the space's private `.journal/` history when they change. |
+| `edit.mjs` | Apply one edit made in the app to `worklog.json`. |
+| `env.sh` | Puts back the PATH a Mac app lacks (Homebrew, nvm, fnm, Volta, asdf). Sourced by the `.sh` files, and by the app to start the core. |
+| `proc.mjs` | Running git, glab, gh and the app's own scripts, with no shell in between. |
+| `show.mjs`, `show.sh` | The terminal view. |
+| `done.mjs`, `done.sh` | Record that HEAD finished one or more scope lines. |
+| `review.mjs` | Fetches a merge request into its review tree, or removes the tree. |
 | `install.sh` | One-time setup: checks what's needed, builds the app, opens it. |
-| `session-hook.sh`, `claude-hook.mjs` | Auto-resume: the Claude Code hook that notes which session runs in which terminal tab, and adding or removing it from `~/.claude/settings.json`. |
+| `claude-hook.mjs`, `session-hook.sh` | Auto-resume: the Claude Code hook that notes which session runs in which terminal tab, and adding or removing it from `~/.claude/settings.json`. |
 | `holidays.mjs` | The holidays quest mode can dress up for: each one's theme and when it starts and ends. |
-| `ai-notes.sh` | Prints your AI notes for a session to read: every space's, then those of the space the repo is in. |
+| `ai-notes.mjs`, `ai-notes.sh` | Prints your AI notes for a session to read: every space's, then those of the space the repo is in. |
 | `update.mjs`, `update.sh` | The update check (GitHub's latest release, into `update.json`) and installing it: a git fast-forward to its tag, then `make.sh`. |
 | `VERSION` | This copy's version, compared with the latest release. |
 | `claude-section.md` | The Claude Code conventions, ready to paste into your `CLAUDE.md`. |
 | `markers.mjs` | What lights a marker and in what colour: the triggers, defaults, and a saved layout. |
 | `make.sh` | Build the app into `~/Applications` after editing `src/main.swift` (`PREVIOUSLY_APP` builds it somewhere else, for trying a copy). |
-| `sync.sh` | Everything a sync does. Run by the app, never on its own. |
-| `fetch.sh` | `git fetch --prune` across a space's repos. |
-| `hosts.sh` | A sync's host calls for one space: `gitlab.sh` and `github.sh` side by side. |
-| `github.sh` | Runs `github-sync.mjs` for a space's github.com repos, through `gh`. |
-| `gitlab.sh` | Finds a space's GitLab host and a clone to call it from, then runs `gitlab-sync.mjs`, which makes the GitLab API calls. |
+| `sync.mjs` | Everything a sync does, for one space: `git fetch --prune` across its repos, and side by side, each host's calls -- GitLab's host and a clone to call it from, then `gitlab-sync.mjs`; `github-sync.mjs` for its github.com repos. Run by the app, never on its own. |
 | `tools/makeicon.swift` | Draws the app icon. |
 
 ---

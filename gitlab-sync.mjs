@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // What a sync asks GitLab, and what it keeps between syncs so it can ask less.
-// gitlab.sh finds the host and a clone to run glab from; this makes the calls,
+// sync.mjs finds the host and a clone to run glab from; this makes the calls,
 // remembers them in sync-cache.json, and hands activity.mjs the same inputs it
 // always had.
 //

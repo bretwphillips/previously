@@ -167,18 +167,26 @@ export function adopt(space, names, config = readSpaces()) {
   }
 }
 
+// A repo by name (in whichever space has it) or by path: {space, data, path}.
+export function findRepo(arg) {
+  if (!arg) return null;
+  const want = arg.includes("/") || arg.includes("\\") ? resolve(arg) : arg;
+  for (const s of readSpaces().spaces) {
+    const hit = reposOf(s).find((r) => r.name === want || r.path === want || basename(r.path) === want);
+    if (hit) return { space: s.id, data: s.data, path: hit.path };
+  }
+  return null;
+}
+
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const [cmd, arg] = process.argv.slice(2);
   if (cmd === "data") console.log(spaceFor(arg).data);
   else if (cmd === "repos") for (const r of reposOf(spaceFor(arg))) console.log(`${r.name}\t${r.path}`);
   else if (cmd === "ids") for (const s of readSpaces().spaces) console.log(s.id);
   else if (cmd === "which") {
-    const want = arg?.includes("/") ? resolve(arg) : arg;
-    for (const s of readSpaces().spaces) {
-      const hit = reposOf(s).find((r) => r.name === want || r.path === want || basename(r.path) === want);
-      if (hit) { console.log(`${s.id}\t${s.data}\t${hit.path}`); process.exit(0); }
-    }
-    process.exit(1);
+    const hit = findRepo(arg);
+    if (!hit) process.exit(1);
+    console.log(`${hit.space}\t${hit.data}\t${hit.path}`);
   } else {
     console.error("usage: node spaces.mjs data|repos|which|ids [arg]");
     process.exit(2);

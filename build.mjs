@@ -248,7 +248,7 @@ const repos = await Promise.all(
     // from the sync, and their commits on your branches from git.
     // Review requests are listed apart: they stay until you approve.
     const reviews = (activity.reviews ?? []).filter((r) => r.repo === name);
-    // This repo's review tree (review.sh) and the MR it's on; once that review is
+    // This repo's review tree (review.mjs) and the MR it's on; once that review is
     // over -- approved, merged or closed -- it's offered for removal.
     const folder = basename(repoList.find((r) => r.name === name)?.path ?? name);
     const mark = join(CODE, "reviews", `${folder}.mr`);

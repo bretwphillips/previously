@@ -300,7 +300,7 @@ git state -- a commit, checkout, stash, fetch or staging -- the page rebuilds.
   hide the drawer, ask for a terminal in a repo by name (checked against the
   current space's repos), say that its theme changed, say whether a sheet is
   open, and ask for a review tree (see *Review threads*: a known repo and an MR
-  number, which `review.sh` fetches into `reviews/`, then a shell opened there).
+  number, which `review.mjs` fetches into `reviews/`, then a shell opened there).
   None of those carries input.
 - The app starts shells, ends them and reads which folder each is in from macOS.
   It never writes to one, and nothing a shell prints reaches the page.
@@ -771,7 +771,7 @@ starts `claude --resume <id>` and is an ordinary shell once you leave Claude.
 Several sessions, even in one repo, each come back to their own tab.
 
 It knows which session is which because turning it on adds a small hook to
-`~/.claude/settings.json` (`session-hook.sh`): each session started in a drawer
+`~/.claude/settings.json` (`claude-hook.mjs`): each session started in a drawer
 tab tells Previously its ID. Turning it off takes the hook out again and leaves
 the rest of that file alone. Only IDs are kept (`terminal-sessions/`), never the
 conversation. A tab with no ID on file -- a session already running when you
