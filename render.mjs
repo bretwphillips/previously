@@ -1160,7 +1160,7 @@ function settingsPane(userName, weightLimit = 5, terminals = [], update = null, 
             )}
             ${row(
               "Race",
-              `<div class="themes" id="race-choice">${["cat", "pug", "frog", "bunny", "pig"]
+              `<div class="themes" id="race-choice">${["cat", "pug", "frog", "bunny", "pig", "fox", "bear", "mouse", "hamster", "raccoon", "penguin"]
                 .map((r) => `<button data-race="${r}">${r[0].toUpperCase() + r.slice(1)}</button>`)
                 .join("")}</div>`,
             )}

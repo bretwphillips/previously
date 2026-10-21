@@ -167,7 +167,7 @@ tasks go with it.
   its total needing attention, so nothing hides.
 - Footprints 👣 mark where your last three commits went (any branch), fainter for
   each older one; all three in one repo is a single mark. With the companion on they
-  are its prints -- paws for a cat, pug, bunny or pig, webbed feet for a frog. In fantasy mode the newest is a tent and the earlier ones fading dots,
+  are its prints -- paws for most animals, webbed feet for a frog. In fantasy mode the newest is a tent and the earlier ones fading dots,
   joined by a faint map road.
 - The Overview's and each repo's sections fold the same way: click **Good to
   know**, **Notes** (or any heading) to put it away. A folded section shows its
@@ -672,7 +672,8 @@ weekend — or a long one — costs nothing.
 Purely decorative. It changes nothing, reports nothing, and respects
 `prefers-reduced-motion`.
 
-**Build it** in Settings → Extras: a **race** (cat, pug, frog, bunny or pig), a **coat**
+**Build it** in Settings → Extras: a **race** (cat, pug, frog, bunny, pig, fox, bear, mouse, hamster, raccoon or
+penguin -- a panda is one of the bear's coats), a **coat**
 for it, a **class** (none, wizard, ranger or knight) and a **colour** -- seven,
 black and white among them; the companion in the sidebar shows each choice as you
 make it. The colour dresses the whole costume: the wizard's hat, the ranger's
