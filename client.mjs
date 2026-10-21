@@ -684,6 +684,7 @@ document.addEventListener('DOMContentLoaded', function () {
       renderLegend();
       renderBoard();
       paintNews(true);
+      paintCleared();
       store.set('worklog.markers', JSON.stringify(CFG));
       if (settingsBridge) {
         clearTimeout(saveTimer);
@@ -2045,8 +2046,11 @@ document.addEventListener('DOMContentLoaded', function () {
           b.className = 'clear';
           li.appendChild(b);
         }
+        // Under Ignore in Settings -> Markers: off the Overview, unless pinned.
+        var ignored = (CFG.assign[li.dataset.trigger] || 'none') === 'none' && !PINNED[markId(li)];
+        li.classList.toggle('ignored', ignored);
         var gone = Boolean(CLEARED[markId(li)]);
-        if (gone) n++;
+        if (gone && !ignored) n++;
         li.classList.toggle('cleared', gone);
         b.textContent = gone ? 'Restore' : '\u00d7';
         b.title = gone ? 'Bring it back to the Overview' : 'Clear it from the Overview';
@@ -2063,9 +2067,22 @@ document.addEventListener('DOMContentLoaded', function () {
       note.textContent = ul.classList.contains('show-cleared') ? 'Hide cleared' : n + ' cleared \u2014 show';
       var head = ul.previousElementSibling, count = head && head.querySelector('.fold-count');
       if (count) {
-        var left = ul.querySelectorAll(':scope > li:not(.cleared)').length;
+        var left = ul.querySelectorAll(':scope > li:not(.cleared):not(.ignored)').length;
         count.textContent = left;
         count.hidden = !left;
+      }
+      var shown = ul.querySelectorAll(':scope > li:not(.ignored)').length;
+      ul.hidden = !shown;
+      if (head && head.dataset.fold === 'news') head.hidden = !shown;
+      if (head && head.dataset.fold === 'needs') {
+        var none = ul.querySelector(':scope ~ p.empty.all-ignored');
+        if (!none) {
+          none = document.createElement('p');
+          none.className = 'empty all-ignored';
+          none.textContent = 'Nothing waiting.';
+          ul.parentNode.insertBefore(none, note.nextSibling);
+        }
+        none.hidden = Boolean(shown);
       }
     });
   }
