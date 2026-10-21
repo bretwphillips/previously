@@ -97,6 +97,243 @@ const ANIMALS = {
       sad:     { at: 4, rows: ["..oCCweCoCweCCo..", ".oCCCeeCCCeeCCCo.", ".oChCtCCCCCCCCCo.", ".oCCCtCCCCCCCCCo.", ".oCCCCmmmmmCCCCo.", "..oCCmCCCCCmCCo.."] },
     },
   },
+  // long ears above a cat-sized head: two rows taller, so every anchor is two lower
+  bunny: {
+    headTop: 5, eyes: 8, neck: 13,
+    rows: [
+      "..ooo.......ooo..",
+      ".oCCCo.....oCCCo.",
+      ".oCiCo.....oCiCo.",
+      ".oCiCo.....oCiCo.",
+      ".oCiCo.....oCiCo.",
+      ".oCiCoooooooCiCo.",
+      ".oCCCCCCCCCCCCCo.",
+      ".oChCCCCCCCCCCCo.",
+      ".oCCweCCCCCweCCo.",
+      ".oCCeeCCCCCeeCCo.",
+      ".oCCCCCCpCCCCCCo.",
+      ".oCCCCCmCmCCCCCo.",
+      "..oCCCCCwCCCCCo..",
+      "...oCCCcccCCCooo.",
+      "...oCCCcccCCCohho",
+      "...oCCCCCCCCCohco",
+      "...oCCCCCCCCCooo.",
+      "...oCCo...oCCo...",
+      "...oooo...oooo...",
+    ],
+    moods: {
+      dancing: { at: 8, rows: [".oCCCeCCCCCeCCCo.", ".oCCeCeCCCeCeCCo."] },
+      peckish: { at: 8, rows: [".oCCCCCCCCCCCCCo.", ".oCCeeCCCCCeeCCo.", null, ".oCCCCCmmmCCCCCo."] },
+      // the ears bend over
+      hungry:  { at: 0, rows: [".................", "oo.............oo", "oCo...........oCo", ".oCo.........oCo.", ".oiCo.......oCio.", ".oCiCoooooooCiCo.", null, null,
+        ".oCCCCCCCCCCCCCo.", ".oCCeeCCCCCeeCCo.", ".oCCCCCCpCCZZZCo.", ".oCCCCCmmmCCCCCo.", "..oCCCmCCCmCCCo.."] },
+      // and flop down
+      sad:     { at: 0, rows: [".................", ".................", ".................", "ooo...........ooo", "oCCoo.......ooCCo", "oiiCCoooooooCCiio", null, null,
+        ".oCCweCCCCCCCCCo.", ".oCCeeCCCCCeeCCo.", ".oCCCCCCpCCCtCCo.", ".oCCCCCmmmCCtCCo.", "..oCCCmCCCmCCCo.."] },
+    },
+  },
+  // a white muzzle and chest, dark-tipped ears and legs, a bushy white-tipped tail
+  fox: {
+    headTop: 3, eyes: 6, neck: 11,
+    rows: [
+      ".o.............o.",
+      ".oko.........oko.",
+      "oCiCo.......oCiCo",
+      "oCiiCoooooooCiiCo",
+      ".oCCCCCCCCCCCCCo.",
+      ".oChCCCCCCCCCCCo.",
+      ".oCCweCCCCCweCCo.",
+      ".oCCeeCCCCCeeCCo.",
+      ".occcccccpccccco.",
+      "..occccmcmcccco..",
+      "...oocccmcccoo...",
+      "...oCCCcccCCCo.oo",
+      "...oCCCcccCCCooco",
+      "...oCCCCCCCCCoCCo",
+      "...oCCCCCCCCCCCo.",
+      "...okko...okko...",
+      "...oooo...oooo...",
+    ],
+    moods: {
+      dancing: { at: 6, rows: [".oCCCeCCCCCeCCCo.", ".oCCeCeCCCeCeCCo."] },
+      peckish: { at: 6, rows: [".oCCCCCCCCCCCCCo.", null, null, "..occccmmmcccco..", "...oocccccccoo..."] },
+      hungry: { at: 6, rows: [".oCCCCCCCCCCCCCo.", null, null, "..occcccmccccco..", "...ooccmcmccoo..."] },
+      sad: { at: 8, rows: [".occcccccpcctcco.", "..occcccmccctco..", "...ooccmcmccoo..."] },
+    },
+  },
+  // round ears and a muzzle; D rings the eyes and k the legs, so the panda's coat blacks them
+  bear: {
+    headTop: 2, eyes: 6, neck: 12, hatDrop: 1,
+    rows: [
+      ".................",
+      ".................",
+      ".ooo.........ooo.",
+      "oCiCoooooooooCiCo",
+      ".oCCCCCCCCCCCCCo.",
+      ".oChCCCCCCCCCCCo.",
+      ".oCDweDCCCDweDCo.",
+      ".oCDeeDCCCDeeDCo.",
+      ".oCCDDcccccDDCCo.",
+      ".oCCCcccpcccCCCo.",
+      ".oCCCccmcmccCCCo.",
+      "..oCCCcccccCCCo..",
+      "...oCCCcccCCCo...",
+      "...oCCCcccCCCo...",
+      "...oCCCCCCCCCo...",
+      "...okko...okko...",
+      "...oooo...oooo...",
+    ],
+    moods: {
+      dancing: { at: 6, rows: [".oCDDeDCCCDeDDCo.", ".oCDeDeCCCeDeDCo."] },
+      peckish: { at: 6, rows: [".oCDDDDCCCDDDDCo.", null, null, null, ".oCCCccmmmccCCCo."] },
+      hungry: { at: 6, rows: [".oCDDDDCCCDDDDCo.", null, null, null, ".oCCCcccmcccCCCo."] },
+      sad: { at: 8, rows: [".oCCDDcccccDtCCo.", ".oCCCcccpccctCCo.", ".oCCCcccmcccCCCo."] },
+    },
+  },
+  // big round ears, a pointed chin, a thin tail
+  mouse: {
+    headTop: 3, eyes: 6, neck: 11,
+    rows: [
+      "..ooo.......ooo..",
+      ".oCCCo.....oCCCo.",
+      "oCiiiCo...oCiiiCo",
+      "oCiiiCoooooCiiiCo",
+      "oCiiCCCCCCCCCiiCo",
+      ".oChCCCCCCCCCCCo.",
+      ".oCCweCCCCCweCCo.",
+      ".oCCeeCCCCCeeCCo.",
+      ".oCCCCCCpCCCCCCo.",
+      "..oCCCCmCmCCCCo..",
+      "...ooCCCmCCCoo...",
+      "...oCCCcccCCCo...",
+      "...oCCCcccCCCo...",
+      "...oCCCCCCCCCo...",
+      "...oCCCCCCCCCoooo",
+      "...oCCo...oCCo..o",
+      "...oooo...oooo.o.",
+    ],
+    moods: {
+      dancing: { at: 6, rows: [".oCCCeCCCCCeCCCo.", ".oCCeCeCCCeCeCCo."] },
+      peckish: { at: 6, rows: [".oCCCCCCCCCCCCCo.", null, null, "..oCCCCmmmCCCCo..", "...ooCCCCCCCoo..."] },
+      hungry: { at: 6, rows: [".oCCCCCCCCCCCCCo.", null, null, "..oCCCCCmCCCCCo..", "...ooCCmCmCCoo..."] },
+      sad: { at: 8, rows: [".oCCCCCCpCCCtCCo.", "..oCCCCCmCCCtCo..", "...ooCCmCmCCoo..."] },
+    },
+  },
+  // small ears and puffed cheeks
+  hamster: {
+    headTop: 2, eyes: 6, neck: 12, hatDrop: 1,
+    rows: [
+      ".................",
+      ".................",
+      "..ooo.......ooo..",
+      ".oCiCoooooooCiCo.",
+      ".oCCCCCCCCCCCCCo.",
+      "oCChCCCCCCCCCCCCo",
+      "oCCCweCCCCCweCCCo",
+      "oCCCeeCCCCCeeCCCo",
+      "occcCCCCpCCCCccco",
+      "occcCCCmCmCCCccco",
+      ".occcCCCmCCCccco.",
+      "..ooCCcccccCCoo..",
+      "...oCcccccccCo...",
+      "...oCcccccccCo...",
+      "...oCCCCCCCCCo...",
+      "...oCCo...oCCo...",
+      "...oooo...oooo...",
+    ],
+    moods: {
+      dancing: { at: 6, rows: ["oCCCCeCCCCCeCCCCo", "oCCCeCeCCCeCeCCCo"] },
+      peckish: { at: 6, rows: ["oCCCCCCCCCCCCCCCo", null, null, "occcCCCmmmCCCccco", ".occcCCCCCCCccco."] },
+      hungry: { at: 6, rows: ["oCCCCCCCCCCCCCCCo", null, null, "occcCCCCmCCCCccco", ".occcCCmCmCCccco."] },
+      sad: { at: 8, rows: ["occcCCCCpCCCtccco", "occcCCCCmCCCtccco", ".occcCCmCmCCccco."] },
+    },
+  },
+  // a dark mask across the eyes, a striped tail
+  raccoon: {
+    headTop: 3, eyes: 6, neck: 11,
+    rows: [
+      ".o.............o.",
+      ".oCo.........oCo.",
+      "oCiCo.......oCiCo",
+      "oCiiCoooooooCiiCo",
+      ".oCCCCCCCCCCCCCo.",
+      ".oChCCCCCCCCCCCo.",
+      ".okkwekCCCkwekko.",
+      ".okkeekCCCkeekko.",
+      ".oCCkkCCpCCkkCCo.",
+      ".oCCCCcmcmcCCCCo.",
+      "..oCCCccmccCCCo..",
+      "...oCCCcccCCCo.o.",
+      "...oCCCcccCCCoko.",
+      "...oCCCCCCCCCoCko",
+      "...oCCCCCCCCCkCo.",
+      "...oCCo...oCCo...",
+      "...oooo...oooo...",
+    ],
+    moods: {
+      dancing: { at: 6, rows: [".okkkekCCCkekkko.", ".okkekeCCCekekko."] },
+      peckish: { at: 6, rows: [".okkkkkCCCkkkkko.", null, null, ".oCCCCcmmmcCCCCo.", "..oCCCcccccCCCo.."] },
+      hungry: { at: 6, rows: [".okkkkkCCCkkkkko.", null, null, ".oCCCCccmccCCCCo.", "..oCCCcmcmcCCCo.."] },
+      sad: { at: 8, rows: [".oCCkkCCpCCktCCo.", ".oCCCCccmccCtCCo.", "..oCCCcmcmcCCCo.."] },
+    },
+  },
+  // a white face and belly, a beak and flippers; D the feet
+  penguin: {
+    headTop: 2, eyes: 6, neck: 11, hatDrop: 1,
+    rows: [
+      ".................",
+      ".................",
+      ".....ooooooo.....",
+      "...ooCCCCCCCoo...",
+      "..oCCCCCCCCCCCo..",
+      ".oCChCCCCCCCCCCo.",
+      ".oCcwecccccwecCo.",
+      ".oCceeccccceecCo.",
+      ".oCccccpppccccCo.",
+      ".oCcccccpcccccCo.",
+      ".oCcccccccccccCo.",
+      ".oCcccccccccccCo.",
+      "oCCcccccccccccCCo",
+      "oCCcccccccccccCCo",
+      "..oCcccccccccCo..",
+      "..oDDDo...oDDDo..",
+      "..ooooo...ooooo..",
+    ],
+    moods: {
+      dancing: { at: 6, rows: [".oCcceccccceccCo.", ".oCcececccececCo."] },
+      peckish: { at: 6, rows: [".oCcccccccccccCo."] },
+      hungry: { at: 6, rows: [".oCcccccccccccCo."] },
+      sad: { at: 8, rows: [".oCccccpppcctcCo.", ".oCcccccpccctcCo."] },
+    },
+  },
+  pig: {
+    headTop: 2, eyes: 6, neck: 12, hatDrop: 1, snout: true,
+    rows: [
+      ".................",
+      ".................",
+      "..ooo.......ooo..",
+      ".oiiCoooooooCiio.",
+      ".oCiCCCCCCCCCiCo.",
+      ".oChCCCCCCCCCCCo.",
+      ".oCCweCCCCCweCCo.",
+      ".oCCeeCCCCCeeCCo.",
+      ".oCCCCoooooCCCCo.",
+      ".oCCCokkkkkoCCCo.",
+      ".oCCCokmkmkoCCCo.",
+      "..oCCCoooooCCCo..",
+      "...oCCCmmmCCCo...",
+      "...oCCCcccCCCo.o.",
+      "...oCCCCCCCCCooCo",
+      "...oCCo...oCCo.o.",
+      "...oooo...oooo...",
+    ],
+    moods: {
+      dancing: { at: 6, rows: [".oCCeeCCCCCeeCCo.", ".oCeCCeCCCeCCeCo."] },
+      peckish: { at: 6, rows: [".oCCCCCCCCCCCCCo.", ".oCCeeCCCCCeeCCo.", null, null, null, null, "...oCCCCmCCCCo..."] },
+      hungry:  { at: 6, rows: [".oCCCCCCCCCCCCCo.", ".oCCeeCCCCCeeCCo.", null, null, null, null, "...oCCmCZCmCCo...", "...oCCCcccCCCo...", "...oCCCCCCCCCoooo", "...oCCo...oCCo..."] },
+      sad:     { at: 6, rows: [".oCCweCCCCCCCCCo.", ".oCCeeCCCCCeeCCo.", ".oCCCCoooooCCtCo.", ".oCCCokkkkkoCtCo.", null, null, "...oCCmCCCmCCo...", "...oCCCcccCCCo...", "...oCCCCCCCCCo...", "...oCCo...oCCoooo"] },
+    },
+  },
 };
 
 // ---------- hats: bottom row lands on headTop (or, with onEyes, eyeRow on the eyes).
@@ -213,18 +450,77 @@ const COATS = {
     grey:  { C: "#9aa3ad", h: "#c9d0d8", c: "#e6eaee", i: "#e8b4ba", p: "#d98a96", m: "#3d434b", o: "#3d434b" },
     black: { C: "#3b3f47", h: "#5d636d", c: "#8a909a", i: "#c98a95", p: "#c98a95", m: "#15171b", o: "#15171b" },
     cream: { C: "#f2dfc0", h: "#fff3df", c: "#fffaf0", i: "#f2b8b8", p: "#e59a9a", m: "#8a6b45", o: "#8a6b45" },
+    brown: { C: "#8a5a3a", h: "#b07a52", c: "#e8cfb4", i: "#e8a0a8", p: "#d98a8a", m: "#3a2214", o: "#3a2214" },
   },
   pug: {
     fawn:    { C: "#e3c08f", h: "#f2dbb5", c: "#f5e6cc", k: "#3a2e2a", D: "#c49a62", m: "#f2a0a8", o: "#5a4430" },
     apricot: { C: "#e8a865", h: "#f4c58f", c: "#f8dfc0", k: "#3a2a22", D: "#c4823f", m: "#f2a0a8", o: "#5a3a20" },
     silver:  { C: "#c9c6c0", h: "#e3e1dc", c: "#efede9", k: "#2f2f33", D: "#a6a29a", m: "#f2a0a8", o: "#4a4a4e" },
     black:   { C: "#3a3c42", h: "#55585f", c: "#62656c", k: "#18191c", D: "#2c2e33", m: "#d98a96", o: "#141518" },
+    blue: { C: "#8a9bb4", h: "#aebcd0", c: "#d4dde9", k: "#2f3846", D: "#7487a2", m: "#f2a0a8", o: "#3a4454" },
+  },
+  bunny: {
+    white: { C: "#f4f1ec", h: "#ffffff", c: "#fffdf8", i: "#f2b8c2", p: "#e88a9a", m: "#6b5e58", o: "#6b5e58" },
+    brown: { C: "#b98a62", h: "#d4ab85", c: "#f0dcc4", i: "#f2b8c2", p: "#d9808f", m: "#4a3220", o: "#4a3220" },
+    grey:  { C: "#a3a6ad", h: "#c8cbd1", c: "#e9ebee", i: "#f0b8c0", p: "#d98a96", m: "#3d4047", o: "#3d4047" },
+    black: { C: "#3d4047", h: "#5e626b", c: "#8a8e96", i: "#c98a95", p: "#c98a95", m: "#16181c", o: "#16181c" },
+    lavender: { C: "#b9a3d9", h: "#d4c4ec", c: "#eee6f8", i: "#f2b8d0", p: "#e088a8", m: "#5a4478", o: "#5a4478" },
+  },
+  fox: {
+    red: { C: "#e2763a", h: "#f2a06a", c: "#fbf1e6", i: "#5a2e18", k: "#3a2418", p: "#2a1a10", m: "#5a2e18", o: "#5a2e18" },
+    arctic: { C: "#eef1f4", h: "#ffffff", c: "#ffffff", i: "#c9d3dc", k: "#8a96a3", p: "#2a2e36", m: "#5a6470", o: "#5a6470" },
+    silver: { C: "#6f7480", h: "#9298a3", c: "#e8eaee", i: "#2c2f36", k: "#1d1f24", p: "#16181c", m: "#2c2f36", o: "#2c2f36" },
+    fennec: { C: "#e8c89a", h: "#f4dcb8", c: "#fdf6ea", i: "#c99a6a", k: "#b08a60", p: "#3a2a1e", m: "#7a5a3a", o: "#7a5a3a" },
+    violet: { C: "#8a5ac9", h: "#ab86de", c: "#f4eefb", i: "#4a2a78", k: "#2a1a44", p: "#1e1230", m: "#3a2460", o: "#3a2460" },
+  },
+  bear: {
+    brown: { C: "#9a6a42", h: "#b98a62", c: "#d9b892", i: "#5e3a22", D: "#9a6a42", k: "#6e4a2c", p: "#2a1a10", m: "#3a2418", o: "#3a2418" },
+    panda: { C: "#f4f2ee", h: "#ffffff", c: "#ffffff", i: "#22232a", D: "#22232a", k: "#22232a", p: "#1a1b20", m: "#3a3b42", o: "#3a3b42" },
+    polar: { C: "#f1efe8", h: "#ffffff", c: "#fbfaf5", i: "#c9c4b8", D: "#f1efe8", k: "#dcd8cd", p: "#2a2a30", m: "#6b675e", o: "#6b675e" },
+    black: { C: "#3a3a40", h: "#55555c", c: "#a8865e", i: "#22222a", D: "#3a3a40", k: "#2a2a30", p: "#1a1a1e", m: "#22222a", o: "#18181c" },
+    pink: { C: "#f2a6c0", h: "#f8c8d8", c: "#fde6ee", i: "#d4708f", D: "#f2a6c0", k: "#e08aa8", p: "#6a2a40", m: "#8a3a56", o: "#8a3a56" },
+  },
+  mouse: {
+    grey: { C: "#a6a2a8", h: "#c8c4ca", c: "#e9e6ea", i: "#f2b0bc", p: "#e88a9a", m: "#3e3a40", o: "#3e3a40" },
+    brown: { C: "#a7825f", h: "#c4a27f", c: "#efe0cc", i: "#f2b0bc", p: "#e08494", m: "#4a3424", o: "#4a3424" },
+    white: { C: "#f4f2ef", h: "#ffffff", c: "#ffffff", i: "#f2b0bc", p: "#e88a9a", m: "#6e6a66", o: "#6e6a66" },
+    black: { C: "#3f3d44", h: "#5e5b64", c: "#8a8792", i: "#d89aa6", p: "#d98a96", m: "#18171c", o: "#18171c" },
+    lilac: { C: "#c4a8e0", h: "#dcc8f0", c: "#f2ebfa", i: "#f2b0cc", p: "#e88aae", m: "#5a4078", o: "#5a4078" },
+  },
+  hamster: {
+    golden: { C: "#e3a95c", h: "#f2c88a", c: "#fbf0dc", i: "#d98a6a", p: "#e88a9a", m: "#5a3a1a", o: "#5a3a1a" },
+    white: { C: "#f3efe8", h: "#ffffff", c: "#ffffff", i: "#f2b8b8", p: "#e88a9a", m: "#6e665e", o: "#6e665e" },
+    grey: { C: "#9a9aa2", h: "#bcbcc4", c: "#ecebee", i: "#e0a6ae", p: "#d98a96", m: "#3a3a42", o: "#3a3a42" },
+    mint: { C: "#8fd4b8", h: "#b4e6d0", c: "#eafaf2", i: "#5fae90", p: "#e88a9a", m: "#2a6a50", o: "#2a6a50" },
+    black: { C: "#3a383e", h: "#57545c", c: "#e8e4e0", i: "#2a282e", p: "#d98a96", m: "#16151a", o: "#16151a" },
+  },
+  raccoon: {
+    grey: { C: "#8f8f96", h: "#b0b0b7", c: "#efeee9", i: "#4a4a52", k: "#2a2a30", p: "#16161a", m: "#2a2a30", o: "#2a2a30" },
+    brown: { C: "#8a7360", h: "#a89280", c: "#efe8de", i: "#4a3a2c", k: "#2c221a", p: "#16120e", m: "#2c221a", o: "#2c221a" },
+    blue: { C: "#6f8fbf", h: "#93acd4", c: "#eef2f8", i: "#34507e", k: "#1c2a44", p: "#101826", m: "#1c2a44", o: "#1c2a44" },
+    plum: { C: "#8a5a86", h: "#a87aa4", c: "#f4eaf2", i: "#4a2a48", k: "#241424", p: "#140a14", m: "#241424", o: "#241424" },
+    rusty: { C: "#a8785a", h: "#c49676", c: "#f2e6da", i: "#5a3a24", k: "#2e2016", p: "#16100c", m: "#2e2016", o: "#2e2016" },
+  },
+  penguin: {
+    classic: { C: "#2c2e36", h: "#4a4d58", c: "#f6f5f1", p: "#f2a33a", D: "#f2a33a", m: "#2c2e36", o: "#16171c" },
+    blue: { C: "#3d5f9a", h: "#5f82bd", c: "#f2f4f6", p: "#4a4a52", D: "#e88a9a", m: "#24365c", o: "#1d2a44" },
+    chick: { C: "#9aa0a8", h: "#bcc2ca", c: "#d8dce2", p: "#2c2e36", D: "#3a3c44", m: "#5a5f68", o: "#4a4f58" },
+    pink: { C: "#d86a9a", h: "#e892b8", c: "#fdf2f6", p: "#f2b13a", D: "#f2b13a", m: "#7a2a50", o: "#5a1e3a" },
+    teal: { C: "#2f8f8a", h: "#52aea8", c: "#f2faf9", p: "#f2a33a", D: "#f2a33a", m: "#1a524e", o: "#123c3a" },
+  },
+  pig: {
+    pink:   { C: "#f4aebd", h: "#fbd0d9", c: "#fde3e8", i: "#e8899c", k: "#ee95a8", m: "#9c4a5c", o: "#8a4252" },
+    ginger: { C: "#e8a073", h: "#f4c09c", c: "#fbdcc6", i: "#cc7a52", k: "#e08f63", m: "#7a3e20", o: "#6e3a1e" },
+    black:  { C: "#3d3a40", h: "#5c5860", c: "#6e6a72", i: "#2c2a2e", k: "#c99aa6", m: "#16151a", o: "#16151a" },
+    grey:   { C: "#b4aeb0", h: "#d4cfd1", c: "#e8e4e5", i: "#9a9093", k: "#e0a5b2", m: "#4a4245", o: "#4a4245" },
+    mint: { C: "#9fdcc0", h: "#c4ecd8", c: "#e4f7ee", i: "#6fb898", k: "#86ceaf", m: "#2f6e54", o: "#2f6450" },
   },
   frog: {
     green:  { C: "#5fb84a", h: "#8fd67a", c: "#e6f2b8", m: "#24502a", o: "#24502a" },
     blue:   { C: "#4a8fd6", h: "#7fb2ea", c: "#d6e8f7", m: "#1f3f66", o: "#1f3f66" },
     yellow: { C: "#e8c84a", h: "#f5e08a", c: "#fbf3cf", m: "#6b5414", o: "#6b5414" },
     red:    { C: "#d6504a", h: "#ea8580", c: "#f7d6d2", m: "#5e1a16", o: "#5e1a16" },
+    purple: { C: "#8a5ac9", h: "#b08ae0", c: "#e6dbf6", m: "#3a1f66", o: "#3a1f66" },
   },
 };
 
@@ -407,6 +703,9 @@ function calavera(grid, a, ox, oy, calm) {
     if ((c === "e" || c === "w") && y <= oy + a.eyes + 1) eyes.push([x, y]);
     if (LOOK_FUR[c]) grid[y][x] = "Q"; else if (LOOK_FEATURES[c]) grid[y][x] = "K";
   }
+  // a snout drawn with its own outline (the pig's) is painted over like the rest of
+  // the face, so the grin sits on bone as on the pug's muzzle
+  for (let y = oy + a.eyes + 2; y < oy + a.neck; y++) for (let x = ox + 4; x <= ox + 12; x++) if (grid[y][x] === "o") grid[y][x] = "Q";
   const bone = (x, y) => y >= oy && y < oy + a.neck && grid[y][x] === "Q";
   // the eyes as the mood draws them, squint and all, painted dark and widened outward
   const widen = (list) => list.flatMap(([ex, ey]) => [[ex, ey, ex < mid], [ex + (ex < mid ? -1 : 1), ey, ex < mid]]);
@@ -460,7 +759,9 @@ function dressUp(grid, animal, mood, costume, facePaint = true) {
   if (costume === "skeleton") {
     for (let y = oy; y < oy + a.neck; y++) for (let x = 0; x < W; x++) {
       const c = grid[y][x];
-      if (PAINT[c]) grid[y][x] = PAINT[c];
+      // the pig's snout is bone, its nostrils black; the pug's muzzle is a dark mask
+      const paint = a.snout && c === "k" ? "b" : PAINT[c];
+      if (paint) grid[y][x] = paint;
     }
   }
   for (const part of COSTUMES[costume](mood)) {
@@ -2518,7 +2819,7 @@ function decorationsFor(theme, right, days, commits, commitDays = 0) {
   return ladder.concat(streaks).filter((d) => DECORATIONS[d.name] && !DECORATIONS_ON_HOLD.includes(d.name));
 }
 const api = { MOODS, ANIMALS, HATS, COATS, HAT_COLOURS, W, H, compose, companion, dressUp, DECORATIONS,
-  RACES: ["cat", "pug", "frog"], CLASSES: ["none", "wizard", "ranger", "knight"],
+  RACES: ["cat", "pug", "frog", "bunny", "pig", "fox", "bear", "mouse", "hamster", "raccoon", "penguin"], CLASSES: ["none", "wizard", "ranger", "knight"],
   COSTUMES: ["none", ...Object.keys(COSTUMES)], LOOKS: Object.keys(LOOKS), LOOKS_PAINTED,
   DECORATION_NAMES: ["none", ...Object.keys(DECORATIONS)], DECORATION_LADDERS, DECORATION_STREAKS, decorationsFor,
   DECORATION_PX, decorationPx };

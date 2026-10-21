@@ -905,6 +905,12 @@ nav .space-switch select { width: 100%; font: inherit; font-size: 12.5px; font-w
                  border-radius: 6px; }
 .themes button[aria-pressed="true"] { background: var(--sel); border-color: var(--muted); font-weight: 600; }
 .themes.deco-specials { margin-top: 10px; align-items: center; }
+/* The companion quiz, under the races. */
+.pick-quiz-open { font: inherit; font-size: 12px; color: var(--muted); background: none; border: 0; padding: 6px 0 0; cursor: pointer; }
+.pick-quiz-open:hover { color: var(--ink); text-decoration: underline; }
+.pick-quiz-open[hidden], .pick-quiz[hidden] { display: none; }
+.pick-quiz { margin-top: 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); }
+.pick-quiz .pick-q { margin: 0 0 8px; font-size: 13px; }
 .deco-specials-label { font-size: 11px; color: var(--muted); width: 100%; }
 .themes button.locked { cursor: default; color: var(--muted); }
 .themes button[data-deco-lock] { position: relative; overflow: visible; }
