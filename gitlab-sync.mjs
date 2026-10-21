@@ -28,7 +28,7 @@ const EPIC_EVERY = DAY;
 const EVENT_DAYS = 21;
 const MR_DAYS = 14;
 const BRANCH_DAYS = 14;
-const MAX_TICKETS = 40;
+const MAX_TICKETS = 60;
 
 const CACHE_FILE = join(DATA, "sync-cache.json");
 
@@ -129,10 +129,13 @@ const reviewsCall = cache.user?.username
 // Your open merge requests, whole each time: a conflict or a pipeline result
 // doesn't touch a merge request's updated time, so "changed since" can't see it.
 const openCall = quick ? Promise.resolve(null) : pages("merge_requests?scope=created_by_me&state=opened");
-const [newEvents, newMrs, reviewing, openMrs] = await Promise.all([eventsCall, mrsCall, reviewsCall, openCall]);
+// Your open tickets, started or not, so the standup can plan past what you've begun.
+const assignedCall = quick ? Promise.resolve(null) : pages("issues?scope=assigned_to_me&state=opened");
+const [newEvents, newMrs, reviewing, openMrs, assignedIssues] = await Promise.all([eventsCall, mrsCall, reviewsCall, openCall, assignedCall]);
 // Without events GitLab didn't answer; leave everything as it was, so the next
 // sync still asks from the last good one.
 if (!newEvents) process.exit(0);
+if (assignedIssues) cache.assigned = assignedIssues.map((i) => ({ project_id: i.project_id, iid: i.iid }));
 
 for (const e of newEvents) {
   cache.events[e.id] = {
@@ -258,6 +261,14 @@ const stateOnly = new Set();
   for (const [holder, project] of Object.entries(readJson(join(DATA, "worklog.json"), {}).projects ?? {})) {
     for (const t of project.threads ?? []) for (const ref of t.blockedBy ?? []) blocker(holder, ref);
   }
+}
+// Your open tickets last: what you've touched keeps its place under the cap.
+const assignedKeys = new Set();
+for (const a of cache.assigned ?? []) {
+  const path = pathOf.get(a.project_id);
+  if (!path) continue;
+  assignedKeys.add(`${path}#${a.iid}`);
+  want(path, a.iid, 0);
 }
 const tickets = [...wanted.entries()].sort((a, b) => b[1].at - a[1].at).slice(0, MAX_TICKETS);
 const keep = new Set(tickets.map(([key]) => key));
@@ -410,7 +421,8 @@ const env = {
   EVENTS: JSON.stringify(Object.values(cache.events).sort((a, b) => b.id - a.id)),
   MRS: JSON.stringify(Object.values(cache.mrs)),
   ISSUES: JSON.stringify(
-    tickets.filter(([key]) => cache.issues[key]).map(([key]) => ({ path: cache.issues[key].path, issue: cache.issues[key].issue, links: cache.issues[key].links ?? [] })),
+    tickets.filter(([key]) => cache.issues[key]).map(([key]) => ({ path: cache.issues[key].path, issue: cache.issues[key].issue, links: cache.issues[key].links ?? [],
+      assigned: assignedKeys.has(key) })),
   ),
   EPICS: JSON.stringify(Object.values(cache.epics).map((e) => e.epic)),
   MESSAGES: JSON.stringify(Object.values(cache.messages)),

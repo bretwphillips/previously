@@ -362,8 +362,10 @@ to change something.
   work first, and nothing that has already merged. Filled in priority order until the tickets' GitLab weights
   reach a limit (Settings → General, 5 by default); a ticket with no weight counts
   as 1, one too big for what is left is skipped so a smaller one can fit, and the
-  first always goes in. Merge requests waiting on your review are added after,
-  whatever the limit.
+  first always goes in. Then, while there's room under the limit, your open tickets
+  you haven't started -- assigned to you, with no thread yet -- those in an epic
+  you're working in first, then the oldest; one blocked by a ticket still open
+  waits. Merge requests waiting on your review are added after, whatever the limit.
 - **Blockers** — `blocked` entries from the narrative.
 - **Needs review** — merge requests recorded as `rfr`, and only those.
 

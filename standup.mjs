@@ -209,6 +209,24 @@ export function standup(repos, tasks, activity, now = new Date(), { weightLimit 
     plan.push(entry);
     load += entry.weight;
   }
+  // Then your open tickets you haven't started -- assigned to you, no thread for
+  // them yet -- while they fit: those in an epic you're working in first, then
+  // the oldest. One blocked by a ticket still open waits.
+  const working = new Set(plan.map((e) => e.epic?.url ?? e.epic?.ref).filter(Boolean));
+  const openTicket = new Set((activity.issues ?? []).filter((i) => i.state === "opened").map((i) => `${i.repo}${i.ticket}`));
+  const unstarted = (activity.issues ?? [])
+    .filter((i) => i.assigned && i.state === "opened")
+    .map((i) => ({ issue: i, repo: repos.find((r) => r.name === i.repo) }))
+    .filter(({ issue, repo }) => repo?.inStandup && repo.onWorkHost && !repo.threads.some((t) => t.ticket === issue.ticket))
+    .filter(({ issue }) => !(issue.blockedBy ?? []).some((b) => b.source !== "description" || openTicket.has(b.ref.startsWith("#") ? `${issue.repo}${b.ref}` : b.ref)))
+    .sort((a, b) => Number(working.has(b.issue.epic?.url ?? b.issue.epic?.ref)) - Number(working.has(a.issue.epic?.url ?? a.issue.epic?.ref))
+      || Number(a.issue.ticket.slice(1)) - Number(b.issue.ticket.slice(1)));
+  for (const { issue, repo } of unstarted) {
+    const weight = issue.weight ?? UNWEIGHED;
+    if (load + weight > limit) continue;
+    plan.push({ text: brief(issue.title), ref: repo.web ? urlFor(repo.web, issue.ticket) : issue.ticket, epic: issue.epic ?? null });
+    load += weight;
+  }
   // Merge requests waiting on your review are on today's plan whatever the
   // weight limit -- someone is waiting -- unless a review thread covers them.
   for (const review of activity.reviews ?? []) {

@@ -97,7 +97,7 @@ const epicOf = (e) => {
 
 const issues = parse(process.env.ISSUES)
   .filter((t) => t.issue?.iid)
-  .map(({ path, issue, links }) => {
+  .map(({ path, issue, links, assigned }) => {
     const repo = folderOf(path);
     const blockedBy = new Map();
     for (const link of Array.isArray(links) ? links : []) {
@@ -112,6 +112,8 @@ const issues = parse(process.env.ISSUES)
       title: issue.title ?? "",
       state: issue.state ?? null,
       weight: issue.weight ?? null,
+      // assigned to you, open: what the standup's Today can plan beyond your threads
+      assigned: Boolean(assigned),
       // The epic the ticket belongs to, on tiers that have epics.
       epic: issue.epic?.iid ? epicOf(issue.epic) : null,
       blockedBy: [...blockedBy].map(([ref, source]) => ({ ref, source })),
