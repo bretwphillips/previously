@@ -900,8 +900,8 @@ function updateRow(update, settings, row, about) {
 
 // The daily code quiz (quiz.mjs). Today's questions as made, answers revealed as
 // they're chosen; the page records each answer through the app.
-// Earlier questions, plain, to study: grouped by day, the answer marked and yours
-// beside it, why, and where in the code.
+// Earlier questions, to study: drawn as today's are once answered -- the answer
+// marked, yours beside it, why, and where in the code -- grouped by day.
 function pastList(past) {
   if (!past.length) return "";
   const letter = (i) => String.fromCharCode(65 + i);
@@ -914,10 +914,13 @@ function pastList(past) {
   const when = (day) => new Date(`${day}T12:00:00`).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
   return `<div class="quiz-past" id="quiz-past" hidden>${[...days].map(([key, qs]) => {
     const [day, repo] = key.split("\u0000");
-    return `<h3>${esc(when(day))}${repo ? ` \u00b7 ${esc(repo)}` : ""}</h3><ol>${qs.map((q) => `<li>
-      <p class="quiz-ask">${esc(q.question)}${q.right === true ? ' <span class="seen">right</span>' : q.right === false ? ' <span class="seen">missed</span>' : ""}</p>
-      <ul>${q.choices.map((c, i) => `<li${i === q.answer ? ' class="is-answer"' : ""}>${letter(i)}. ${esc(c)}${i === q.answer ? " \u2713" : ""}${i === q.chosen && i !== q.answer ? " \u2190 yours" : ""}</li>`).join("")}</ul>
-      <p>${esc(q.explanation ?? "")} ${q.href ? `<a class="quiz-code" href="${esc(q.href)}">${esc(q.file)}:${q.line}</a>` : q.file ? `<span class="quiz-code">${esc(q.file)}:${q.line}</span>` : ""}</p>
+    return `<h3>${esc(when(day))}${repo ? ` \u00b7 ${esc(repo)}` : ""}</h3><ol class="quiz-list">${qs.map((q) => `<li class="quiz-q${q.right === true ? " right" : q.right === false ? " wrong" : ""}">
+      <p class="quiz-ask">${esc(q.question)}</p>
+      <div class="quiz-choices">${q.choices.map((c, i) => `<button disabled${i === q.answer ? ' class="is-answer"' : i === q.chosen ? ' class="is-chosen"' : ""}><b>${letter(i)}</b> ${esc(c)}</button>`).join("")}</div>
+      <div class="quiz-why">
+        <p>${esc(q.explanation ?? "")}</p>
+        ${q.href ? `<a class="quiz-code" href="${esc(q.href)}">${esc(q.file)}:${q.line}</a>` : q.file ? `<span class="quiz-code">${esc(q.file)}:${q.line}</span>` : ""}
+      </div>
     </li>`).join("")}</ol>`;
   }).join("")}</div>`;
 }
@@ -947,9 +950,13 @@ function quizSheet(quiz) {
         : `<button class="quiz-flag" title="The question or its answer is wrong. It won’t be scored or asked again.">Bad question</button>`}
     </li>`;
   };
+  // Today's score, with the day streak; the running total of right answers is
+  // shown under the decoration instead.
   const s = quiz.stats ?? {};
-  const record = s.answered
-    ? `${s.correct ?? 0} of ${s.answered} right${s.streak ? ` \u00b7 ${s.streak}-day streak` : ""}${s.best > (s.streak ?? 0) ? ` (best ${s.best})` : ""}`
+  const scored = questions.filter((q) => q.chosen != null && !q.flagged);
+  const answered = scored.length, correct = scored.filter((q) => q.chosen === q.answer).length;
+  const record = answered
+    ? `${correct} of ${answered} right${s.streak ? ` \u00b7 ${s.streak}-day streak` : ""}${s.best > (s.streak ?? 0) ? ` (best ${s.best})` : ""}`
     : "";
   const done = questions.length && questions.every((q) => q.chosen != null || q.flagged);
   return `<div class="scrim" id="quiz" hidden>
@@ -963,7 +970,7 @@ function quizSheet(quiz) {
     <div class="notes-actions">
       ${questions.length ? "" : `<button class="mini primary" id="quiz-make"${current?.error ? "" : " data-auto"}>${current?.error ? "Try again" : "Make today\u2019s quiz"}</button>`}
       ${(quiz.past ?? []).length ? `<button class="mini" id="quiz-past-toggle" aria-pressed="false">Previous questions</button>` : ""}
-      <span class="hint" id="quiz-status" data-answered="${s.answered ?? 0}" data-correct="${s.correct ?? 0}" data-streak="${s.streak ?? 0}" data-best="${s.best ?? 0}">${done ? "Done for today. " : ""}${esc(record)}</span>
+      <span class="hint" id="quiz-status" data-answered="${answered}" data-correct="${correct}" data-streak="${s.streak ?? 0}" data-best="${s.best ?? 0}">${done ? "Done for today. " : ""}${esc(record)}</span>
     </div>
   </div>
 </div>`;
