@@ -6,7 +6,7 @@
 ## Previously (work dashboard)
 
 The Previously app (in ~/Applications) shows current state across every repo here. Its data
-lives in `~/Projects/previously/` — read `README.md` there before touching it.
+lives in `~/Projects/previously/` — read `README.md` and `docs/guide.md` there before touching it.
 
 - **Each space (work, personal, …) has its own data folder.** Find a repo's with
   `node ~/Projects/previously/spaces.mjs which <repo>` -- it prints the space, its
