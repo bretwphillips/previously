@@ -312,7 +312,7 @@ export function createCore(host) {
     const state = readJson(UPDATE, {}) ?? {};
     if ((state.problem?.at ?? 0) >= started - 1) return;
     state.problem = {
-      text: `The update stopped before it could say why (exit ${status}). Run sh update.sh install in the previously folder to see the error.`,
+      text: `The update stopped before it could say why (exit ${status}). Run ${process.platform === "win32" ? "node update.mjs install" : "sh update.sh install"} in the previously folder to see the error.`,
       at: now(),
     };
     writeJson(UPDATE, state);

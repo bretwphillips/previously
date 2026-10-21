@@ -42,3 +42,7 @@ reviews/
 
 # Where the terminal drawer's tabs were, and which ran Claude, for the next launch.
 terminal-layout.json
+
+# The Electron shell's own packages (npm install in electron/).
+electron/node_modules/
+electron/Previously.ico

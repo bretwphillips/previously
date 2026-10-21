@@ -7,7 +7,7 @@
 //   node spaces.mjs which <repo>     "space<TAB>data<TAB>path" for a repo, by name or path
 //   node spaces.mjs ids              every space's id
 import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
-import { basename, dirname, join, resolve } from "node:path";
+import { basename, dirname, join, resolve, sep } from "node:path";
 import { homedir } from "node:os";
 import { fileURLToPath } from "node:url";
 
@@ -21,7 +21,7 @@ const SPACE_FILES = ["worklog.json", "tasks.json", "notes.md", "links.json", "ch
   "resolved.json", "worklog.html", "build.log", ".journal"];
 
 const slug = (name) => name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "space";
-const expand = (p) => resolve(p.replace(/^~(?=$|\/)/, homedir()));
+const expand = (p) => resolve(p.replace(/^~(?=$|[\\/])/, homedir()));
 
 function defaults() {
   return {
@@ -105,7 +105,7 @@ export function reposOf(space, config = readSpaces()) {
   const nearest = (path) => {
     let best = null;
     for (const s of config.spaces) for (const f of s.folders) {
-      if ((path === f || path.startsWith(f + "/")) && (!best || f.length > best.length)) best = { id: s.id, length: f.length };
+      if ((path === f || path.startsWith(f + sep)) && (!best || f.length > best.length)) best = { id: s.id, length: f.length };
     }
     return best?.id;
   };

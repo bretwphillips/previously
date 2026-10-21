@@ -1,0 +1,14 @@
+{
+  "name": "previously-shell",
+  "private": true,
+  "description": "Previously's window, tray and terminal for Windows (and anywhere Electron runs), around the shared core.",
+  "type": "module",
+  "main": "main.mjs",
+  "scripts": {
+    "start": "electron ."
+  },
+  "dependencies": {
+    "electron": "44.6.0",
+    "node-pty": "1.1.0"
+  }
+}

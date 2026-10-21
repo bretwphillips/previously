@@ -10,6 +10,7 @@ import { existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { execFileSync } from "node:child_process";
+import { program } from "./proc.mjs";
 import { CODE } from "./spaces.mjs";
 
 // Where releases come from when this copy can't say: a zip has no remote.
@@ -154,12 +155,26 @@ export async function install() {
   }
 
   try {
-    execFileSync("/bin/sh", [join(CODE, "make.sh")], { stdio: ["ignore", "pipe", "pipe"] });
+    rebuild();
   } catch (e) {
-    stop(`Version ${latest.version} is in place but the app didn't build: ${String(e.stderr ?? "").trim().split("\n").pop() || "see make.sh"}`);
+    stop(`Version ${latest.version} is in place but the app didn't build: ${String(e.stderr ?? "").trim().split("\n").pop() || (process.platform === "darwin" ? "see make.sh" : "see npm install in electron")}`);
   }
   save({ problem: null, installedAt: Math.floor(Date.now() / 1000) });
   return `Updated to ${latest.version}.`;
+}
+
+/** The app, rebuilt for the code now in place: on the Mac, make.sh compiles it;
+    elsewhere the Electron shell's packages are brought up to what it now lists. */
+export function rebuild() {
+  if (process.platform === "darwin") {
+    execFileSync("/bin/sh", [join(CODE, "make.sh")], { stdio: ["ignore", "pipe", "pipe"] });
+    return;
+  }
+  const dir = join(CODE, "electron");
+  const npm = program("npm");
+  execFileSync(npm.cmd, ["install", "--no-audit", "--no-fund"], { cwd: dir, stdio: ["ignore", "pipe", "pipe"], shell: npm.shell, windowsHide: true });
+  // Electron fetches its own binary on first use; fetched now, so the relaunch is quick.
+  execFileSync(process.execPath, [join(dir, "node_modules", "electron", "install.js")], { cwd: dir, stdio: ["ignore", "pipe", "pipe"], windowsHide: true });
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

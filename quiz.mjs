@@ -10,6 +10,7 @@
 // is dropped: only what can be checked against the code is shown. Once you've had a
 // few dozen, every other quiz brings one back -- rechecked against the code first.
 import { execFileSync } from "node:child_process";
+import { program } from "./proc.mjs";
 import { existsSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { spaceFor, reposOf, CODE } from "./spaces.mjs";
@@ -293,10 +294,11 @@ Reply with ONLY a JSON object, no prose, no code fence:
 {"questions":[{"question":"...","choices":["...","...","...","..."],"answer":0,"explanation":"...","file":"...","line":1,"quote":"..."}]}
 
 ${material}`;
+  const claude = program("claude");
   const raw = execFileSync(
-    "claude",
+    claude.cmd,
     ["-p", "--model", "sonnet", "--output-format", "json", "--allowedTools", "Read,Grep,Glob", "--permission-mode", "dontAsk"],
-    { cwd: repo.path, input: prompt, encoding: "utf8", maxBuffer: 64 << 20, timeout: 300_000 },
+    { cwd: repo.path, input: prompt, encoding: "utf8", maxBuffer: 64 << 20, timeout: 300_000, shell: claude.shell, windowsHide: true },
   );
   const text = JSON.parse(raw).result ?? "";
   const json = JSON.parse(text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1));
@@ -315,7 +317,7 @@ ${material}`;
 // nearest to the cited one -- as Claude may have counted lines in an older copy.
 function checks(repo, q, git, fetched) {
   if (!Array.isArray(q.choices) || q.choices.length < 2 || !(q.answer >= 0 && q.answer < q.choices.length)) return null;
-  if (!q.file || q.file.startsWith("/") || q.file.includes("..")) return null;
+  if (!q.file || /^([\\/]|[A-Za-z]:)/.test(q.file) || q.file.includes("..")) return null;
   const quote = (q.quote ?? "").trim();
   if (quote.length < 12) return null;
   const find = (text) => {

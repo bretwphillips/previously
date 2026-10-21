@@ -81,6 +81,8 @@ the rest sit beside the code. None of them are tracked by git.
 | `core.mjs` | What the app decides, whatever shell hosts the page: saving what the page sends, switching spaces, the sync queue and schedule, updates, the quiz, review trees, the menu bar's list, and rebuilding then showing the page. A shell supplies only what its system does (`host`). |
 | `core-server.mjs` | The core as a child process, for a shell that can't run JavaScript itself: JSON lines over stdin and stdout. |
 | `src/main.swift` | The Mac app around the core: window, menu bar, quick view, clipboard, folder picker, whether you're at the Mac, and the terminal drawer (`TerminalDrawer`, which owns each shell's PTY). The menu-bar icon is drawn here (`menuBarIcon()`), from the app icon's cloud. |
+| `electron/` | The app on Windows (and anywhere else Electron runs), around the same core: `main.mjs` (window, tray, menu, whether you're there), `terminal.mjs` (the drawer, on node-pty -- ConPTY on Windows), `preload.cjs` (the pages' `webkit.messageHandlers`, carried to the main process), `icon.mjs` (the shortcut's `.ico`). `npm install` there; `npm start` runs it. |
+| `install.ps1` | The Windows installer: checks what's needed, installs `electron/`'s packages, adds a Start menu entry, opens it. |
 
 **Scripts.**
 
@@ -94,7 +96,7 @@ the rest sit beside the code. None of them are tracked by git.
 | `show.mjs`, `show.sh` | The terminal view. |
 | `done.mjs`, `done.sh` | Record that HEAD finished one or more scope lines. |
 | `review.mjs` | Fetches a merge request into its review tree, or removes the tree. |
-| `install.sh` | One-time setup: checks what's needed, builds the app, opens it. |
+| `install.sh` | One-time setup on a Mac: checks what's needed, builds the app, opens it. |
 | `claude-hook.mjs`, `session-hook.sh` | Auto-resume: the Claude Code hook that notes which session runs in which terminal tab, and adding or removing it from `~/.claude/settings.json`. |
 | `holidays.mjs` | The holidays quest mode can dress up for: each one's theme and when it starts and ends. |
 | `ai-notes.mjs`, `ai-notes.sh` | Prints your AI notes for a session to read: every space's, then those of the space the repo is in. |

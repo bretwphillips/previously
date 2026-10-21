@@ -1,8 +1,8 @@
 // Running other programs: git, glab, gh, and the app's own Node scripts. No
 // shell in between, so it works the same on every system.
 import { spawn, spawnSync } from "node:child_process";
-import { createWriteStream } from "node:fs";
-import { join } from "node:path";
+import { createWriteStream, existsSync } from "node:fs";
+import { delimiter, join } from "node:path";
 import { CODE } from "./spaces.mjs";
 
 /** Runs a program to the end: {code, out, err}, never throwing. `log` sends its
@@ -34,10 +34,26 @@ export function run(cmd, args = [], { cwd, env, input, log } = {}) {
 /** One of the app's own scripts, run with this same Node. */
 export const node = (file, args = [], opts = {}) => run(process.execPath, [join(CODE, file), ...args], { cwd: CODE, ...opts });
 
+/** How to start a program by name. On Windows a tool installed through npm is a
+    .cmd script, which only starts through the command shell -- so only fixed
+    arguments go to one started that way, never text from elsewhere. */
+export function program(name) {
+  if (process.platform !== "win32") return { cmd: name, shell: false };
+  const dirs = (process.env.PATH ?? "").split(delimiter).filter(Boolean);
+  for (const ext of [".exe", ".cmd", ".bat"]) {
+    for (const dir of dirs) {
+      const path = join(dir, name + ext);
+      if (existsSync(path)) return { cmd: ext === ".exe" ? path : `"${path}"`, shell: ext !== ".exe" };
+    }
+  }
+  return { cmd: name, shell: false };
+}
+
 /** Whether a program can be found at all (glab, gh). */
-export function has(cmd) {
-  const found = spawnSync(cmd, ["--version"], { stdio: "ignore", windowsHide: true });
-  return !found.error;
+export function has(name) {
+  const { cmd, shell } = program(name);
+  const found = spawnSync(cmd, ["--version"], { stdio: "ignore", windowsHide: true, shell });
+  return !found.error && found.status === 0;
 }
 
 /** git's answer, or null when it failed. */
