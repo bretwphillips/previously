@@ -540,6 +540,7 @@ final class TerminalDrawer: NSObject, WKScriptMessageHandler, WKNavigationDelega
     /// while a shell sits in another.
     var onRepoChanged: ((String) -> Void)?
     var onEmpty: (() -> Void)?
+    var onHide: (() -> Void)?
     var onDrag: ((CGFloat) -> Void)?
 
     var isEmpty: Bool { shells.isEmpty }
@@ -548,7 +549,7 @@ final class TerminalDrawer: NSObject, WKScriptMessageHandler, WKNavigationDelega
         super.init()
         let config = WKWebViewConfiguration()
         config.websiteDataStore = .nonPersistent()
-        for name in ["termInput", "termResize", "termReady", "termClose", "termNew", "termSplit", "termLayout", "termLink"] {
+        for name in ["termInput", "termResize", "termReady", "termClose", "termNew", "termSplit", "termLayout", "termLink", "termHide"] {
             config.userContentController.add(self, name: name)
         }
         let dropView = DropWebView(frame: .zero, configuration: config)
@@ -883,6 +884,10 @@ final class TerminalDrawer: NSObject, WKScriptMessageHandler, WKNavigationDelega
         }
         if message.name == "termNew" {
             openPlain()
+            return
+        }
+        if message.name == "termHide" {
+            onHide?()
             return
         }
         if message.name == "termLayout" {
@@ -1782,6 +1787,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, WKN
             self.tellPageDrawerHeight()
         }
         drawer.onEmpty = { [weak self] in self?.hideTerminal() }
+        drawer.onHide = { [weak self] in self?.hideTerminal() }
         drawer.onRepoChanged = { [weak self] _ in self?.refresh() }
         window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 1080, height: 740),

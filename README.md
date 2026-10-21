@@ -296,7 +296,9 @@ sidebar, which stays full height beside it. Each shell is a tab:
   edge to sit beside it, on a pill to take that column. `Esc` mid-drag puts it
   back.
 - `exit` closes a pane, `×` closes a tab and every pane in it; closing the last
-  hides the drawer. Hiding it leaves the shells running.
+  hides the drawer. The `×` at the far right of the tab bar hides the drawer, as the
+  toolbar button does. Hiding it leaves the shells running, so reopening it shows
+  them as you left them.
 - Quitting ends the shells -- they belong to the app -- but not the layout. The
   next launch reopens the drawer if it was open, with the same tabs, groups,
   column order and widths, and a fresh shell in the folder each one was last in
