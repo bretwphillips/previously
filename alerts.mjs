@@ -16,7 +16,10 @@ export function alertsFor(repo, narrative = {}) {
   // `unfinished` marks work that is yours and not done -- uncommitted, unpushed,
   // stashed, or noted as blocked or waiting. The markers count those.
   // at: when the thing it's about was last touched, for lines that go stale (see render.mjs)
-  const add = (severity, text, source, unfinished = false, at) => out.push({ severity, text, source, repo: repo.name, unfinished, ...(at ? { at } : {}) });
+  // key: for a line whose wording ages ("10 days ago"), what it is about, so a
+  // line you cleared stays cleared until that changes rather than until tomorrow.
+  const add = (severity, text, source, unfinished = false, at, key) =>
+    out.push({ severity, text, source, repo: repo.name, unfinished, ...(at ? { at } : {}), ...(key ? { key } : {}) });
 
   for (const text of narrative.blocked ?? []) add("blocked", text, "narrative", true);
 
@@ -45,12 +48,13 @@ export function alertsFor(repo, narrative = {}) {
     return days === 0 ? "today" : days === 1 ? "yesterday" : `${age(at)} ago`;
   };
   for (const b of repo.unpushedBranches ?? [])
-    add("info", `${b.branch} has ${plural(b.commits, "commit")} on no remote, the last ${ago(b.at)}`, "git", true, b.at);
+    add("info", `${b.branch} has ${plural(b.commits, "commit")} on no remote, the last ${ago(b.at)}`, "git", true, b.at, `sidebranch:${b.branch}:${b.commits}:${b.at}`);
   if (repo.stashTimes?.length)
-    add("info", `${repo.stashTimes.length} stash${repo.stashTimes.length === 1 ? "" : "es"}, oldest ${ago(Math.min(...repo.stashTimes))}`, "git", true, Math.max(...repo.stashTimes));
+    add("info", `${repo.stashTimes.length} stash${repo.stashTimes.length === 1 ? "" : "es"}, oldest ${ago(Math.min(...repo.stashTimes))}`, "git", true, Math.max(...repo.stashTimes),
+      `stash:${repo.stashTimes.length}:${Math.min(...repo.stashTimes)}:${Math.max(...repo.stashTimes)}`);
 
   if (!repo.isDefault && repo.days !== null && repo.days > STALE_DAYS)
-    add("quiet", `no commits in ${plural(repo.days, "day")}`, "git");
+    add("quiet", `no commits in ${plural(repo.days, "day")}`, "git", false, undefined, "quiet");
 
   return out.sort((a, b) => SEVERITY.indexOf(a.severity) - SEVERITY.indexOf(b.severity));
 }
