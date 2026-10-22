@@ -187,14 +187,15 @@ export function standup(repos, tasks, activity, now = new Date(), { weightLimit 
     }
   }
 
-  // Merge requests you approved are review work, and belong in the record.
+  // Merge requests you approved are review work, and belong in the record --
+  // in a repo you haven't cloned too, which comes with its own link.
   for (const approval of activity.approvals ?? []) {
     if (approval.at < cutoff) continue;
-    const repo = repos.find((r) => r.name === approval.repo);
-    if (!repo?.onWorkHost) continue;
+    const repo = approval.repo && repos.find((r) => r.name === approval.repo);
+    if (repo ? !repo.onWorkHost : !approval.web) continue;
     yesterday.push({
       text: `Reviewed: ${brief(approval.title)}`,
-      ref: mrUrl(repo.web, approval.iid) ?? `!${approval.iid}`,
+      ref: mrUrl(repo ? repo.web : approval.web, approval.iid) ?? `!${approval.iid}`,
       epic: null,
     });
   }

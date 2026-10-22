@@ -152,6 +152,14 @@ for (const e of newEvents) {
 }
 for (const [id, e] of Object.entries(cache.events)) if (secondsOf(e.created_at) < now - EVENT_DAYS * DAY) delete cache.events[id];
 
+// A merge request you approved is review work even in a project not cloned here:
+// each such project is looked up (by id) once, for the path its link needs.
+await Promise.all(
+  [...new Set(Object.values(cache.events).filter((e) => e.action_name === "approved").map((e) => e.project_id))]
+    .filter((id) => !cache.projects[id])
+    .map((id) => lookUp(id)),
+);
+
 // Someone else spoke: a ticket or merge request of yours whose comment count
 // went up by more than the comments you left on it since the last sync. Only
 // counts already seen once are compared, so the first sync flags nothing.
@@ -432,7 +440,7 @@ cache.problems = problems;
 // ---- hand it all to activity.mjs, the same shape the API gave it
 const env = {
   ...process.env,
-  PROJECTS: JSON.stringify(projects),
+  PROJECTS: JSON.stringify(Object.values(cache.projects).map((p) => ({ id: p.id, path_with_namespace: p.path }))),
   EVENTS: JSON.stringify(Object.values(cache.events).sort((a, b) => b.id - a.id)),
   MRS: JSON.stringify(Object.values(cache.mrs)),
   ISSUES: JSON.stringify(
