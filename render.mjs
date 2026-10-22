@@ -7,6 +7,8 @@ import { readFileSync } from "node:fs";
 // Fantasy mode ships as plain files, read at build time, so its drawing code is
 // not trapped inside a template literal.
 const here = new URL(".", import.meta.url);
+// Shortcut hints in the keys of the computer the page is built on.
+const MOD = process.platform === "darwin" ? "\u2318" : "Ctrl+";
 const QUEST_JS = readFileSync(new URL("quest.js", here), "utf8");
 const COMPANION_JS = readFileSync(new URL("companion.js", here), "utf8");
 // quest.css names only "dark"; every other dark theme gets its dark pictures too.
@@ -473,7 +475,7 @@ function overview(data) {
       <div class="notes-actions">
         <button class="mini primary" id="notes-save">Save</button>
         <button class="mini" id="notes-cancel">Cancel</button>
-        <span class="hint">\u2318S saves \u00b7 Esc cancels</span>
+        <span class="hint">${MOD}S saves \u00b7 Esc cancels</span>
       </div>
     </div>
 
@@ -538,7 +540,7 @@ function sectionEditor(field, raw, hint) {
       <div class="notes-actions">
         <button class="mini primary sect-save">Save</button>
         <button type="button" class="mini sect-cancel">Cancel</button>
-        <span class="hint">\u2318S saves \u00b7 Esc cancels</span>
+        <span class="hint">${MOD}S saves \u00b7 Esc cancels</span>
       </div>
     </form>`;
 }
@@ -1001,10 +1003,10 @@ function settingsPane(userName, weightLimit = 5, terminals = [], update = null, 
     ["settings", "Open settings"],
   ];
   const fixed = [
-    ["\u2318R", "Refresh"],
-    ["\u2318W", "Close window"],
-    ["\u2318M", "Minimize"],
-    ["\u2318Q", "Quit"],
+    [`${MOD}R`, "Refresh"],
+    [`${MOD}W`, "Close window"],
+    [`${MOD}M`, "Minimize"],
+    [`${MOD}Q`, "Quit"],
     ["\u2191 \u2193", "Move between projects"],
   ];
 
@@ -1289,12 +1291,12 @@ function settingsPane(userName, weightLimit = 5, terminals = [], update = null, 
         <table class="keys">${rebindable
           .map(
             ([action, label]) =>
-              `<tr><td>${esc(label)}</td><td>${action === "overview" ? "<kbd>\u23180</kbd> " : ""}<kbd class="editable" data-action="${action}"></kbd></td></tr>`,
+              `<tr><td>${esc(label)}</td><td>${action === "overview" ? `<kbd>${MOD}0</kbd> ` : ""}<kbd class="editable" data-action="${action}"></kbd></td></tr>`,
           )
           .join("")}${fixed
           .map(([key, label]) => `<tr><td>${esc(label)}</td><td><kbd>${key}</kbd></td></tr>`)
           .join("")}</table>
-        <p class="hint">Click a key to rebind it. Command shortcuts come from the menu bar.</p>
+        <p class="hint">Click a key to rebind it. ${process.platform === "darwin" ? "Command shortcuts come from the menu bar." : "The rest come from the app's menu: Alt shows it."}</p>
       </div>
     </section>`;
 }

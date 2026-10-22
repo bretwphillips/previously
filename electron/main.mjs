@@ -317,7 +317,8 @@ function paintTray() {
 function buildMenu() {
   const mod = process.platform === "darwin" ? "Cmd" : "Ctrl";
   Menu.setApplicationMenu(Menu.buildFromTemplate([
-    ...(process.platform === "darwin" ? [{ role: "appMenu" }] : []),
+    // Quitting from the keyboard, as on the Mac: closing the window only hides it.
+    ...(process.platform === "darwin" ? [{ role: "appMenu" }] : [{ label: "File", submenu: [{ label: "Quit Previously", accelerator: "Ctrl+Q", click: () => quit() }] }]),
     { role: "editMenu" },
     {
       label: "View",

@@ -400,7 +400,9 @@ function newTab(position) {
 
 // ⌘-click opens a link, as in other Mac terminals: a plain click focuses or
 // selects and never opens anything by accident.
-function openLink(e, uri) { if (e && e.metaKey) app.termLink.postMessage(uri); }
+// ⌘-click on a Mac, Ctrl-click elsewhere: as in each system's other terminals.
+var MAC = /Mac/.test(navigator.platform);
+function openLink(e, uri) { if (e && (MAC ? e.metaKey : e.ctrlKey)) app.termLink.postMessage(uri); }
 // Hovering a link says how to open it -- and, for a link a program marked, where
 // it really goes, as its text can say anything.
 function hint(holder, text) { holder.title = text; }

@@ -24,7 +24,8 @@ Every narrative line carries a small source tag so you can tell what it rests on
 
 ## Setting it up
 
-Previously is a Mac app (macOS 13 or later). It reads your git clones where
+Previously runs on a Mac (macOS 13 or later) or on Windows 10 or 11 -- see *On
+Windows* below for what's different there. It reads your git clones where
 they already are -- one folder of them, or several. Clone it (or unzip it)
 anywhere and run its installer:
 
@@ -41,6 +42,47 @@ their own copy, built from their own folder. It also offers to add the Claude Co
 `CLAUDE.md` (see *Working with Claude*); the text is in `claude-section.md`.
 Repos in other folders, or a second set like personal projects, go in spaces of
 their own: Settings → Spaces (see *Spaces* under *Using it*).
+
+### On Windows
+
+The same, in PowerShell -- the script is unsigned, so this one run is allowed past
+PowerShell's policy:
+
+```powershell
+git clone https://github.com/bretwphillips/previously.git
+powershell -ExecutionPolicy Bypass -File previously\install.ps1
+```
+
+It needs `git` and `node` 20 or later, and says where to get either. It puts itself
+beside your repos as on a Mac, installs its window and terminal (Electron, into
+`previously\electron\`, a minute the first time), adds **Previously** to the Start
+menu and opens it. It offers to install `gh` through winget, and to add the Claude
+Code section to `CLAUDE.md` -- with forward-slash paths, as Claude Code runs its
+commands in Git Bash there, so `sh …/show.sh` and the rest work as written.
+
+What's different from the Mac:
+
+- **The tray** has what the menu bar has: what needs you, by space, and a click on
+  one opens it. Closing the window leaves the app there; quit from the tray, or
+  `Ctrl+Q`.
+- **Shortcuts** are `Ctrl` where the Mac has `⌘`: `Ctrl+G` standup, `Ctrl+,`
+  settings, `Ctrl+R` refresh, `Ctrl+E` notes. Splitting the terminal is
+  `Ctrl+Shift+D`, since `Ctrl+D` belongs to the shell. The menu hides until you
+  press `Alt`.
+- **The terminal** runs PowerShell (PowerShell 7 if it's installed). Windows doesn't
+  say which folder a shell has `cd`'d into, so a tab keeps the name of the folder it
+  started in, and a split opens there. `Ctrl`-click a link to open it.
+- **Auto-resume** counts a tab as running Claude once Claude Code's session hook has
+  noted a session there, and resumes that session after a restart, even if Claude
+  had since been closed in that tab.
+- **Terminal apps** (Settings → Terminal) are the Mac's only: on Windows it's the
+  drawer or nothing.
+- **Updating** works the same, from Settings; instead of rebuilding an app it brings
+  `electron\`'s packages up to date. From a terminal: `node update.mjs check` or
+  `node update.mjs install`.
+
+Each computer keeps its own spaces, worklogs, notes, tasks and settings: they live
+in its own folder and aren't synced between machines.
 
 **Updating:** once a day, when the window opens, Previously asks GitHub whether
 there's a newer release. When there is, a dot appears on the gear and
@@ -224,7 +266,8 @@ tasks go with it.
   folders and sync), *Markers*, *Shortcuts*, *Extras* (quote of the day, quest
   mode, the companion) and *A.I.* (notes for the AI, the code quiz, auto-resume). Hover a setting's name for what it does; **Done** or `Esc` goes back to
   the pane you came from. `⌘R` refresh, `⌘0` Overview, `⌘E` open `notes.md` in
-  the app macOS opens `.md` files with, `` ⌃` `` terminal, `⌘Q` quit.
+  the app macOS opens `.md` files with, `` ⌃` `` terminal, `⌘Q` quit (on Windows,
+  `Ctrl` for `⌘`).
 - The **edit** button beside Notes writes `notes.md` from inside the window. It only
   appears in the app — a browser cannot write the file, so there the page is
   read-only.
@@ -264,7 +307,7 @@ sidebar, which stays full height beside it. Each shell is a tab:
   named after the repo its shell is in and follows your `cd`, so a click always
   lands in the repo you clicked; while a program is running in it, it keeps the
   last answer.
-- `⌘D` or the split button at the right of the tab strip puts a new shell beside
+- `⌘D` (`Ctrl+Shift+D` on Windows) or the split button at the right of the tab strip puts a new shell beside
   the focused one, in the folder that one is in. A tab's shells sit side by side
   as columns, equal until you drag a divider (double-click one to even them out).
   Click a pane to focus it; the others dim a little.
@@ -305,11 +348,11 @@ git state -- a commit, checkout, stash, fetch or staging -- the page rebuilds.
   open, and ask for a review tree (see *Review threads*: a known repo and an MR
   number, which `review.mjs` fetches into `reviews/`, then a shell opened there).
   None of those carries input.
-- The app starts shells, ends them and reads which folder each is in from macOS.
+- The app starts shells, ends them and, on a Mac, reads which folder each is in from macOS.
   It never writes to one, and nothing a shell prints reaches the page.
 - `xterm.js` is vendored in `terminal/vendor/`; nothing loads from the network.
-- **⌘-click** a web address in a shell's output to open it in your browser, as in
-  other Mac terminals; a plain click only focuses or selects. Links a program marks
+- **⌘-click** (`Ctrl`-click on Windows) a web address in a shell's output to open
+  it in your browser, as in other terminals; a plain click only focuses or selects. Links a program marks
   as links (Claude Code's) work too, and hovering one shows where it really goes --
   its text can say anything. A full path (`/…` or `~/…`, a trailing `:line` ignored)
   opens as well: a folder in Finder, and a plain document (image, PDF, text, audio,
@@ -328,7 +371,7 @@ the space's first folder or the repo. The app cannot see into another app's tabs
 click opens a new window, and the page does not rebuild after commands; it
 catches up on its next rebuild as usual.
 
-macOS only, like the rest of the app: 13 or later.
+On Windows the drawer is the same, on PowerShell; see *On Windows* under *Setting it up*.
 
 ---
 
@@ -491,9 +534,9 @@ Each space sets its own schedule in Settings → Spaces. **Manual** by default �
 nothing is fetched, ever.
 
 Set it to **Weekly**, **Daily**, **Hourly** or **Every 15 min** and the app syncs -- `git fetch --prune` across
-your repos and GitLab -- *the first time you're at the Mac each day* (weekly: the
+your repos and GitLab -- *the first time you're at the computer each day* (weekly: the
 first time after seven days), whether the app was just opened or left running,
-so the standup is current when you get in. "At the Mac" means the screen
+so the standup is current when you get in. "At the computer" means the screen
 unlocked and awake, the keyboard or mouse used in the last 15 minutes, and the
 window showing. The standup says when it last synced, in purple when that was
 before today. Never at a set time of day, never while the
@@ -590,7 +633,7 @@ happen to be standing on.
 Still nothing at a set time. If sync is Manual only, none of this happens until you
 press the button.
 
-The app only syncs while you're there, and it can sit in the menu bar for days
+The app only syncs while you're there, and it can sit in the menu bar (or the tray) for days
 unwatched. So when a sync is more than a day overdue, the Overview says *Last
 synced 3 days ago* with a **Sync now** button beside it. Manual only never shows
 it — you sync when you choose — and neither does a sync that is current.
