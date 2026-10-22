@@ -1,5 +1,5 @@
 import { execFile } from "node:child_process";
-import { readdirSync, existsSync } from "node:fs";
+import { readdirSync, existsSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { promisify } from "node:util";
 
@@ -39,6 +39,38 @@ async function defaultBase(repo) {
     if (await git(repo, ["rev-parse", "--verify", "-q", ref])) return ref;
   }
   return "HEAD";
+}
+
+// What a repo's main branch has that its newest release doesn't, for whoever
+// tags it: the next release's notes. Read from origin's branch, so it has
+// everyone's merges as of the last fetch. A merged MR or PR is known by its
+// title; a squash merge by its subject, GitLab's 'Resolve "…"' unwrapped.
+const unwrap = (title) => /^Resolve "(.*)"$/.exec(title)?.[1] ?? title;
+
+function releaseChange(entry) {
+  const [subject = "", body = ""] = entry.split("\x1f");
+  const first = unwrap(body.trim().split("\n")[0]);
+  let m;
+  if ((m = /^Merge pull request #(\d+)/.exec(subject))) return { title: first || subject, ref: `#${m[1]}` };
+  if (/^Merge branch '/.test(subject)) {
+    const mr = /See merge request \S*!(\d+)/.exec(body);
+    return { title: first || subject, ...(mr ? { ref: `!${mr[1]}` } : {}) };
+  }
+  // A branch merged back into itself, and the commit that bumps the version, aren't changes.
+  if (/^Merge /.test(subject) || /^(Version \d|Release v?\d|Bump (the )?version|v?\d+\.\d+\.\d+$|chore\(release\))/i.test(subject)) return null;
+  if ((m = /^(.*) \(#(\d+)\)$/.exec(subject))) return { title: m[1], ref: `#${m[2]}` };
+  return { title: unwrap(subject) };
+}
+
+async function sinceRelease(repo, base) {
+  if (base === "HEAD") return null;
+  const tag = await git(repo, ["describe", "--tags", "--abbrev=0", base]);
+  if (!tag) return null;
+  const log = await git(repo, ["log", "--first-parent", "--format=%s%x1f%b%x1e", `${tag}..${base}`]);
+  const changes = (log ?? "").split("\x1e").map((e) => e.trim()).filter(Boolean).map(releaseChange).filter(Boolean);
+  let fetchedAt = null;
+  try { fetchedAt = Math.floor(statSync(join(repo, ".git", "FETCH_HEAD")).mtimeMs / 1000); } catch {}
+  return changes.length ? { tag, base, changes, fetchedAt } : null;
 }
 
 export function findRepos(root) {
@@ -169,8 +201,11 @@ export async function readRepo(root, name, author) {
   const committedAt = Number(ts) || 0;
   const branchName = branch || "(detached)";
 
+  const release = await sinceRelease(repo, base);
+
   return {
     name,
+    release,
     branch: branchName,
     isDefault: branchName === "master" || branchName === "main",
     dirty: realChanges(status),

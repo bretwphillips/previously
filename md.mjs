@@ -1,8 +1,9 @@
 // Deliberately tiny: notes.md is a scratchpad, not a publishing format.
 // Headings, bullets, checkboxes, rules, links, bold, code. Nothing else.
 
+// Quotes too: the same text goes into attributes, where a bare " ends one early.
 export const esc = (s) =>
-  String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
 // Only web links become links. Ticket descriptions are written by other people,
 // and a javascript: or file: link would run or load inside the app.

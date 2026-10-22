@@ -658,6 +658,11 @@ button.mini { font: inherit; font-size: 11px; padding: 3px 10px; cursor: pointer
               border: 1px solid var(--line); background: var(--bg); color: var(--ink);
               border-radius: 5px; text-transform: none; letter-spacing: 0; font-weight: 500; }
 button.mini:hover { border-color: var(--muted); }
+.git .row .v button.mini { margin-left: 6px; }
+.release-draft { margin: 8px 0 2px; padding: 10px 12px; border-top: 1px solid var(--line-soft); font-family: var(--sans); font-size: 13.5px; }
+.release-draft[hidden] { display: none; }
+.release-draft ul { margin: 6px 0 10px; padding-left: 18px; }
+.release-draft li { margin: 2px 0; }
 button.mini.primary { background: var(--waiting); border-color: var(--waiting); color: #fff; }
 button.mini[hidden] { display: none; }
 h3 button.mini { margin-left: 8px; vertical-align: 1px; }
@@ -797,7 +802,7 @@ body.quest:not(.quest-none) .thread-tabs .mark { display: none; }
 .about details > div p { margin: 0 0 6px; }
 .about details > div p:last-child { margin: 0; }
 /* Unread isn't shown in type at all: the marker carries it. */
-#standup-synced.stale { color: var(--mark-unfinished); font-weight: 600; }
+#standup-synced.stale, .release-synced.stale { color: var(--mark-unfinished); font-weight: 600; }
 /* A line's marker is its checkbox: click to acknowledge, again to undo. */
 .alerts li[data-key] > .dot { cursor: pointer; user-select: none; -webkit-user-select: none; position: relative; }
 /* The marker is small; its click target is a little larger than it looks. */

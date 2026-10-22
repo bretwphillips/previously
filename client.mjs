@@ -2112,6 +2112,37 @@ document.addEventListener('DOMContentLoaded', function () {
   }, true);
   paintCleared();
 
+  /* A repo's release row: what's merged since its newest tag, shown and copied as
+     the next release's notes. */
+  document.addEventListener('click', function (e) {
+    var toggle = e.target.closest ? e.target.closest('.release-notes-toggle') : null;
+    if (toggle) {
+      var panel = toggle.closest('.git').querySelector('.release-draft');
+      panel.hidden = !panel.hidden;
+      toggle.setAttribute('aria-expanded', String(!panel.hidden));
+      // Kept open through the reload a sync brings, so the fresh list is where you left it.
+      var repo = toggle.closest('section').id;
+      try { if (panel.hidden) sessionStorage.removeItem('release-open'); else sessionStorage.setItem('release-open', repo); } catch (err) {}
+      return;
+    }
+    var copy = e.target.closest ? e.target.closest('.release-draft-copy') : null;
+    if (!copy) return;
+    var bridge = window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.copyText;
+    if (bridge) bridge.postMessage({ text: copy.dataset.text });
+    else if (navigator.clipboard) navigator.clipboard.writeText(copy.dataset.text);
+    copy.textContent = 'Copied';
+    setTimeout(function () { copy.textContent = 'Copy'; }, 1500);
+  });
+
+  (function () {
+    var open = null;
+    try { open = sessionStorage.getItem('release-open'); } catch (err) {}
+    var toggle = open && document.querySelector('#' + CSS.escape(open) + ' .release-notes-toggle');
+    if (!toggle) return;
+    toggle.closest('.git').querySelector('.release-draft').hidden = false;
+    toggle.setAttribute('aria-expanded', 'true');
+  })();
+
   /* An Overview alert opens its repo, at that alert. */
   document.addEventListener('click', function (e) {
     var row = e.target.closest && e.target.closest('li.go > .what, li.go > .who') ? e.target.closest('li.go[data-go]') : null;
@@ -2484,10 +2515,8 @@ document.addEventListener('DOMContentLoaded', function () {
   var standupStale = false;
   // When GitLab was last asked: anything from yesterday shows it's worth a sync
   // before posting. Comments, approvals and merges only arrive with one.
-  (function () {
-    var label = document.getElementById('standup-synced');
-    var data = JSON.parse(document.getElementById('sync-data').textContent);
-    var at = Math.max(data.lastSyncAt || 0, data.lastApiSyncAt || 0, data.lastQuickSyncAt || 0);
+  // The same words beside a repo's release notes, from that repo's own last fetch.
+  function syncedLabel(label, at) {
     if (!label || !at) return;
     var when = new Date(at * 1000), today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -2496,7 +2525,13 @@ document.addEventListener('DOMContentLoaded', function () {
     label.textContent = old
       ? ' Last synced ' + (today - when < 86400000 ? 'yesterday' : when.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })) + ' at ' + time + '.'
       : ' Synced at ' + time + '.';
-    label.className = old ? 'stale' : '';
+    label.classList.toggle('stale', old);
+  }
+  (function () {
+    var data = JSON.parse(document.getElementById('sync-data').textContent);
+    syncedLabel(document.getElementById('standup-synced'), Math.max(data.lastSyncAt || 0, data.lastApiSyncAt || 0, data.lastQuickSyncAt || 0));
+    var marks = document.querySelectorAll('.release-synced');
+    for (var i = 0; i < marks.length; i++) syncedLabel(marks[i], Number(marks[i].dataset.at));
   })();
   if (standupSync && !(window.webkit && window.webkit.messageHandlers.syncNow)) standupSync.hidden = true;
   if (standupSync) standupSync.addEventListener('click', function () {
