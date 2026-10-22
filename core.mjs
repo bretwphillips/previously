@@ -114,6 +114,11 @@ export function createCore(host) {
       reuses the last one, for saves that change nothing git knows about. Only the
       current space's page is shown, so only it reloads -- and an open standup is
       handed the fresh draft rather than losing its place. */
+  /** After a sync: the page from the last git walk first, which already has what
+      the hosts just said -- the standup's reviews, comments and merges, in a
+      fraction of a second -- then a fresh walk for what the fetch changed. */
+  const refreshAfterSync = (id) => refresh({ cached: true, space: id }).then(() => refresh({ space: id }));
+
   async function refresh({ cached = false, space } = {}) {
     const id = space ?? currentSpace();
     await script("refresh.mjs", { space: id, args: cached ? ["--cached"] : [] });
@@ -226,7 +231,7 @@ export function createCore(host) {
     await script("sync.mjs", { space: id, env: full ? { FULL: "1" } : {} });
     running = false;
     stamp(["lastSyncAt"], id);
-    refresh({ space: id });
+    refreshAfterSync(id);
     // The page shows every space's last sync, so it redraws even for another's.
     if (id !== currentSpace()) refresh({ cached: true });
     nextSync();
@@ -254,7 +259,7 @@ export function createCore(host) {
     running = false;
     backoff = done.code === 0 ? 1 : Math.min(backoff * 2, 4);
     stamp([quick ? "lastQuickSyncAt" : "lastApiSyncAt"], id);
-    refresh({ space: id });
+    refreshAfterSync(id);
     nextSync();
   }
 
