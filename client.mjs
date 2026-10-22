@@ -431,13 +431,19 @@ document.addEventListener('DOMContentLoaded', function () {
     store.set('worklog.marks', JSON.stringify(now));
     var present = {};
     for (var q = 0; q < all.length; q++) present[markId(all[q])] = 1;
+    // Only this space's lines are on the page, and every space's page shares this
+    // storage: what's kept for a repo shown elsewhere is left for its own page.
+    var shown = {};
+    var navs = document.querySelectorAll('nav button[data-pane]');
+    for (var n = 0; n < navs.length; n++) shown[navs[n].dataset.pane] = 1;
+    var gone = function (key) { return !present[key] && shown[key.split('|')[0]]; };
     var pruned = false, unpinned = false;
-    for (var key in ACKED) if (!present[key]) { delete ACKED[key]; pruned = true; }
+    for (var key in ACKED) if (gone(key)) { delete ACKED[key]; pruned = true; }
     if (pruned) store.set('worklog.acked', JSON.stringify(ACKED));
     var uncleared = false;
-    for (var gone in CLEARED) if (!present[gone]) { delete CLEARED[gone]; uncleared = true; }
+    for (var cleared in CLEARED) if (gone(cleared)) { delete CLEARED[cleared]; uncleared = true; }
     if (uncleared) store.set('worklog.cleared', JSON.stringify(CLEARED));
-    for (var pin in PINNED) if (!present[pin]) { delete PINNED[pin]; unpinned = true; }
+    for (var pin in PINNED) if (gone(pin)) { delete PINNED[pin]; unpinned = true; }
     if (unpinned) store.set('worklog.pinned', JSON.stringify(PINNED));
     if (!quiet) ghostDrains();
     playDrains();

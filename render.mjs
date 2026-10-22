@@ -304,7 +304,7 @@ function alertLine(a, withRepo) {
     ? ` class="go" data-go="${esc(a.repo)}" data-alert="${esc(a.text)}" title="Open ${esc(a.repo)}"`
     : ` data-alert="${esc(a.text)}"${target ? ` class="go" data-target="${target}" title="Show"` : ""}`;
   // The key is what "seen" remembers: a line whose text changes is new again.
-  return `<li${go} data-key="${esc(`a:${a.text}`)}" data-sev="${a.severity}" data-trigger="${triggerOf(a)}"${a.unfinished ? " data-unfinished" : ""}><span class="dot ${a.severity}"></span>${
+  return `<li${go} data-key="${esc(`a:${a.key ?? a.text}`)}" data-sev="${a.severity}" data-trigger="${triggerOf(a)}"${a.unfinished ? " data-unfinished" : ""}><span class="dot ${a.severity}"></span>${
     withRepo ? `<span class="who">${esc(a.repo)}</span>` : ""
   }<span class="what">${esc(a.text)}${stale}</span></li>`;
 }
