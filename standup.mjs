@@ -16,6 +16,9 @@ const WEIGHT_LIMIT = 5;
 const UNWEIGHED = 1;
 // Not touched in this long, a ticket waits behind ones that are moving.
 const STALE_DAYS = 30;
+// With this few tickets left to you, any of them held up by someone else's work
+// is worth saying in Blockers, started or not.
+const FEW_LEFT = 3;
 
 // Monday looks back to Friday. Any other day looks back to yesterday.
 export function since(now = new Date()) {
@@ -82,6 +85,8 @@ export function standup(repos, tasks, activity, now = new Date(), { weightLimit 
   const today = [];
   const blockers = [];
   const reviews = [];
+  // Tickets whose blocker is already written down: the written line says it better.
+  const written = new Set();
 
 
   for (const repo of repos) {
@@ -150,6 +155,7 @@ export function standup(repos, tasks, activity, now = new Date(), { weightLimit 
       }
 
       for (const line of thread.blocked ?? []) blockers.push({ text: text(line), ref });
+      if ((thread.blocked ?? []).length && thread.ticket) written.add(`${repo.name}${thread.ticket}`);
       for (const number of awaitingReview(thread)) {
         reviews.push({
           text: thread.title ?? repo.name,
@@ -260,6 +266,35 @@ export function standup(repos, tasks, activity, now = new Date(), { weightLimit 
     return true;
   };
   for (const c of queue) take(c);
+
+  // Blockers nobody wrote down: a ticket you're on -- or any of your last few --
+  // held up by open work that's someone else's. Your own tickets blocking each
+  // other is sequencing, not a blocker; the plan above already orders them.
+  const issueByKey = new Map((activity.issues ?? []).map((i) => [`${i.repo}${i.ticket}`, i]));
+  const epicByKey = new Map((activity.epicIssues ?? []).map((i) => [`${i.repo}${i.ticket}`, i]));
+  const othersHolding = (key) => {
+    const at = key.lastIndexOf("#");
+    return (issueByKey.get(key)?.blockedBy ?? []).filter((b) => {
+      // A GitLab link says who has the blocker; a description only names it, so
+      // it counts when an epic you work in shows it taken by someone, not you.
+      if (b.source === "gitlab") return b.others === true;
+      const ref = b.ref.startsWith("#") ? `${key.slice(0, at)}${b.ref}` : b.ref;
+      const known = issueByKey.get(ref);
+      if (known?.assigned || known?.state === "closed") return false;
+      return Boolean(epicByKey.get(ref)?.assigned);
+    }).map((b) => b.ref);
+  };
+  const keyOf = (c) => `${c.issue.repo}${c.issue.ticket}`;
+  const pool = new Map([
+    ...today.filter((e) => e.key).map((e) => [e.key, { text: e.text, ref: e.ref }]),
+    ...[...mine, ...free].map((c) => [keyOf(c), { text: brief(c.issue.title), ref: c.repo.web ? urlFor(c.repo.web, c.issue.ticket) : c.issue.ticket }]),
+  ]);
+  const started = new Set(today.map((e) => e.key).filter(Boolean));
+  for (const [key, entry] of pool) {
+    if (written.has(key) || (pool.size > FEW_LEFT && !started.has(key))) continue;
+    const holding = othersHolding(key);
+    if (holding.length) blockers.push({ text: `${entry.text} — waiting on ${holding.join(", ")}`, ref: entry.ref });
+  }
   // Merge requests waiting on your review are on today's plan whatever the
   // weight limit -- someone is waiting -- unless a review thread covers them.
   for (const review of activity.reviews ?? []) {

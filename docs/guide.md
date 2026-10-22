@@ -398,7 +398,13 @@ to change something.
   with its blocker: one of these is pulled in ahead of it; someone else's, and it
   waits. Merge
   requests waiting on your review are added after, whatever the limit.
-- **Blockers** — `blocked` entries from the narrative.
+- **Blockers** — `blocked` entries from the narrative, and on their own, tickets
+  held up by someone else's open work: one you've started, or any of yours when
+  only three or fewer are left. A GitLab "blocked by" link says who has the
+  blocker; a "blocked by #61" in a description counts when that ticket is in one
+  of your epics and someone other than you has it. Your own tickets blocking each
+  other aren't listed -- that's order, which Today already follows -- and a ticket
+  with a written `blocked` line shows that line instead.
 - **Needs review** — merge requests recorded as `rfr`, and only those.
 
 Lines are grouped by **epic**, so it is obvious which body of work each belongs to.
