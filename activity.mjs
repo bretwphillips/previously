@@ -108,9 +108,11 @@ const issues = parse(process.env.ISSUES)
     for (const link of Array.isArray(links) ? links : []) {
       if (link.link_type !== "is_blocked_by" || link.state === "closed") continue;
       const ref = refOf(link.references?.full ?? `#${link.iid}`, repo);
-      if (ref) blockedBy.set(ref, "gitlab");
+      // others: someone else has it (true), nobody or you (false), not known yet (absent).
+      const who = link.assignees;
+      if (ref) blockedBy.set(ref, { source: "gitlab", ...(Array.isArray(who) ? { others: who.length > 0 && !who.includes(process.env.ME) } : {}) });
     }
-    for (const ref of blockersIn(issue.description, repo)) if (!blockedBy.has(ref)) blockedBy.set(ref, "description");
+    for (const ref of blockersIn(issue.description, repo)) if (!blockedBy.has(ref)) blockedBy.set(ref, { source: "description" });
     return {
       repo,
       ticket: `#${issue.iid}`,
@@ -123,7 +125,7 @@ const issues = parse(process.env.ISSUES)
       updatedAt: issue.updated_at ? Date.parse(issue.updated_at) / 1000 : null,
       // The epic the ticket belongs to, on tiers that have epics.
       epic: issue.epic?.iid ? epicOf(issue.epic) : null,
-      blockedBy: [...blockedBy].map(([ref, source]) => ({ ref, source })),
+      blockedBy: [...blockedBy].map(([ref, b]) => ({ ref, ...b })),
       // Shown on the pane as the ticket's brief; Scope falls back to it.
       description: issue.description ?? "",
     };

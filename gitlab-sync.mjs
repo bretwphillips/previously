@@ -337,7 +337,9 @@ if (!quick) await Promise.all(
     if (!changed.has(key) && entry.links && !blocked) return;
     const links = await api(`projects/${encodeURIComponent(t.path)}/issues/${t.iid}/links`);
     if (Array.isArray(links)) {
-      entry.links = links.map((l) => ({ link_type: l.link_type, state: l.state, iid: l.iid, references: { full: l.references?.full } }));
+      // Who has each linked ticket: the standup's Blockers only lists work that's someone else's.
+      entry.links = links.map((l) => ({ link_type: l.link_type, state: l.state, iid: l.iid, references: { full: l.references?.full },
+        assignees: (l.assignees ?? []).map((a) => a.username) }));
     }
   }),
 );
@@ -443,6 +445,7 @@ const env = {
   PROJECTS: JSON.stringify(Object.values(cache.projects).map((p) => ({ id: p.id, path_with_namespace: p.path }))),
   EVENTS: JSON.stringify(Object.values(cache.events).sort((a, b) => b.id - a.id)),
   MRS: JSON.stringify(Object.values(cache.mrs)),
+  ME: cache.me ?? "",
   ISSUES: JSON.stringify(
     tickets.filter(([key]) => cache.issues[key]).map(([key]) => ({ path: cache.issues[key].path, issue: cache.issues[key].issue, links: cache.issues[key].links ?? [],
       assigned: assignedKeys.has(key) })),
