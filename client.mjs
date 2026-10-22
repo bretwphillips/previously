@@ -408,16 +408,19 @@ document.addEventListener('DOMContentLoaded', function () {
         else count.remove();
       }
     }
-    // The Overview's own marker: the most pressing of any repo's.
+    // The Overview's own marker: the most pressing of the lines it shows. One you
+    // cleared is acknowledged, and one under Ignore never lights, so neither counts;
+    // what a repo keeps on its own pane lights that repo, not the Overview.
     var top = 'none';
-    for (var r in now) if (RANK[now[r]] > RANK[top]) top = now[r];
-    var ov = document.querySelector('nav button[data-pane="overview"] .dot');
-    if (ov && !busy(ov)) ov.className = 'dot ' + top;
     var all = document.querySelectorAll('.alerts li[data-key]');
     for (var a = 0; a < all.length; a++) {
       var li = all[a], pane = li.closest('section');
       var owner = li.dataset.go || (pane ? pane.id.replace(/^pane-/, '') : '');
       var isNew = known[owner] ? !known[owner][li.dataset.key] : false;
+      if (pane && pane.id === 'pane-overview') {
+        var lit = lineMarker(li, isNew);
+        if (RANK[lit] > RANK[top]) top = lit;
+      }
       li.classList.toggle('unread', isNew);
       var d = li.querySelector('.dot');
       // One mid-drain or mid-fill is left to finish; it repaints when it's done.
@@ -427,6 +430,8 @@ document.addEventListener('DOMContentLoaded', function () {
           : d.className === 'dot none' ? 'Click to mark as unread' : 'Click when handled or no longer relevant';
       }
     }
+    var ov = document.querySelector('nav button[data-pane="overview"] .dot');
+    if (ov && !busy(ov)) ov.className = 'dot ' + top;
     if (changed) store.set('worklog.seen', JSON.stringify(seen));
     store.set('worklog.marks', JSON.stringify(now));
     var present = {};
