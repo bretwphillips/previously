@@ -277,12 +277,25 @@ function gitBlock(r) {
     ],
   ];
 
+  // For whoever tags this repo: what its main branch has had merged since the newest
+  // tag, to copy into the next release's notes.
+  const rel = r.release;
+  if (rel) rows.push(["release", `${esc(rel.tag)} · ${rel.changes.length} since <button class="mini release-notes-toggle" aria-expanded="false">Release notes</button>`]);
+  const notes = rel ? rel.changes.map((c) => `- ${c.title}${c.ref ? ` (${c.ref})` : ""}`).join("\n") : "";
+  const panel = rel
+    ? `<div class="release-draft" hidden>
+        <p class="hint">Merged into ${esc(rel.base)} since ${esc(rel.tag)}, as of this repo's last fetch -- sync first for everyone's latest.</p>
+        <ul>${rel.changes.map((c) => `<li>${esc(c.title)}${c.ref ? ` <span class="hint">${esc(c.ref)}</span>` : ""}</li>`).join("")}</ul>
+        <button class="mini release-draft-copy" data-text="${esc(notes)}">Copy</button> <button class="mini" data-sync-now>Sync</button><span class="hint release-synced" data-at="${rel.fetchedAt ?? ""}"></span>
+      </div>`
+    : "";
+
   return `<div class="git">${rows
     .map(
       ([k, v]) =>
         `<div class="row"><span class="k">${k}</span><span class="v">${v}</span></div>`,
     )
-    .join("")}</div>`;
+    .join("")}${panel}</div>`;
 }
 
 // The part of a repo's pane an alert is about, so a click can take you there.
