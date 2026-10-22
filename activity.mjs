@@ -26,6 +26,7 @@ const folderOf = (path = "") => folders.get(path) ?? path.split("/").pop();
 
 // project id -> the folder that holds it.
 const names = new Map(projects.map((p) => [p.id, folderOf(p.path_with_namespace ?? "")]));
+const pathOf = new Map(projects.map((p) => [p.id, p.path_with_namespace]));
 
 const comments = {};
 const approvals = [];
@@ -35,9 +36,13 @@ for (const event of events) {
   if (!repo) continue;
   const at = Date.parse(event.created_at) / 1000;
 
+  // One in a project not cloned here keeps its own link, rather than a repo's.
   if (event.action_name === "approved") {
+    const path = pathOf.get(event.project_id);
+    const cloned = folders.has(path);
     approvals.push({
-      repo,
+      repo: cloned ? repo : null,
+      ...(cloned || !process.env.GITLAB_HOST ? {} : { web: `https://${process.env.GITLAB_HOST}/${path}` }),
       iid: event.target_iid,
       title: event.target_title ?? "",
       at,
