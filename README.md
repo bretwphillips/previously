@@ -19,7 +19,8 @@ laptop — on the branch you are on, or on one you left behind and never pushed.
 stash from five months ago. None of it is visible from GitLab, your editor, or any
 single repo — only from something looking at all of them at once.
 
-It is a Mac app with a window and a menu-bar item. It only touches the network when
+It is a desktop app for the Mac and Windows, with a window and a menu-bar item (a
+tray icon on Windows). It only touches the network when
 it syncs, checks for an update, or makes a quiz.
 
 What it is not: a tracker — GitLab owns tickets. A metric — the companion is capped
@@ -115,8 +116,9 @@ to check before you act on it.**
 - **Markers.** A dot beside each repo and line says what kind of thing it is:
   red when someone else did something on yours, purple for work you haven't
   finished, green for anything else new. Bold means you haven't looked yet.
-- **The menu bar** keeps listing what needs you with the window closed.
-- **Standup** (`⌘G`) drafts your morning post from the last working day: what you
+- **The menu bar** (the tray, on Windows) keeps listing what needs you with the
+  window closed.
+- **Standup** (`⌘G`, or `Ctrl+G` on Windows) drafts your morning post from the last working day: what you
   did yesterday, what's planned today up to a weight limit, blockers, and what's
   waiting on your review — ready to copy into Slack.
 
@@ -125,7 +127,7 @@ to check before you act on it.**
 - **Sync** brings in comments, reviews, merge-request state and ticket details.
   It's **Manual** by default — nothing is fetched until you click **Sync** — or
   set a space to sync daily, hourly or every 15 minutes, only while you're at
-  the Mac.
+  the computer.
 - **Notes and tasks** are yours: `notes.md` for anything, tasks for work with no
   commit behind it. Both show on the Overview.
 - **From a terminal:** `sh previously/show.sh` prints what needs you; add a repo's

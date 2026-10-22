@@ -58,7 +58,7 @@ if [ "$HERE" != "$TARGET" ]; then
     say "Updating $TARGET (your own files are kept)…"
     rsync -a --exclude .git --exclude-from="$HERE/.gitignore" "$HERE/" "$TARGET/"
   else
-    say "Putting it in $TARGET…"
+    say "Putting it in ${TARGET}…"
     mv "$HERE" "$TARGET"
   fi
 fi
