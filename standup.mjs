@@ -148,8 +148,11 @@ export function standup(repos, tasks, activity, now = new Date(), { weightLimit 
 
       if (touched && goal) yesterday.push({ text: goal, ref, epic });
 
-      // Today is the plan, and a ticket that has landed is not in it.
-      if ((repo.group === "active" || touched) && goal && !finished(thread)) {
+      // Today is the plan, and a ticket that has landed is not in it. Closed in
+      // GitLab counts as landed, whatever MRs the thread knows about.
+      const closed = thread.ticket && (activity.issues ?? []).some(
+        (i) => i.repo === repo.name && i.ticket === thread.ticket && i.state === "closed");
+      if ((repo.group === "active" || touched) && goal && !finished(thread) && !closed) {
         today.push({ text: goal, ref, epic, touched, at: repo.committedAt ?? 0, weight: thread.weight?.value ?? UNWEIGHED,
           key: thread.ticket ? `${repo.name}${thread.ticket}` : null });
       }

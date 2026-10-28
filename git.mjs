@@ -134,6 +134,7 @@ export async function readRepo(root, name, author) {
   // Your commits on every ticket branch touched this past week, not just the
   // one checked out: a day spent on three branches is three tickets of work,
   // and the standup only saw the branch you happened to end the day on.
+  // Merging master in is not work on the ticket.
   const weekAgo = Date.now() / 1000 - 8 * 86400;
   const ticketCommits = {};
   const ticketBranches = {};
@@ -144,7 +145,7 @@ export async function readRepo(root, name, author) {
       .filter(([b, at]) => b && Number(at) >= weekAgo && ticketFrom(b))
       .map(async ([b]) => {
         const times = await git(repo, [
-          "log", "--since=8.days", ...(author ? [`--author=${author}`] : []), "--format=%ct", `${base}..${b}`,
+          "log", "--since=8.days", "--no-merges", ...(author ? [`--author=${author}`] : []), "--format=%ct", `${base}..${b}`,
         ]);
         const list = (times || "").split("\n").filter(Boolean).map(Number);
         if (list.length) {
