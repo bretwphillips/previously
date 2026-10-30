@@ -280,7 +280,7 @@ function gitBlock(r) {
   // For whoever tags this repo: what its main branch has had merged since the newest
   // tag, to copy into the next release's notes.
   const rel = r.release;
-  if (rel) rows.push(["release", `${esc(rel.tag)} · ${rel.changes.length} since <button class="mini release-notes-toggle" aria-expanded="false">Release notes</button>`]);
+  if (rel) rows.push(["release", `${esc(rel.tag)} · ${rel.changes.length} since${rel.next ? ` · next ${esc(rel.next.tag)}${rel.next.bumped ? "" : ' <span class="hint">(version not bumped yet)</span>'}` : ""} <button class="mini release-notes-toggle" aria-expanded="false">Release notes</button>`]);
   const notes = rel ? rel.changes.map((c) => `- ${c.title}${c.ref ? ` (${c.ref})` : ""}`).join("\n") : "";
   const panel = rel
     ? `<div class="release-draft" hidden>
