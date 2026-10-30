@@ -45,6 +45,9 @@ async function defaultBase(repo) {
 // tags it: the next release's notes. Read from origin's branch, so it has
 // everyone's merges as of the last fetch. A merged MR or PR is known by its
 // title; a squash merge by its subject, GitLab's 'Resolve "…"' unwrapped.
+// A version bump, however a repo words it: "v1.2.0", "Release 1.2", "My App 0.4.24".
+const VERSION_BUMP = /^(Version \d|Release v?\d|Bump (the )?version|chore\(release\))|^[\w .-]{0,30}\bv?\d+\.\d+\.\d+$/i;
+
 const unwrap = (title) => /^Resolve "(.*)"$/.exec(title)?.[1] ?? title;
 
 function releaseChange(entry) {
@@ -57,9 +60,28 @@ function releaseChange(entry) {
     return { title: first || subject, ...(mr ? { ref: `!${mr[1]}` } : {}) };
   }
   // A branch merged back into itself, and the commit that bumps the version, aren't changes.
-  if (/^Merge /.test(subject) || /^(Version \d|Release v?\d|Bump (the )?version|v?\d+\.\d+\.\d+$|chore\(release\))/i.test(subject)) return null;
+  if (/^Merge /.test(subject) || VERSION_BUMP.test(subject)) return null;
   if ((m = /^(.*) \(#(\d+)\)$/.exec(subject))) return { title: m[1], ref: `#${m[2]}` };
   return { title: unwrap(subject) };
+}
+
+// Your work that went onto the main branch without a ticket branch: commits made
+// there, and merges of branches with no ticket number, named by the merge
+// request's title. A ticket's own merge -- a numbered branch, or GitLab's
+// 'Resolve "…"' squash -- is its thread's to report.
+function untracked(entry) {
+  const [at, subject = "", body = ""] = entry.split("\x1f");
+  const first = body.trim().split("\n")[0];
+  let m;
+  if ((m = /^Merge pull request #(\d+) from [^/\s]+\/(\S+)/.exec(subject)))
+    return ticketFrom(m[2]) ? null : { at: Number(at), title: first || subject, ref: `!${m[1]}` };
+  if ((m = /^Merge branch '([^']+)' into/.exec(subject))) {
+    if (ticketFrom(m[1])) return null;
+    const mr = /See merge request \S*!(\d+)/.exec(body);
+    return { at: Number(at), title: first && !first.startsWith("See merge request") ? first : m[1], ...(mr ? { ref: `!${mr[1]}` } : {}) };
+  }
+  if (/^Merge /.test(subject) || /^Resolve "/.test(subject) || VERSION_BUMP.test(subject)) return null;
+  return { at: Number(at), title: subject };
 }
 
 async function sinceRelease(repo, base) {
@@ -206,6 +228,13 @@ export async function readRepo(root, name, author) {
   const branchName = branch || "(detached)";
 
   const release = await sinceRelease(repo, base);
+  // A merge made on the host's website carries your account's address, not
+  // necessarily the one this repo commits with, so your name counts too.
+  const you = await git(repo, ["config", "--get", "user.name"]);
+  const mainLog = base === "HEAD" ? null : await git(repo, [
+    "log", "--first-parent", "--since=8.days", "--fixed-strings",
+    ...(author ? [`--author=${author}`, ...(you ? [`--author=${you}`] : [])] : []), "--format=%ct%x1f%s%x1f%b%x1e", base,
+  ]);
 
   return {
     name,
@@ -242,6 +271,8 @@ export async function readRepo(root, name, author) {
     othersWork,
     ticketCommits,
     ticketBranches,
+    // Your work this past week that went onto the main branch with no ticket of its own.
+    untracked: (mainLog ?? "").split("\x1e").map((e) => e.trim()).filter(Boolean).map(untracked).filter(Boolean),
     recentLog,
     // Ticket branches in play: the one you are on, and any touched in the last
     // two weeks whose remote still exists. The build gives each a thread when

@@ -125,6 +125,8 @@ const PR = `number title state isDraft headRefName url updatedAt mergeable repos
   comments { totalCount } mergedBy { login ... on User { name } }
   timelineItems(itemTypes: [CLOSED_EVENT], last: 1) { nodes { ... on ClosedEvent { actor { login ... on User { name } } } } }
   reviewThreads(first: 50) { nodes { isResolved } }
+  reviewRequests(first: 10) { nodes { requestedReviewer { ... on User { login } } } }
+  latestReviews(first: 10) { nodes { author { login } } }
   commits(last: 1) { nodes { commit { statusCheckRollup { state } } } }`;
 const since = new Date((last ? last - 3600 : now - PR_DAYS * DAY) * 1000).toISOString().slice(0, 10);
 const found = await graphql(`query {
@@ -147,6 +149,9 @@ for (const pr of [...(found.data.mine?.nodes ?? []), ...(found.data.open?.nodes 
     updatedAt: secondsOf(pr.updatedAt), comments: pr.comments.totalCount,
     conflict: pr.mergeable === "CONFLICTING",
     threads: (pr.reviewThreads?.nodes ?? []).some((t) => !t.isResolved),
+    // Asked to review, and those who have: GitHub drops a request once it's answered.
+    reviewers: [...new Set([...(pr.reviewRequests?.nodes ?? []).map((r) => r.requestedReviewer?.login),
+      ...(pr.latestReviews?.nodes ?? []).map((r) => r.author?.login)])].filter((login) => login && login !== me),
     failed: ["FAILURE", "ERROR"].includes(pr.commits?.nodes?.[0]?.commit?.statusCheckRollup?.state),
   };
 }
@@ -343,7 +348,8 @@ const activity = {
     const ticket = /^(\d+)-/.exec(pr.branch ?? "")?.[1];
     // a finished PR's last update is when it merged or closed, near enough
     const doneAt = pr.state === "MERGED" || pr.state === "CLOSED" ? pr.updatedAt ?? null : null;
-    return ticket ? { repo: repos.get(pr.slug), ticket: `#${ticket}`, number: pr.number, state: STATE(pr), title: pr.title ?? "", doneAt } : null;
+    return ticket ? { repo: repos.get(pr.slug), ticket: `#${ticket}`, number: pr.number, state: STATE(pr), title: pr.title ?? "", doneAt,
+      reviewers: pr.reviewers ?? [] } : null;
   }).filter(Boolean),
   issues: (() => {
     const out = Object.values(cache.issues).map((t) => {

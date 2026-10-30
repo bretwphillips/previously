@@ -203,8 +203,12 @@ for (const m of newMrs ?? []) {
     merged_at: m.merged_at,
     closed_at: m.closed_at,
     user_notes_count: m.user_notes_count,
+    reviewers: (m.reviewers ?? []).map((r) => r.username),
   };
 }
+// Reviewers are added without always touching a merge request's updated time,
+// so an open one's are taken from the whole open list each sync.
+for (const m of openMrs ?? []) if (cache.mrs[m.id]) cache.mrs[m.id].reviewers = (m.reviewers ?? []).map((r) => r.username);
 for (const [id, m] of Object.entries(cache.mrs)) if (secondsOf(m.updated_at) < now - MR_DAYS * DAY) delete cache.mrs[id];
 
 // ---- the tickets: every one the standup or quest mode might show

@@ -144,7 +144,7 @@ const repos = await Promise.all(
     const withSynced = (ticket, recorded = []) => {
       const mine = synced.filter((m) => m.ticket === ticket);
       if (!mine.length) return recorded;
-      const fresh = mine.map((m) => ({ number: m.number, state: m.state, seenAt: syncedOn, doneAt: m.doneAt ?? null }));
+      const fresh = mine.map((m) => ({ number: m.number, state: m.state, seenAt: syncedOn, doneAt: m.doneAt ?? null, reviewers: m.reviewers ?? [] }));
       const kept = recorded.filter((r) => !mine.some((m) => m.number === r.number));
       return [...kept, ...fresh];
     };

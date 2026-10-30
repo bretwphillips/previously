@@ -63,8 +63,13 @@ const text = (entry) => (typeof entry === "string" ? entry : (entry?.text ?? "")
 // pulls in merged and draft ones, and asking the team to review merged work is
 // worse than leaving the line empty.
 function awaitingReview(thread) {
-  return (thread.mrs ?? []).filter((m) => m.state === "rfr").map((m) => m.number);
+  return (thread.mrs ?? []).filter((m) => m.state === "rfr");
 }
+
+// Who it's waiting on, after the link, by the username up to its first dot:
+// "(ana, sam)". Not "@ana": a pasted @name doesn't become a Slack mention.
+const reviewersOf = (mr) =>
+  (mr.reviewers ?? []).length ? `(${mr.reviewers.map((r) => r.split(".")[0]).join(", ")})` : "";
 
 // Standups are fragments. Cut at the first full stop or dash and cap the rest.
 function brief(line) {
@@ -93,6 +98,8 @@ export function standup(repos, tasks, activity, now = new Date(), { weightLimit 
     if (!repo.inStandup) continue;
     const commits = repo.recentCommits.filter((c) => c.at >= cutoff);
 
+    // Tickets this repo's threads have already put in Yesterday.
+    const said = new Set();
     for (const [index, thread] of repo.threads.entries()) {
       const scopeDone = (thread.plan ?? []).filter((item) => item.doneAt && item.doneAt >= cutoff);
       const token = reference(thread);
@@ -118,9 +125,12 @@ export function standup(repos, tasks, activity, now = new Date(), { weightLimit 
       // A thread's own branch counts, wherever you are now; the checked-out
       // branch still counts for a thread with no ticket of its own.
       const onItsBranch = (repo.ticketCommits?.[thread.ticket] ?? []).some((at) => at >= cutoff);
+      // The checked-out branch's commits are its own thread's: on the main
+      // branch, only a thread with no ticket claims them.
+      const ownBranch = repo.ticket ? thread.ticket === repo.ticket : !thread.ticket;
       const touched =
         onItsBranch ||
-        (index === repo.currentIndex && commits.length > 0) ||
+        (index === repo.currentIndex && ownBranch && commits.length > 0) ||
         scopeDone.length > 0 ||
         discussed;
       const epic = thread.epic
@@ -146,7 +156,10 @@ export function standup(repos, tasks, activity, now = new Date(), { weightLimit 
         continue;
       }
 
-      if (touched && goal) yesterday.push({ text: goal, ref, epic });
+      if (touched && goal) {
+        yesterday.push({ text: goal, ref, epic });
+        if (thread.ticket) said.add(thread.ticket);
+      }
 
       // Today is the plan, and a ticket that has landed is not in it. Closed in
       // GitLab counts as landed, whatever MRs the thread knows about.
@@ -159,12 +172,27 @@ export function standup(repos, tasks, activity, now = new Date(), { weightLimit 
 
       for (const line of thread.blocked ?? []) blockers.push({ text: text(line), ref });
       if ((thread.blocked ?? []).length && thread.ticket) written.add(`${repo.name}${thread.ticket}`);
-      for (const number of awaitingReview(thread)) {
+      for (const mr of awaitingReview(thread)) {
         reviews.push({
           text: thread.title ?? repo.name,
-          ref: mrUrl(repo.web, number) ?? `!${number}`,
+          ref: mrUrl(repo.web, mr.number) ?? `!${mr.number}`,
+          after: reviewersOf(mr),
         });
       }
+    }
+
+    // Work that landed with no thread to say it: merge requests merged in the
+    // window, by their titles -- and, in a repo that merged none, what went
+    // straight onto the main branch. A repo that merges by rebasing puts every
+    // commit there, so its merge requests are the point, not its commits.
+    const merged = (activity.mrs ?? [])
+      .filter((m) => m.repo === repo.name && m.state === "merged" && m.doneAt >= cutoff && !said.has(m.ticket))
+      .map((m) => ({ title: m.title, ref: `!${m.number}` }));
+    const direct = (repo.untracked ?? []).filter((w) => w.at >= cutoff);
+    for (const work of merged.length ? merged : direct) {
+      const line = brief(work.title);
+      if (!line || yesterday.some((e) => e.text === line)) continue;
+      yesterday.push({ text: line, ref: work.ref && repo.web ? urlFor(repo.web, work.ref) : null, epic: null });
     }
   }
 
@@ -348,7 +376,7 @@ export function standup(repos, tasks, activity, now = new Date(), { weightLimit 
       .join("\n");
   };
 
-  const flat = (entries) => entries.map((e) => `• ${e.text}${e.ref ? ` ${e.ref}` : ""}`);
+  const flat = (entries) => entries.map((e) => `• ${e.text}${e.ref ? ` ${e.ref}` : ""}${e.after ? ` ${e.after}` : ""}`);
 
   const text_ = [
     // Slack puts the first line beside your name, so it should not be a
