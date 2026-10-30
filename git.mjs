@@ -92,7 +92,29 @@ async function sinceRelease(repo, base) {
   const changes = (log ?? "").split("\x1e").map((e) => e.trim()).filter(Boolean).map(releaseChange).filter(Boolean);
   let fetchedAt = null;
   try { fetchedAt = Math.floor(statSync(join(repo, ".git", "FETCH_HEAD")).mtimeMs / 1000); } catch {}
-  return changes.length ? { tag, base, changes, fetchedAt } : null;
+  return changes.length ? { tag, base, changes, fetchedAt, next: await nextTag(repo, base, tag) } : null;
+}
+
+// The tag the next release should get: the version the main branch already
+// declares when it has moved past the newest tag -- a CI that checks the tag
+// against the file wants exactly that -- else the newest tag's next patch.
+const semver = (v) => /^v?(\d+)\.(\d+)\.(\d+)$/.exec(v ?? "")?.slice(1).map(Number) ?? null;
+const newer = (a, b) => {
+  const i = a.findIndex((n, k) => n !== b[k]);
+  return i >= 0 && a[i] > b[i];
+};
+
+async function nextTag(repo, base, tag) {
+  const last = semver(tag);
+  if (!last) return null;
+  const prefix = tag.startsWith("v") ? "v" : "";
+  const pkg = await git(repo, ["show", `${base}:package.json`]);
+  let declared = null;
+  try { declared = JSON.parse(pkg ?? "").version; } catch {}
+  declared ??= (await git(repo, ["show", `${base}:VERSION`]))?.trim();
+  const version = semver(declared);
+  if (version && newer(version, last)) return { tag: `${prefix}${version.join(".")}`, bumped: true };
+  return { tag: `${prefix}${last[0]}.${last[1]}.${last[2] + 1}`, bumped: false };
 }
 
 export function findRepos(root) {
