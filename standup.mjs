@@ -82,9 +82,16 @@ function brief(line) {
 // of someone's architecture is.
 const WORKED_ON = (entry) => entry && (entry.count >= 2 || entry.longest >= 400);
 
+// GitLab titles a ticket's merge request 'Resolve "<the ticket>"'.
+const unwrap = (title) => /^Resolve "(.*)"$/.exec(title ?? "")?.[1] ?? title;
+
 export function standup(repos, tasks, activity, now = new Date(), { weightLimit = WEIGHT_LIMIT } = {}) {
   const cutoff = since(now);
   const nowSeconds = now.getTime() / 1000;
+  // Yesterday ends where today starts: work done this morning is today's, not
+  // the last working day's. (A Monday's runs from Friday through the weekend.)
+  const until = new Date(now).setHours(0, 0, 0, 0) / 1000;
+  const inWindow = (at) => at >= cutoff && at < until;
 
   const yesterday = [];
   const today = [];
@@ -96,12 +103,12 @@ export function standup(repos, tasks, activity, now = new Date(), { weightLimit 
 
   for (const repo of repos) {
     if (!repo.inStandup) continue;
-    const commits = repo.recentCommits.filter((c) => c.at >= cutoff);
+    const commits = repo.recentCommits.filter((c) => inWindow(c.at));
 
     // Tickets this repo's threads have already put in Yesterday.
     const said = new Set();
     for (const [index, thread] of repo.threads.entries()) {
-      const scopeDone = (thread.plan ?? []).filter((item) => item.doneAt && item.doneAt >= cutoff);
+      const scopeDone = (thread.plan ?? []).filter((item) => item.doneAt && inWindow(item.doneAt));
       const token = reference(thread);
       const ref = token && repo.web ? urlFor(repo.web, token) : null;
 
@@ -120,11 +127,11 @@ export function standup(repos, tasks, activity, now = new Date(), { weightLimit 
       // Comments count as work: a review ticket produces nothing a clone sees.
       const discussed = [thread.ticket, ref].some((key) => {
         const entry = key && repo.commentsOn[key];
-        return WORKED_ON(entry) && entry.last >= cutoff;
+        return WORKED_ON(entry) && inWindow(entry.last);
       });
       // A thread's own branch counts, wherever you are now; the checked-out
       // branch still counts for a thread with no ticket of its own.
-      const onItsBranch = (repo.ticketCommits?.[thread.ticket] ?? []).some((at) => at >= cutoff);
+      const onItsBranch = (repo.ticketCommits?.[thread.ticket] ?? []).some(inWindow);
       // The checked-out branch's commits are its own thread's: on the main
       // branch, only a thread with no ticket claims them.
       const ownBranch = repo.ticket ? thread.ticket === repo.ticket : !thread.ticket;
@@ -185,14 +192,19 @@ export function standup(repos, tasks, activity, now = new Date(), { weightLimit 
     // window, by their titles -- and, in a repo that merged none, what went
     // straight onto the main branch. A repo that merges by rebasing puts every
     // commit there, so its merge requests are the point, not its commits.
+    // A merge request of a ticket's reads as the ticket does -- its title, under
+    // its epic -- not as GitLab's 'Resolve "…"'.
     const merged = (activity.mrs ?? [])
-      .filter((m) => m.repo === repo.name && m.state === "merged" && m.doneAt >= cutoff && !said.has(m.ticket))
-      .map((m) => ({ title: m.title, ref: `!${m.number}` }));
-    const direct = (repo.untracked ?? []).filter((w) => w.at >= cutoff);
+      .filter((m) => m.repo === repo.name && m.state === "merged" && inWindow(m.doneAt) && !said.has(m.ticket))
+      .map((m) => {
+        const issue = m.ticket && (activity.issues ?? []).find((i) => i.repo === repo.name && i.ticket === m.ticket);
+        return { title: issue?.title ?? unwrap(m.title), ref: `!${m.number}`, epic: issue?.epic ?? null };
+      });
+    const direct = (repo.untracked ?? []).filter((w) => inWindow(w.at));
     for (const work of merged.length ? merged : direct) {
       const line = brief(work.title);
       if (!line || yesterday.some((e) => e.text === line)) continue;
-      yesterday.push({ text: line, ref: work.ref && repo.web ? urlFor(repo.web, work.ref) : null, epic: null });
+      yesterday.push({ text: line, ref: work.ref && repo.web ? urlFor(repo.web, work.ref) : null, epic: work.epic ?? null });
     }
   }
 
@@ -202,7 +214,7 @@ export function standup(repos, tasks, activity, now = new Date(), { weightLimit 
     ...Object.entries(tasks.repos ?? {})
       .filter(([repo]) => reported.has(repo))
       .flatMap(([repo, list]) => list.map((t) => ({ ...t, repo }))),
-  ].filter((t) => t.done && t.doneAt && t.doneAt >= cutoff && t.doneAt <= nowSeconds);
+  ].filter((t) => t.done && t.doneAt && inWindow(t.doneAt));
 
   for (const task of ticked) yesterday.push({ text: task.text, ref: null, epic: null });
 
@@ -214,7 +226,7 @@ export function standup(repos, tasks, activity, now = new Date(), { weightLimit 
   for (const repo of repos) {
     if (!repo.onWorkHost) continue;
     for (const [key, entry] of Object.entries(repo.commentsOn)) {
-      if (claimed.has(key) || !WORKED_ON(entry) || entry.last < cutoff) continue;
+      if (claimed.has(key) || !WORKED_ON(entry) || !inWindow(entry.last)) continue;
       const ticket = (activity.issues ?? []).find((i) => i.repo === repo.name && i.ticket === key);
       yesterday.push({
         text: brief(entry.title || "discussion"),
@@ -227,7 +239,7 @@ export function standup(repos, tasks, activity, now = new Date(), { weightLimit 
   // Merge requests you approved are review work, and belong in the record --
   // in a repo you haven't cloned too, which comes with its own link.
   for (const approval of activity.approvals ?? []) {
-    if (approval.at < cutoff) continue;
+    if (!inWindow(approval.at)) continue;
     const repo = approval.repo && repos.find((r) => r.name === approval.repo);
     if (repo ? !repo.onWorkHost : !approval.web) continue;
     yesterday.push({
