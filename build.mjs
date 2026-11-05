@@ -51,6 +51,9 @@ const readJson = (path, fallback) => {
 };
 
 const state = readJson(join(here, "worklog.json"), { goals: [], projects: {} });
+// `now` is one entry, but a session writing it like `next` makes it a list of one.
+for (const project of Object.values(state.projects ?? {}))
+  for (const thread of project.threads ?? []) if (Array.isArray(thread.now)) thread.now = thread.now[0];
 // Yours, written by the app. Things with no commit to prove them: testing,
 // tagging a release, a question to ask someone.
 const tasks = readJson(join(here, "tasks.json"), { global: [], repos: {} });
