@@ -174,7 +174,7 @@ export function standup(repos, tasks, activity, now = new Date(), { weightLimit 
         (i) => i.repo === repo.name && i.ticket === thread.ticket && i.state === "closed");
       if ((repo.group === "active" || touched) && goal && !finished(thread) && !closed) {
         today.push({ text: goal, ref, epic, touched, at: repo.committedAt ?? 0, weight: thread.weight?.value ?? UNWEIGHED,
-          key: thread.ticket ? `${repo.name}${thread.ticket}` : null });
+          key: thread.ticket ? `${repo.name}${thread.ticket}` : null, number: Number(thread.ticket?.slice(1)) || Infinity });
       }
 
       for (const line of thread.blocked ?? []) blockers.push({ text: text(line), ref });
@@ -249,8 +249,10 @@ export function standup(repos, tasks, activity, now = new Date(), { weightLimit 
     });
   }
 
-  // Carried-over work first, then the rest, most recently touched first.
-  today.sort((a, b) => Number(b.touched) - Number(a.touched) || b.at - a.at);
+  // Carried-over work first, then the rest, most recently touched first; within a
+  // repo, lowest ticket number first, the order they're usually meant to be done in.
+  const byNumber = (a, b) => (a === b ? 0 : a < b ? -1 : 1);
+  today.sort((a, b) => Number(b.touched) - Number(a.touched) || b.at - a.at || byNumber(a.number ?? Infinity, b.number ?? Infinity));
   // In priority order, take what fits under the limit, skipping a ticket too
   // big for what is left so a smaller one can still fill the gap. The first
   // always goes in, even alone over the limit: an empty plan helps nobody.
@@ -265,7 +267,7 @@ export function standup(repos, tasks, activity, now = new Date(), { weightLimit 
   // Then what you haven't started, while it fits. The epics your started work
   // belongs to come first: your open tickets in them (assigned to you, no thread
   // yet), then the next ones nobody has taken there, from the repo you've been
-  // busiest in, each epic in its own order. A ticket nobody has touched in a month
+  // busiest in, lowest ticket number first. A ticket nobody has touched in a month
   // waits behind those, and tickets assigned to you in other epics come last. One
   // blocked by a ticket still open goes in only with its blocker: one of these
   // is pulled in ahead of it; someone else's, and it waits.
@@ -284,7 +286,7 @@ export function standup(repos, tasks, activity, now = new Date(), { weightLimit 
   const stale = (i) => (i.updatedAt ?? nowSeconds) < nowSeconds - STALE_DAYS * DAY;
   const mine = fresh((activity.issues ?? []).filter((i) => i.assigned && i.state === "opened"));
   const free = fresh((activity.epicIssues ?? []).filter((i) => !i.assigned && inWork(i.epic)))
-    .sort((a, b) => busiest(b.issue.repo) - busiest(a.issue.repo) || a.issue.order - b.issue.order);
+    .sort((a, b) => busiest(b.issue.repo) - busiest(a.issue.repo) || number(a.issue) - number(b.issue));
   const ours = mine.filter(({ issue }) => inWork(issue.epic)).sort((a, b) => number(a.issue) - number(b.issue));
   const moving = ({ issue }) => !stale(issue), quiet = ({ issue }) => stale(issue);
   const queue = [

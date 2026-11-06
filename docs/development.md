@@ -21,7 +21,7 @@ the rest sit beside the code. None of them are tracked by git.
 
 | | |
 |---|---|
-| `worklog.json` | The narrative. Goals, and per repo `now` / `next` / `plan` / `notes` / `blocked` / `waiting`. Claude maintains it. |
+| `worklog.json` | The narrative. Goals, and per repo `now` / `next` / `plan` / `notes` / `blocked` / `waiting`. Claude maintains it. `now` is one `{ text, src }`; `next` and `plan` are lists of them. |
 | `tasks.json` | Yours. Things with no commit behind them — testing, tagging a release, a question to ask. Add and tick them in the app; they appear on the Overview and on the repo they belong to. |
 | `links.json` | Yours. Blockers you linked with *+ blocker*, keyed `"repo#ticket"`. |
 | `checks.json` | Yours. Ticks on a ticket's own checklist, made in the app, keyed `"repo#ticket"`. |

@@ -2550,6 +2550,7 @@ document.addEventListener('DOMContentLoaded', function () {
   window.standupFresh = function (draft) {
     standupBox.value = draft.text;
     if (standupBox.hidden) showPreview();
+    syncedLabel(document.getElementById('standup-synced'), draft.syncedAt);
     standup.classList.remove('syncing');
     if (standupSync) { standupSync.disabled = false; standupSync.textContent = 'Sync'; }
     standupStale = true;
