@@ -274,6 +274,18 @@ const stateOnly = new Set();
   for (const [holder, project] of Object.entries(readJson(join(DATA, "worklog.json"), {}).projects ?? {})) {
     for (const t of project.threads ?? []) for (const ref of t.blockedBy ?? []) blocker(holder, ref);
   }
+  // Every ticket the narrative has a thread for, branch or not, so one closed
+  // without a branch -- a review, a question -- leaves the standup's plan. Asked
+  // last, behind everything above, under the cap.
+  for (const [holder, project] of Object.entries(readJson(join(DATA, "worklog.json"), {}).projects ?? {})) {
+    for (const t of project.threads ?? []) {
+      const iid = /^#(\d+)$/.exec(t.ticket ?? "")?.[1];
+      const path = pathOfFolder.get(holder);
+      if (!iid || !path || wanted.has(`${path}#${iid}`)) continue;
+      stateOnly.add(`${path}#${iid}`);
+      want(path, iid, -1);
+    }
+  }
 }
 // Your open tickets last: what you've touched keeps its place under the cap.
 const assignedKeys = new Set();
