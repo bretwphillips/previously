@@ -2666,7 +2666,12 @@ document.addEventListener('DOMContentLoaded', function () {
   document.getElementById('standup-copy').addEventListener('click', function () {
     var box = document.getElementById('standup-text');
     if (copyBridge) {
-      copyBridge.postMessage({ text: box.value, html: asHTML(box.value) });
+      /* The text flavour is the preview's words, as WebKit's own copy writes
+         it: Slack pastes plain text that looks like markup instead of the HTML. */
+      var html = asHTML(box.value);
+      var words = document.createElement('div');
+      words.innerHTML = html.replace(/<li>/g, '\\u2022 ').replace(/<\\/(p|li)>/g, '\\n');
+      copyBridge.postMessage({ text: words.textContent.trim(), html: html });
     } else {
       box.select();
       try {
