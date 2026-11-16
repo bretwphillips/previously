@@ -237,16 +237,17 @@ export function standup(repos, tasks, activity, now = new Date(), { weightLimit 
   }
 
   // Merge requests you approved are review work, and belong in the record --
-  // in a repo you haven't cloned too, which comes with its own link.
+  // in a repo you haven't cloned too, which comes with its own link. Approving
+  // again after new commits is the same review, so each MR is listed once.
+  const reviewed = new Set();
   for (const approval of activity.approvals ?? []) {
     if (!inWindow(approval.at)) continue;
     const repo = approval.repo && repos.find((r) => r.name === approval.repo);
     if (repo ? !repo.onWorkHost : !approval.web) continue;
-    yesterday.push({
-      text: `Reviewed: ${brief(approval.title)}`,
-      ref: mrUrl(repo ? repo.web : approval.web, approval.iid) ?? `!${approval.iid}`,
-      epic: null,
-    });
+    const ref = mrUrl(repo ? repo.web : approval.web, approval.iid) ?? `!${approval.iid}`;
+    if (reviewed.has(ref)) continue;
+    reviewed.add(ref);
+    yesterday.push({ text: `Reviewed: ${brief(approval.title)}`, ref, epic: null });
   }
 
   // Carried-over work first, then the rest, most recently touched first; within a

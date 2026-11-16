@@ -45,8 +45,9 @@ const writeAtomic = (path, text) => {
   renameSync(`${path}.tmp`, path);
 };
 const iso = (seconds) => new Date(seconds * 1000).toISOString();
-// The events API filters by whole days, and excludes the day it is given.
-const dayBefore = (seconds) => iso(seconds - DAY).slice(0, 10);
+// The events API filters by whole days in the server's time zone, and excludes the
+// day it is given. Two days back covers any zone; events are kept by id, so the overlap is free.
+const dayBefore = (seconds) => iso(seconds - 2 * DAY).slice(0, 10);
 const secondsOf = (stamp) => Date.parse(stamp) / 1000;
 
 let cache = readJson(CACHE_FILE, null);
