@@ -13,7 +13,7 @@
 import { execFile, execFileSync } from "node:child_process";
 import { readFileSync, writeFileSync, renameSync } from "node:fs";
 import { join } from "node:path";
-import { since as standupSince } from "./standup.mjs";
+import { since as standupSince } from "standup-core";
 import { blockersIn } from "./blockers.mjs";
 
 const DATA = process.env.DATA;

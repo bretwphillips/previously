@@ -6,6 +6,13 @@ HERE=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 # replacing anyone else's copy, and no admin password needed.
 APP="${PREVIOUSLY_APP:-$HOME/Applications/Previously.app}"
 
+# The standup engine (package.json), installed when it's missing or the lockfile
+# has moved on -- a fresh copy, or an update that changed it.
+if [ ! -f "$HERE/node_modules/.package-lock.json" ] || [ "$HERE/package-lock.json" -nt "$HERE/node_modules/.package-lock.json" ]; then
+  . "$HERE/env.sh"
+  (cd "$HERE" && npm ci --no-audit --no-fund >/dev/null)
+fi
+
 # The icon is drawn, not stored, but it only changes when its source does.
 if [ ! -f "$APP/Contents/Resources/AppIcon.icns" ] \
    || [ "$HERE/tools/makeicon.swift" -nt "$APP/Contents/Resources/AppIcon.icns" ]; then
