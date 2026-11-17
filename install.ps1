@@ -74,6 +74,13 @@ if ($Here -ne $Target) {
 }
 $Here = $Target
 
+Push-Location $Here
+try {
+  # The standup engine (package.json).
+  npm ci --no-audit --no-fund
+  if ($LASTEXITCODE -ne 0) { Fail "npm ci didn't finish -- see above." }
+} finally { Pop-Location }
+
 Say "Installing its window and terminal (Electron)... this takes a minute the first time."
 Push-Location (Join-Path $Here "electron")
 try {

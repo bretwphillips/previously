@@ -1,0 +1,8 @@
+{
+  "name": "previously",
+  "private": true,
+  "description": "The standup engine Previously shares with Standby. The Mac app itself needs nothing else from npm; the Windows shell's packages are in electron/.",
+  "dependencies": {
+    "standup-core": "https://codeload.github.com/bretwphillips/standup-core/tar.gz/27380e73b4c9b9a9249157bf689d02c41ec5ea7f"
+  }
+}

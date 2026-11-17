@@ -164,7 +164,8 @@ export async function install() {
 }
 
 /** The app, rebuilt for the code now in place: on the Mac, make.sh compiles it;
-    elsewhere the Electron shell's packages are brought up to what it now lists. */
+    elsewhere the standup engine and the Electron shell's packages are brought up
+    to what they now list. */
 export function rebuild() {
   if (process.platform === "darwin") {
     execFileSync("/bin/sh", [join(CODE, "make.sh")], { stdio: ["ignore", "pipe", "pipe"] });
@@ -172,6 +173,7 @@ export function rebuild() {
   }
   const dir = join(CODE, "electron");
   const npm = program("npm");
+  execFileSync(npm.cmd, ["ci", "--no-audit", "--no-fund"], { cwd: CODE, stdio: ["ignore", "pipe", "pipe"], shell: npm.shell, windowsHide: true });
   execFileSync(npm.cmd, ["install", "--no-audit", "--no-fund"], { cwd: dir, stdio: ["ignore", "pipe", "pipe"], shell: npm.shell, windowsHide: true });
   // Electron fetches its own binary on first use; fetched now, so the relaunch is quick.
   execFileSync(process.execPath, [join(dir, "node_modules", "electron", "install.js")], { cwd: dir, stdio: ["ignore", "pipe", "pipe"], windowsHide: true });

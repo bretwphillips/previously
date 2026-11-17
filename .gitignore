@@ -46,3 +46,6 @@ terminal-layout.json
 # The Electron shell's own packages (npm install in electron/).
 electron/node_modules/
 electron/Previously.ico
+
+# The standup engine, from package.json (npm install here).
+node_modules/

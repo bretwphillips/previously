@@ -14,7 +14,7 @@ import { markdown } from "./md.mjs";
 import { renderPage } from "./render.mjs";
 import { readLedger, updateLedger, commitStreak, nextStreakDay, streakSchedule } from "./ledger.mjs";
 import { petState } from "./pet.mjs";
-import { standup } from "./standup.mjs";
+import { standup } from "standup-core";
 import { quoteFor } from "./quotes.mjs";
 import { installedTerminals } from "./terminals.mjs";
 import { installedEditors, editorLink } from "./editors.mjs";

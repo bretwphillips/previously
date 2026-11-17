@@ -67,6 +67,7 @@ HERE="$TARGET"
 . "$HERE/env.sh"
 command -v git >/dev/null 2>&1 || fail "git is missing: xcode-select --install"
 [ -n "$NODE" ] || fail "node is missing: install it from https://nodejs.org (or brew install node / nvm install --lts)"
+command -v npm >/dev/null 2>&1 || fail "npm is missing: it comes with node -- install node from https://nodejs.org"
 xcode-select -p >/dev/null 2>&1 && command -v swiftc >/dev/null 2>&1 ||
   fail "Xcode's command-line tools are missing: xcode-select --install, then run this again"
 

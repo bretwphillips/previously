@@ -75,7 +75,7 @@ the rest sit beside the code. None of them are tracked by git.
 | `quotes.mjs` | The quote of the day on the Overview (Settings turns it off). Picked by date, so it holds until midnight; add your own to the list. |
 | `quiz.mjs` | The code quiz: picks the code, asks Claude Code for questions, checks each quote against the file. |
 | `editors.mjs` | Which editors Settings offers for opening a file at a line, by what is installed. |
-| `standup.mjs` | Builds the morning post from threads, commits and activity. |
+| `package.json` | The one npm package the app itself uses: [standup-core](https://github.com/bretwphillips/standup-core), which builds the morning post from threads, commits and activity (shared with Standby). Pinned to a commit; `make.sh` (Mac) and the installer and updater (Windows) run `npm ci` when the lockfile changes. A standup fix goes there, then the pin moves. |
 | `activity.mjs` | Turns raw GitLab events and MRs into per-ticket comments, approvals and MR states. |
 | `src/Info.plist` | The app bundle's manifest; `make.sh` copies it in, so a first build makes a whole app. |
 | `core.mjs` | What the app decides, whatever shell hosts the page: saving what the page sends, switching spaces, the sync queue and schedule, updates, the quiz, review trees, the menu bar's list, and rebuilding then showing the page. A shell supplies only what its system does (`host`). |

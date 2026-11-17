@@ -14,7 +14,7 @@ import { execFile, execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { readFileSync, writeFileSync, renameSync } from "node:fs";
 import { join } from "node:path";
-import { since as standupSince } from "./standup.mjs";
+import { since as standupSince } from "standup-core";
 
 // The space being synced: its data folder, and its repos as "name<TAB>path" lines.
 const DATA = process.env.DATA;
