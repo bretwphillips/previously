@@ -386,7 +386,7 @@ to change something.
   plus any tasks ticked. Commit subjects are the texture of a day, not its point,
   and a reader scanning ten standups wants the goal.
 - **Today** — the plan, not a record. The same one line per ticket, carried-over
-  work first, and nothing that has already merged. Filled in priority order until the tickets' GitLab weights
+  work first, then work waiting on a review, and nothing that has already merged. Filled in priority order until the tickets' GitLab weights
   reach a limit (Settings → General, 5 by default); a ticket with no weight counts
   as 1, one too big for what is left is skipped so a smaller one can fit, and the
   first always goes in. Then, while there's room, what you haven't started, in the

@@ -173,7 +173,8 @@ export function standup(repos, tasks, activity, now = new Date(), { weightLimit 
       const closed = thread.ticket && (activity.issues ?? []).some(
         (i) => i.repo === repo.name && i.ticket === thread.ticket && i.state === "closed");
       if ((repo.group === "active" || touched) && goal && !finished(thread) && !closed) {
-        today.push({ text: goal, ref, epic, touched, at: repo.committedAt ?? 0, weight: thread.weight?.value ?? UNWEIGHED,
+        today.push({ text: goal, ref, epic, touched, inReview: awaitingReview(thread).length > 0,
+          at: repo.committedAt ?? 0, weight: thread.weight?.value ?? UNWEIGHED,
           key: thread.ticket ? `${repo.name}${thread.ticket}` : null, number: Number(thread.ticket?.slice(1)) || Infinity });
       }
 
@@ -250,10 +251,12 @@ export function standup(repos, tasks, activity, now = new Date(), { weightLimit 
     yesterday.push({ text: `Reviewed: ${brief(approval.title)}`, ref, epic: null });
   }
 
-  // Carried-over work first, then the rest, most recently touched first; within a
-  // repo, lowest ticket number first, the order they're usually meant to be done in.
+  // Carried-over work first, then work waiting on a review, then the rest, most
+  // recently touched first; within a repo, lowest ticket number first, the order
+  // they're usually meant to be done in.
   const byNumber = (a, b) => (a === b ? 0 : a < b ? -1 : 1);
-  today.sort((a, b) => Number(b.touched) - Number(a.touched) || b.at - a.at || byNumber(a.number ?? Infinity, b.number ?? Infinity));
+  today.sort((a, b) => Number(b.touched) - Number(a.touched) || Number(!!b.inReview) - Number(!!a.inReview)
+    || b.at - a.at || byNumber(a.number ?? Infinity, b.number ?? Infinity));
   // In priority order, take what fits under the limit, skipping a ticket too
   // big for what is left so a smaller one can still fill the gap. The first
   // always goes in, even alone over the limit: an empty plan helps nobody.
